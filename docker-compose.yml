@@ -1,6 +1,6 @@
 version: "3.9" # optional since v1.27.0
 services:
-  dev-baseapp-fe:
+  dev-parlamento-fe:
     stdin_open: true # Allow hot reload
     tty: true
     build:
@@ -10,14 +10,14 @@ services:
       - "3000:3000"
     volumes:
       - ./frontend/lib:/usr/src/app/lib
-  test-baseapp-fe:
+  test-parlamento-fe:
     build:
       context: ./frontend
       dockerfile: ./Dockerfile.test
     volumes:
       - ./frontend/lib:/usr/src/app/lib
       - ./frontend/test:/usr/src/app/test
-  prod-baseapp-fe:
+  prod-parlamento-fe:
     build:
       context: ./frontend
       dockerfile: ./Dockerfile.prod
