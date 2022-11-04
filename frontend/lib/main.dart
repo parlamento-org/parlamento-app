@@ -61,8 +61,6 @@ class MyHomePage extends StatelessWidget {
         appBar: AppBar(
           title: const Text("MyApp"),
         ),
-        body: Center(
-            child: Column(
-                children: const [Text("Test"), GetUserName("Poodlers")])));
+        body: Center(child: Column(children: const [GetUserName("Poodlers")])));
   }
 }

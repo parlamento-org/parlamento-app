@@ -5,14 +5,14 @@ cleanup() {
 
 trap 'kill "${child_pid}"; wait "${child_pid}"' SIGINT SIGTERM
 
-docker-compose up dev-baseapp-fe $@ &
+docker-compose up dev-parlamento-fe $@ &
 
 child_pid="$!"
 
 
 ID=""
 while [ -z "$ID" ]; do
-    ID=$(docker ps -qf "name=dev-baseapp-fe")
+    ID=$(docker ps -qf "name=dev-parlamento-fe")
 done
 
 docker attach $ID

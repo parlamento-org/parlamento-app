@@ -19,7 +19,7 @@ class GetUserName extends StatelessWidget {
           log(snapshot.error.toString());
           return const Text("Something went wrong");
         }
-
+        log(snapshot.data!.docs.length.toString());
         if (snapshot.hasData && snapshot.data!.docs.isEmpty) {
           return const Text("Document does not exist");
         }
