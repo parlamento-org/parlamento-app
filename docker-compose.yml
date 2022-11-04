@@ -1,0 +1,25 @@
+version: "3.9" # optional since v1.27.0
+services:
+  dev-baseapp-fe:
+    stdin_open: true # Allow hot reload
+    tty: true
+    build:
+      context: ./frontend
+      dockerfile: ./Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/lib:/usr/src/app/lib
+  test-baseapp-fe:
+    build:
+      context: ./frontend
+      dockerfile: ./Dockerfile.test
+    volumes:
+      - ./frontend/lib:/usr/src/app/lib
+      - ./frontend/test:/usr/src/app/test
+  prod-baseapp-fe:
+    build:
+      context: ./frontend
+      dockerfile: ./Dockerfile.prod
+    ports:
+      - "80:80"
