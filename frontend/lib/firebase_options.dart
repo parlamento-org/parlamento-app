@@ -70,7 +70,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '374682980066',
     projectId: 'firestore-parlamento',
     storageBucket: 'firestore-parlamento.appspot.com',
-    iosClientId: '374682980066-b8b5e90rmnrkpgng5k4fufktfat7voom.apps.googleusercontent.com',
+    iosClientId:
+        '374682980066-b8b5e90rmnrkpgng5k4fufktfat7voom.apps.googleusercontent.com',
     iosBundleId: 'com.example.frontend',
   );
 }

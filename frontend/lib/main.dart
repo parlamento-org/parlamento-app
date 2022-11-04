@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:frontend/widget/get_user_example.dart';
+import 'package:frontend/example_widgets/get_user_example.dart';
 import 'firebase_options.dart';
 
 void main() {
