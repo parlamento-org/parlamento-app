@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "374682980066",
+    "project_id": "firestore-parlamento",
+    "storage_bucket": "firestore-parlamento.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:374682980066:android:4b9107897cbf075367d8bb",
+        "android_client_info": {
+          "package_name": "com.example.frontend"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "374682980066-nrc38iqrpacg84hajq4ndasj58rvlumu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCE9CtEp0ixrs0mymG7kAjEjuMxwP_ulng"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "374682980066-nrc38iqrpacg84hajq4ndasj58rvlumu.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "374682980066-b8b5e90rmnrkpgng5k4fufktfat7voom.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.frontend"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
