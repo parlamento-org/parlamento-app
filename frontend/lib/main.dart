@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:frontend/example_widgets/get_user_example.dart';
+import 'package:frontend/login_widgets/login_method_choice.dart';
+import 'package:frontend/themes/base_theme.dart';
 import 'firebase_options.dart';
 
 void main() {
@@ -27,6 +29,7 @@ class MyApp extends StatelessWidget {
 
         // Once complete, show your application
         if (snapshot.connectionState == ConnectionState.done) {
+          FirebaseAuth.instance.setPersistence(Persistence.NONE);
           return MaterialApp(
             title: 'Flutter Demo',
             theme: ThemeData(
@@ -58,9 +61,9 @@ class MyHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: const Text("MyApp"),
-        ),
-        body: Center(child: Column(children: const [GetUserName("Poodlers")])));
+        backgroundColor: baseTheme.backgroundColor,
+        body: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [Center(child: LoginMethodChoice())]));
   }
 }
