@@ -1,10 +1,10 @@
-import 'dart:developer';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/external_login/create_user.dart';
 import 'package:frontend/external_login/facebook_sign_in.dart';
 import 'package:frontend/external_login/google_sign_in.dart';
-import 'package:frontend/login_widgets/initial_ogin_method_button.dart';
+import 'package:frontend/login_widgets/initial_login_method_button.dart';
+import 'package:frontend/login_widgets/login_form.dart';
+
 import 'package:frontend/themes/base_theme.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
@@ -43,7 +43,9 @@ class LoginMethodChoice extends StatelessWidget {
             LoginMethodButton(
               onPressed: () => {
                 Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => const LoginMethodChoice()))
+                    builder: (context) => const LoginPage(
+                          title: "Bem vinde!",
+                        )))
               },
               buttonText: "Entrar com e-mail",
               buttonIcon: Icons.alternate_email,

@@ -18,7 +18,7 @@ class LoginMethodButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
-        style: initialLoginbuttonStyle,
+        style: initialLoginbuttonStyle(baseTheme.primaryColorLight),
         onPressed: onPressed,
         child: Padding(
           padding: const EdgeInsets.all(5.0),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 final baseTheme = ThemeData(
   primaryColor: const Color(0xff6404C5),
   primaryColorLight: const Color.fromARGB(255, 255, 255, 255),
+  primaryColorDark: const Color.fromARGB(255, 72, 72, 72),
   scaffoldBackgroundColor: const Color(0xff6404C5),
   dialogBackgroundColor: const Color.fromARGB(255, 255, 255, 255),
   backgroundColor: const Color(0xffD7D7FF),
@@ -36,12 +37,30 @@ const smallSeparator = SizedBox(
   height: 20,
 );
 
-ButtonStyle initialLoginbuttonStyle = ButtonStyle(
+const BorderRadius inputRadius = BorderRadius.all(Radius.circular(15.0));
+
+InputDecoration getInputDecoration(String hintText) {
+  return InputDecoration(
+      filled: true,
+      fillColor: baseTheme.primaryColorLight,
+      hoverColor: baseTheme.primaryColorLight,
+      hintText: hintText,
+      enabledBorder: OutlineInputBorder(
+          borderRadius: inputRadius,
+          borderSide: BorderSide(color: baseTheme.primaryColorDark)),
+      border: const OutlineInputBorder(borderRadius: inputRadius),
+      focusedBorder: const OutlineInputBorder(
+          borderSide: BorderSide(width: 2), borderRadius: inputRadius));
+}
+
+ButtonStyle initialLoginbuttonStyle(Color backgroundColor) => ButtonStyle(
     textStyle: MaterialStateProperty.resolveWith(((states) {
       return secondaryTextStyle;
     })),
-    backgroundColor: MaterialStateProperty.resolveWith(
-        (states) => baseTheme.primaryColorLight),
+    minimumSize: MaterialStateProperty.resolveWith(
+        (states) => const Size.fromHeight(50)),
+    backgroundColor:
+        MaterialStateProperty.resolveWith((states) => backgroundColor),
     shape: MaterialStateProperty.resolveWith((states) =>
         const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(10.0)))));
