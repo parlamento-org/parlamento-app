@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:frontend/external_login/create_user.dart';
 import 'package:frontend/themes/base_theme.dart';
 
 class LoginPage extends StatefulWidget {
@@ -278,14 +279,15 @@ class _LoginPageState extends State<LoginPage> {
       });
       FirebaseAuth.instance
           .createUserWithEmailAndPassword(email: email, password: password)
-          .then((value) =>
-              Navigator.of(context).pushReplacement(MaterialPageRoute(
-                  builder: (context) => const Scaffold(
-                        body: Center(
-                          child: Text("Registered with email and password!"),
-                        ),
-                      ))))
-          .catchError((error) {
+          .then((credential) {
+        createUser(credential.user!);
+        Navigator.of(context).pushReplacement(MaterialPageRoute(
+            builder: (context) => const Scaffold(
+                  body: Center(
+                    child: Text("Registered with email and password!"),
+                  ),
+                )));
+      }).catchError((error) {
         setState(() {
           _isLoggingIn = false;
         });
