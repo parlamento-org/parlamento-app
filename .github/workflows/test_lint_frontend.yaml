@@ -1,6 +1,6 @@
 name: Test and lint frontend
 
-on: push
+on: pull_request
 
 jobs:
   lint_frontend:
