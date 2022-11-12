@@ -41,4 +41,4 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: cd frontend && cp fly.dev.toml fly.toml && flyctl deploy --local-only --image ghcr.io/poodlers/parlamento-dev
+      - run: cd frontend && cp fly.dev.toml fly.toml && flyctl deploy --local-only --image ghcr.io/poodlers/parlamento-dev:feature-workflows
