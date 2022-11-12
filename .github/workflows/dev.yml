@@ -3,7 +3,7 @@ name: Build and Publish Development Docker Images
 on:
   push:
     branches:
-      - develop
+      - development
 
 env:
   REGISTRY: ghcr.io
