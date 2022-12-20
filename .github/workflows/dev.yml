@@ -8,7 +8,7 @@ env:
   FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
 jobs:
-  frontend:
+  backend:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -29,16 +29,16 @@ jobs:
         id: meta
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
-          images: ghcr.io/poodlers/parlamento-dev
+          images: ghcr.io/poodlers/parlamento-dev-api
 
       - name: Build and push Docker image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
-          context: ./frontend/
-          file: ./frontend/Dockerfile.prod
+          context: ./backend/
+          file: ./backend/Dockerfile.prod
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: cd frontend && cp fly.dev.toml fly.toml && flyctl deploy --local-only --image ghcr.io/poodlers/parlamento-dev:feature-workflows
+      - run: cd backend && cp fly.dev.toml fly.toml && flyctl deploy --local-only --image ghcr.io/poodlers/parlamento-dev-api:feature-workflows

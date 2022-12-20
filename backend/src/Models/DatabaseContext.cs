@@ -21,11 +21,7 @@ public class DatabaseContext : DbContext
         optionsBuilder.UseSqlite(@"Data Source=" + databaseFilePath + @";foreign keys=true;");
     }
 
-    public DbSet<Brand>? brands { get; set; }
 
-    public DbSet<SalesChannel>? SalesChannel { get; set; }
-
-    public DbSet<ContactInfo>? ContactInfo { get; set; }
 
 
 }

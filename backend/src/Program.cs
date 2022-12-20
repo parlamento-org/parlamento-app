@@ -3,9 +3,6 @@ using backend.Models;
 
 using FluentValidation;
 
-using Prometheus;
-
-using promMetrics;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<DatabaseContext>();
@@ -44,19 +41,12 @@ if (app.Environment.IsDevelopment())
 
 // app.UseHttpsRedirection();
 
-app.UseMetricServer();
-app.UseHttpMetrics();
-
-var manualMetrics = new PrometheusMetrics();
 app.UseRouting();
 app.UseAuthorization();
 app.UseEndpoints(endpoints =>
 {
     app.MapControllers();
     endpoints.MapControllers();
-    endpoints.MapMetrics();
-    manualMetrics.UpdateCpuMemMetrics();
-    manualMetrics.IncrementRequestCounter();
 });
 
 app.UseCors("AllowAllOrigins");

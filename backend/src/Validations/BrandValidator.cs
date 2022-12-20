@@ -4,6 +4,7 @@ using FluentValidation;
 
 namespace backend.Validations;
 
+/*
 public class BrandValidator : AbstractValidator<Brand>
 {
     private readonly DatabaseContext _db;
@@ -44,3 +45,5 @@ public class BrandValidator : AbstractValidator<Brand>
 
 
 }
+
+*/

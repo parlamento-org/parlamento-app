@@ -10,7 +10,7 @@ public class HomeController : ControllerBase
     public Dictionary<string, string> Get()
     {
         var arr = new Dictionary<string, string>();
-        arr.Add("greeting", "Hello World 2");
+        arr.Add("greeting", "Hello World");
         return arr;
     }
 }
