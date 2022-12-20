@@ -1,10 +1,9 @@
-# fly.toml file generated for parlamento-dev on 2022-11-12T00:17:36Z
+# fly.toml file generated for parlamento-dev on 2022-12-20T17:21:01Z
 
 app = "parlamento-dev"
 kill_signal = "SIGINT"
 kill_timeout = 5
 processes = []
-
 
 [env]
 
@@ -33,4 +32,3 @@ processes = []
     interval = "15s"
     restart_limit = 0
     timeout = "2s"
- 
