@@ -1,10 +1,9 @@
-# fly.toml file generated for parlamento on 2022-10-27T00:04:16+01:00
+# fly.toml file generated for parlamento-dev on 2022-12-20T17:21:01Z
 
-app = "parlamento"
+app = "parlamento-dev"
 kill_signal = "SIGINT"
 kill_timeout = 5
 processes = []
-
 
 [env]
 
@@ -14,7 +13,7 @@ processes = []
 
 [[services]]
   http_checks = []
-  internal_port = 80
+  internal_port = 8080
   processes = ["app"]
   protocol = "tcp"
   script_checks = []
@@ -24,9 +23,13 @@ processes = []
     type = "connections"
 
   [[services.ports]]
-    force_https = false
+    force_https = true
     handlers = ["http"]
     port = 80
+
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port = 443
 
   [[services.tcp_checks]]
     grace_period = "1s"

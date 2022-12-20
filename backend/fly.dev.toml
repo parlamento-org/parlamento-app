@@ -1,4 +1,3 @@
-# fly.toml file generated for api-maersk on 2022-10-27T00:04:46+01:00
 
 app = "parlamento-dev-api"
 kill_signal = "SIGINT"
