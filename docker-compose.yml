@@ -50,7 +50,7 @@ services:
       - ./backend/test:/usr/src/app/test
       - ./backend/integration-tests:/usr/src/app/integration-tests
     depends_on:
-      - db-config-migrate
+      - db-parlamento-migrate
   db-parlamento-migrate:
     build:
       context: ./backend
