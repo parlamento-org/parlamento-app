@@ -1,4 +1,4 @@
-# fly.toml file generated for parlamento-dev-api on 2022-12-20T15:02:33Z
+# fly.toml file generated for parlamento-dev-api on 2022-12-20T19:15:59Z
 
 app = "parlamento-dev-api"
 kill_signal = "SIGINT"
