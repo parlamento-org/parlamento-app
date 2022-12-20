@@ -23,3 +23,37 @@ services:
       dockerfile: ./Dockerfile.prod
     ports:
       - "80:80"
+  dev-parlamento-be:
+    build:
+      context: ./backend
+      dockerfile: ./Dockerfile
+    ports:
+      - "8180:8080"
+      - "8181:8081"
+    volumes:
+      - ./backend/src:/usr/src/app/src
+    depends_on:
+      - db-parlamento-migrate
+  prod-parlamento-be:
+    build:
+      context: ./backend
+      dockerfile: ./Dockerfile.prod
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+  test-parlamento-be:
+    build:
+      context: ./backend
+      dockerfile: ./Dockerfile.test
+    volumes:
+      - ./backend/src:/usr/src/app/src
+      - ./backend/test:/usr/src/app/test
+      - ./backend/integration-tests:/usr/src/app/integration-tests
+    depends_on:
+      - db-config-migrate
+  db-parlamento-migrate:
+    build:
+      context: ./backend
+      dockerfile: ./Dockerfile.migrate
+    volumes:
+      - ./backend/src/db.sqlite:/usr/src/app/src/db.sqlite
