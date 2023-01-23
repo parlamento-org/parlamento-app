@@ -15,4 +15,6 @@ RUN dotnet dev-certs https --trust
 
 WORKDIR /usr/src/app/src
 
+EXPOSE 8080
+
 CMD [ "dotnet", "watch" ]

@@ -42,4 +42,6 @@ RUN flutter pub get
 
 COPY . .
 
+EXPOSE 8080
+
 CMD [ "flutter", "run", "-d", "web-server", "--web-hostname=0.0.0.0", "--web-port=3000"]

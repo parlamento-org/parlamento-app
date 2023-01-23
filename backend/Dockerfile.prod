@@ -28,4 +28,6 @@ WORKDIR /usr/src/app
 COPY --from=build /usr/src/app/build .
 COPY --from=build /usr/src/app/src/db.sqlite .
 
+EXPOSE 8080
+
 CMD ["dotnet", "backend.dll", "--urls", "http://0.0.0.0:8080"]
