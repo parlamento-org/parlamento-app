@@ -59,7 +59,7 @@ class MyHomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: const Text("MyAppblehh"),
+          title: const Text("MyApp"),
         ),
         body: Center(child: Column(children: const [GetUserName("Poodlers")])));
   }
