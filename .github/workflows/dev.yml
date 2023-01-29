@@ -44,7 +44,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: cd frontend && cp fly.dev.toml fly.toml && flyctl deploy --local-only --image ghcr.io/poodlers/parlamento-dev:feature-workflows
+      - run: cd frontend && cp fly.dev.toml fly.toml && flyctl deploy --local-only --image ghcr.io/poodlers/parlamento-dev:development
   backend:
     runs-on: ubuntu-latest
     permissions:
@@ -78,4 +78,4 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: cd backend && cp fly.dev.toml fly.toml && flyctl deploy --local-only --image ghcr.io/poodlers/parlamento-dev-api:feature-workflows
+      - run: cd backend && cp fly.dev.toml fly.toml && flyctl deploy --local-only --image ghcr.io/poodlers/parlamento-dev-api:development
