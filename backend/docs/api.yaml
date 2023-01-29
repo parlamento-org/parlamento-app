@@ -1,0 +1,276 @@
+openapi: 3.0.1
+info:
+  title: brand-info-backend
+  version: "1.0"
+paths:
+  /brand:
+    get:
+      tags:
+        - brand
+      operationId: GetBrands
+      parameters:
+        - name: searchString
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            text/plain:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/brand"
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/brand"
+            text/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/brand"
+    post:
+      tags:
+        - brand
+      operationId: CreateBrand
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/brandDTO"
+          text/json:
+            schema:
+              $ref: "#/components/schemas/brandDTO"
+          application/*+json:
+            schema:
+              $ref: "#/components/schemas/brandDTO"
+      responses:
+        "200":
+          description: Success
+  "/brand/{id}":
+    get:
+      tags:
+        - brand
+      operationId: GetBrand
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: Success
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/brand"
+            application/json:
+              schema:
+                $ref: "#/components/schemas/brand"
+            text/json:
+              schema:
+                $ref: "#/components/schemas/brand"
+    delete:
+      tags:
+        - brand
+      operationId: DeleteBrand
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: Success
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/brand"
+            application/json:
+              schema:
+                $ref: "#/components/schemas/brand"
+            text/json:
+              schema:
+                $ref: "#/components/schemas/brand"
+  "/edit/sales-channel":
+    put:
+      tags:
+        - Sales channel and Fullfilment
+      operationId: EditSalesChannel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/fullfilmentDTO"
+          text/json:
+            schema:
+              $ref: "#/components/schemas/fullfilmentDTO"
+          application/*+json:
+            schema:
+              $ref: "#/components/schemas/fullfilmentDTO"
+      responses:
+        "200":
+          description: Success
+  "/edit/return-policy":
+    put:
+      tags:
+        - Return Policy
+      operationId: EditReturnPolicy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/returnDTO"
+          text/json:
+            schema:
+              $ref: "#/components/schemas/returnDTO"
+          application/*+json:
+            schema:
+              $ref: "#/components/schemas/returnDTO"
+      responses:
+        "200":
+          description: Success
+  "/edit/contact-info":
+    put:
+      tags:
+        - Contact Info
+      operationId: EditContactInfo
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/contactInfoDTO"
+          text/json:
+            schema:
+              $ref: "#/components/schemas/contactInfoDTO"
+          application/*+json:
+            schema:
+              $ref: "#/components/schemas/contactInfoDTO"
+      responses:
+        "200":
+          description: Success
+components:
+  schemas:
+    contactInfoDTO:
+      type: object
+      properties:
+        brandID:
+          type: integer
+          format: int32
+        newBrandName:
+          type: string
+        contactInfos:
+          type: array
+          items:
+            $ref: "#/components/schemas/contactInfo"
+    returnDTO:
+      type: object
+      properties:
+        brandID:
+          type: integer
+          format: int32
+        salesChannelName:
+          $ref: "#/components/schemas/salesChannelName"
+        digitalReturnLabel:
+          type: boolean
+        prePrintedReturnLabel:
+          type: boolean
+    fullfilmentDTO:
+      type: object
+      properties:
+        brandID:
+          type: integer
+          format: int32
+        salesChannelName:
+          $ref: "#/components/schemas/salesChannelName"
+        fullOrWait:
+          type: boolean
+        partialAndCancel:
+          type: boolean
+        isActive:
+          type: boolean
+    contactInfo:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: false
+        phoneNumber:
+          type: string
+    salesChannel:
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/salesChannelName"
+        fullOrWait:
+          type: boolean
+        partialAndCancel:
+          type: boolean
+        digitalReturnLabel:
+          type: boolean
+        prePrintedReturnLabel:
+          type: boolean
+        isActive:
+          type: boolean
+          nullable: false
+      additionalProperties: false
+    salesChannelName:
+      enum:
+        - Webshop
+        - Wholesale
+        - Own Store
+        - Marketing
+        - Stock Shared
+      type: string
+    brand:
+      required:
+        - name
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+          nullable: false
+        contactInfos:
+          type: array
+          items:
+            $ref: "#/components/schemas/contactInfo"
+        salesChannels:
+          type: array
+          items:
+            $ref: "#/components/schemas/salesChannel"
+      additionalProperties: false
+    brandDTO:
+      required:
+        - name
+        - contactInfos
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: false
+        contactInfos:
+          type: array
+          items:
+            $ref: "#/components/schemas/contactInfo"
+        salesChannels:
+          type: array
+          items:
+            $ref: "#/components/schemas/salesChannel"
+      additionalProperties: false

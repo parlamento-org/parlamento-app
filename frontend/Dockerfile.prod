@@ -16,5 +16,7 @@ COPY . .
 
 RUN flutter build web --release
 
+EXPOSE 8080
+
 FROM nginx:stable-alpine
 COPY --from=build /usr/src/app/build/web /usr/share/nginx/html
