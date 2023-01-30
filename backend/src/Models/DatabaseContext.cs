@@ -21,7 +21,11 @@ public class DatabaseContext : DbContext
         optionsBuilder.UseSqlite(@"Data Source=" + databaseFilePath + @";foreign keys=true;");
     }
 
+    public DbSet<ProjectLaw>? ProjectLaws { get; set; }
 
+    public DbSet<User>? Users { get; set; }
+
+    public DbSet<PoliticalParty>? PoliticalParties { get; set; }
 
 
 }
