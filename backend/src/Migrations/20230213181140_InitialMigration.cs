@@ -82,8 +82,10 @@ namespace backend.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
+                    SourceId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Legislatura = table.Column<string>(type: "TEXT", nullable: false),
                     Score = table.Column<int>(type: "INTEGER", nullable: false),
-                    VoteDate = table.Column<DateOnly>(type: "TEXT", nullable: false),
+                    VoteDate = table.Column<string>(type: "TEXT", nullable: false),
                     ProposingPartypartyAcronym = table.Column<string>(type: "TEXT", nullable: false),
                     ProposalTitle = table.Column<string>(type: "TEXT", nullable: false),
                     FullProposalTextLink = table.Column<string>(type: "TEXT", nullable: false),
@@ -120,19 +122,13 @@ namespace backend.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     isUninamousWithinParty = table.Column<bool>(type: "INTEGER", nullable: true),
                     numberOfDeputies = table.Column<int>(type: "INTEGER", nullable: true),
-                    politicalPartypartyAcronym = table.Column<string>(type: "TEXT", nullable: false),
+                    politicalPartyAcronym = table.Column<string>(type: "TEXT", nullable: false),
                     votingOrientation = table.Column<int>(type: "INTEGER", nullable: false),
                     VotingResultId = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_VotingBlock", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_VotingBlock_PoliticalParties_politicalPartypartyAcronym",
-                        column: x => x.politicalPartypartyAcronym,
-                        principalTable: "PoliticalParties",
-                        principalColumn: "partyAcronym",
-                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_VotingBlock_VotingResult_VotingResultId",
                         column: x => x.VotingResultId,
@@ -146,9 +142,10 @@ namespace backend.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    UserId = table.Column<int>(type: "INTEGER", nullable: false),
                     VoteDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    ProjectLawId = table.Column<int>(type: "INTEGER", nullable: false)
+                    ProjectLawId = table.Column<int>(type: "INTEGER", nullable: false),
+                    VotingOrientation = table.Column<int>(type: "INTEGER", nullable: false),
+                    UserId = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -163,8 +160,7 @@ namespace backend.Migrations
                         name: "FK_Vote_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateIndex(
@@ -201,11 +197,6 @@ namespace backend.Migrations
                 name: "IX_Vote_UserId",
                 table: "Vote",
                 column: "UserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_VotingBlock_politicalPartypartyAcronym",
-                table: "VotingBlock",
-                column: "politicalPartypartyAcronym");
 
             migrationBuilder.CreateIndex(
                 name: "IX_VotingBlock_VotingResultId",

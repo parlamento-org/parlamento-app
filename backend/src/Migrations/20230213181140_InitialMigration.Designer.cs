@@ -11,7 +11,7 @@ using backend.Models;
 namespace backend.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20230130011013_InitialMigration")]
+    [Migration("20230213181140_InitialMigration")]
     partial class InitialMigration
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -67,6 +67,10 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Legislatura")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<int?>("ProposalResult")
                         .HasColumnType("INTEGER");
 
@@ -81,7 +85,10 @@ namespace backend.Migrations
                     b.Property<int>("Score")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateOnly?>("VoteDate")
+                    b.Property<int>("SourceId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("VoteDate")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -137,11 +144,14 @@ namespace backend.Migrations
                     b.Property<int>("ProjectLawId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("UserId")
+                    b.Property<int?>("UserId")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("VoteDate")
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("VotingOrientation")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
@@ -167,7 +177,7 @@ namespace backend.Migrations
                     b.Property<int?>("numberOfDeputies")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("politicalPartypartyAcronym")
+                    b.Property<string>("politicalPartyAcronym")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -177,8 +187,6 @@ namespace backend.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("VotingResultId");
-
-                    b.HasIndex("politicalPartypartyAcronym");
 
                     b.ToTable("VotingBlock");
                 });
@@ -245,9 +253,7 @@ namespace backend.Migrations
 
                     b.HasOne("backend.Models.User", null)
                         .WithMany("Votes")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
 
                     b.Navigation("ProjectLaw");
                 });
@@ -257,14 +263,6 @@ namespace backend.Migrations
                     b.HasOne("backend.Models.VotingResult", null)
                         .WithMany("votingBlocks")
                         .HasForeignKey("VotingResultId");
-
-                    b.HasOne("backend.Models.PoliticalParty", "politicalParty")
-                        .WithMany()
-                        .HasForeignKey("politicalPartypartyAcronym")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("politicalParty");
                 });
 
             modelBuilder.Entity("backend.Models.User", b =>

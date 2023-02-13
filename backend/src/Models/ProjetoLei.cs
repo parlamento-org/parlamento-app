@@ -31,7 +31,6 @@ public class PoliticalParty
     public String? partyAcronym { get; set; }
     public String? fullName { get; set; }
 
-
 }
 
 public class VotingBlock
@@ -44,7 +43,7 @@ public class VotingBlock
 
     public int? numberOfDeputies { get; set; }
     [Required]
-    public PoliticalParty? politicalParty { get; set; }
+    public String? politicalPartyAcronym { get; set; }
 
     [Required]
     [EnumDataType(typeof(VotingOrientation), ErrorMessage = "Invalid Voting Orientation")]
@@ -58,9 +57,8 @@ public class VotingResult
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
-    [Required]
     public Boolean isUninamous { get; set; }
-    [Required]
+
     public List<VotingBlock>? votingBlocks { get; set; }
 }
 
@@ -69,13 +67,16 @@ public class ProjectLawDTO
 {
 
     [Required]
-    public int score { get; set; }
+    public String? legislatura { get; set; }
 
     [Required]
-    public DateOnly? voteDate { get; set; }
+    public int sourceId { get; set; }
 
     [Required]
-    public PoliticalParty? proposingParty { get; set; }
+    public String? voteDate { get; set; }
+
+    [Required]
+    public String? proposingPartyAcronym { get; set; }
 
     [Required]
     public String? proposalTitle { get; set; }
@@ -84,10 +85,9 @@ public class ProjectLawDTO
 
     [EnumDataType(typeof(ProposalResult), ErrorMessage = "Invalid Proposal Result")]
     public ProposalResult? proposalResult { get; set; }
-
+    [Required]
     public VotingResult? votingResultGenerality { get; set; }
     public VotingResult? votingResultSpeciality { get; set; }
-
 
 }
 
@@ -103,18 +103,6 @@ public class ProjectLaw
     {
 
     }
-    public ProjectLaw(ProjectLawDTO dto)
-    {
-        Score = dto.score;
-        VoteDate = dto.voteDate;
-        ProposingParty = dto.proposingParty;
-        ProposalTitle = dto.proposalTitle;
-        FullProposalTextLink = dto.fullProposalTextLink;
-        ProposalResult = dto.proposalResult;
-        VotingResultGenerality = dto.votingResultGenerality;
-        VotingResultSpeciality = dto.votingResultSpeciality;
-
-    }
 
 
     [Key]
@@ -122,10 +110,15 @@ public class ProjectLaw
     public int Id { get; set; }
 
     [Required]
+    public int SourceId { get; set; }
+
+    [Required]
+    public String? Legislatura { get; set; }
+    [Required]
     public int Score { get; set; }
 
     [Required]
-    public DateOnly? VoteDate { get; set; }
+    public String? VoteDate { get; set; }
 
     [Required]
     public PoliticalParty? ProposingParty { get; set; }

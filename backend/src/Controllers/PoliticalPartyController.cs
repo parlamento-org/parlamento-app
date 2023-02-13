@@ -60,6 +60,24 @@ public class PoliticalPartyController : ControllerBase
         return Ok(newParty);
     }
 
+    [HttpDelete("{id}", Name = "DeleteParty")]
+    public IActionResult Delete(String id)
+    {
+        var partyQuery = _dbPartySet.Where(x => x.partyAcronym == id);
+
+        if (!partyQuery.Any())
+        {
+            return NotFound("No Party found with the given abbreviation.");
+        }
+
+        var party = partyQuery.First();
+        _dbPartySet.Remove(party);
+
+        _context.SaveChanges();
+
+        return Ok(party);
+    }
+
 
 
 }

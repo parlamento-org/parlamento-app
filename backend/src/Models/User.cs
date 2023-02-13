@@ -26,14 +26,28 @@ public class User
     public List<PartyStats> PartyStats { get; set; } = new List<PartyStats>();
 }
 
+public class UserDTO
+{
+
+    [Required]
+    public String? userName { get; set; }
+
+    [Required]
+    public String? email { get; set; }
+
+    [Required]
+    public String? password { get; set; }
+
+    [Required]
+    public int profilePic { get; set; }
+
+}
+
 public class Vote
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
-
-    [Required]
-    public int UserId { get; set; }
 
     [Required]
     public DateTime VoteDate { get; set; }
@@ -43,7 +57,24 @@ public class Vote
 
     [Required]
     [EnumDataType(typeof(VotingOrientation), ErrorMessage = "Invalid Voting Orientation")]
-    VotingOrientation VotingOrientation { get; set; }
+    public VotingOrientation VotingOrientation { get; set; }
+
+}
+
+public class VoteDTO
+{
+
+    [Required]
+    public int userID { get; set; }
+    [Required]
+    public String? voteDate { get; set; }
+
+    [Required]
+    public int projectLawID { get; set; }
+
+    [Required]
+    [EnumDataType(typeof(VotingOrientation), ErrorMessage = "Invalid Voting Orientation")]
+    public VotingOrientation votingOrientation { get; set; }
 
 }
 
