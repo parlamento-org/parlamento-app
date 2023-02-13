@@ -52,7 +52,7 @@ public class ProjetoLeiController : ControllerBase
     public async Task<IActionResult> Vote(ProjectLawDTO dto)
     {
 
-        var projectLaw = _context.ProjectLaws?.FirstOrDefault(x => x.FullProposalTextLink == dto.fullProposalTextLink);
+        var projectLaw = _dbProjectLawSet.FirstOrDefault(x => x.FullProposalTextLink == dto.fullProposalTextLink);
         if (projectLaw != null)
         {
             return NotFound("This proposal already exists!");
