@@ -21,6 +21,13 @@ class MyHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(builder: (context, child) => Login());
+    return MaterialApp(
+        builder: (context, child) => Overlay(
+              initialEntries: [
+                OverlayEntry(
+                  builder: (context) => Login(),
+                ),
+              ],
+            ));
   }
 }

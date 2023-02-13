@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../components/myButton.dart';
 import '../components/myTextField.dart';
 import '../components/squareTile.dart';
+import '../themes/base_theme.dart';
 
 class Login extends StatelessWidget {
   Login({super.key});
@@ -17,7 +18,7 @@ class Login extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[300],
+      backgroundColor: baseTheme.colorScheme.background,
       body: SafeArea(
         child: Center(
           child: Column(
@@ -26,19 +27,20 @@ class Login extends StatelessWidget {
               const SizedBox(height: 50),
 
               // logo
-              const Icon(
-                Icons.lock,
-                size: 100,
+              Image.asset(
+                'lib/images/logo.png',
+                height: 120,
+                width: 120,
               ),
 
-              const SizedBox(height: 50),
+              const SizedBox(height: 30),
 
               // welcome back, you've been missed!
               Text(
-                'Welcome back you\'ve been missed!',
+                'Bem vinde!',
                 style: TextStyle(
-                  color: Colors.grey[700],
-                  fontSize: 16,
+                  color: baseTheme.colorScheme.primary,
+                  fontSize: 30,
                 ),
               ),
 
@@ -70,7 +72,7 @@ class Login extends StatelessWidget {
                   children: [
                     Text(
                       'Forgot Password?',
-                      style: TextStyle(color: Colors.grey[600]),
+                      style: TextStyle(color: baseTheme.colorScheme.primary),
                     ),
                   ],
                 ),
@@ -83,7 +85,7 @@ class Login extends StatelessWidget {
                 onTap: signUserIn,
               ),
 
-              const SizedBox(height: 50),
+              const SizedBox(height: 20),
 
               // or continue with
               Padding(
@@ -93,14 +95,14 @@ class Login extends StatelessWidget {
                     Expanded(
                       child: Divider(
                         thickness: 0.5,
-                        color: Colors.grey[400],
+                        color: baseTheme.colorScheme.primary,
                       ),
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10.0),
                       child: Text(
                         'Or continue with',
-                        style: TextStyle(color: Colors.grey[700]),
+                        style: TextStyle(color: baseTheme.colorScheme.primary),
                       ),
                     ),
                     Expanded(
@@ -116,7 +118,7 @@ class Login extends StatelessWidget {
               const SizedBox(height: 50),
 
               // google + apple sign in buttons
-              /*Row(
+              Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const [
                   // google button
@@ -127,9 +129,9 @@ class Login extends StatelessWidget {
                   // apple button
                   SquareTile(imagePath: 'lib/images/facebook.png')
                 ],
-              ),*/
+              ),
 
-              const SizedBox(height: 50),
+              const SizedBox(height: 10),
 
               // not a member? register now
               Row(
@@ -137,13 +139,13 @@ class Login extends StatelessWidget {
                 children: [
                   Text(
                     'Not a member?',
-                    style: TextStyle(color: Colors.grey[700]),
+                    style: TextStyle(color: baseTheme.colorScheme.primary),
                   ),
                   const SizedBox(width: 4),
-                  const Text(
+                  Text(
                     'Register now',
                     style: TextStyle(
-                      color: Colors.blue,
+                      color: baseTheme.colorScheme.primary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
