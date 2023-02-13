@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'pages/login.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -19,11 +21,6 @@ class MyHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-        builder: (context, child) => Scaffold(
-            appBar: AppBar(
-              title: const Text("MyApp"),
-            ),
-            body: const Center(child: Text("Hello World"))));
+    return MaterialApp(builder: (context, child) => Login());
   }
 }
