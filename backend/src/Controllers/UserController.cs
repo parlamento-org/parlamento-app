@@ -42,23 +42,6 @@ public class UserController : ControllerBase
             };
     }
 
-    [HttpPost(Name = "ValidateUser")]
-    public IActionResult Validate(UserValidateDTO dto)
-    {
-
-        var user = _context.Users?.FirstOrDefault(x => x.Email == dto.email);
-        if (user == null)
-        {
-            return NotFound("There is no User with this Email!");
-        }
-
-        if (user.Password != dto.password)
-        {
-            return NotFound("This User exists but you have provided the wrong password!");
-        }
-
-        return Ok(user);
-    }
 
     [HttpPost(Name = "CreateUser")]
     public async Task<IActionResult> Create(UserDTO dto)
@@ -86,7 +69,7 @@ public class UserController : ControllerBase
 
 
 
-    [HttpPost(Name = "AddUserVote")]
+    [HttpPut(Name = "AddUserVote")]
     public async Task<IActionResult> Vote(VoteDTO dto)
     {
 
@@ -116,6 +99,7 @@ public class UserController : ControllerBase
         await _context.SaveChangesAsync();
         return Ok(user);
     }
+
 
 
     [HttpDelete("{email}", Name = "DeleteUser")]
