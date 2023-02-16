@@ -53,6 +53,58 @@ namespace backend.Migrations
                     b.HasKey("partyAcronym");
 
                     b.ToTable("PoliticalParties");
+
+                    b.HasData(
+                        new
+                        {
+                            partyAcronym = "PSD",
+                            fullName = "Partido Social-Democrata"
+                        },
+                        new
+                        {
+                            partyAcronym = "PS",
+                            fullName = "Partido Socialista"
+                        },
+                        new
+                        {
+                            partyAcronym = "BE",
+                            fullName = "Bloco de Esquerda"
+                        },
+                        new
+                        {
+                            partyAcronym = "PCP",
+                            fullName = "Partido Comunista Português"
+                        },
+                        new
+                        {
+                            partyAcronym = "CDS-PP",
+                            fullName = "Coligação Democrática Unitária"
+                        },
+                        new
+                        {
+                            partyAcronym = "PAN",
+                            fullName = "Pessoas-Animais-Natureza"
+                        },
+                        new
+                        {
+                            partyAcronym = "L",
+                            fullName = "Partido Livre"
+                        },
+                        new
+                        {
+                            partyAcronym = "IL",
+                            fullName = "Iniciativa Liberal"
+                        },
+                        new
+                        {
+                            partyAcronym = "CH",
+                            fullName = "Chega"
+                        },
+                        new
+                        {
+                            partyAcronym = "Governo",
+                            fullName = "Governo"
+                        });
                 });
 
             modelBuilder.Entity("backend.Models.ProjectLaw", b =>

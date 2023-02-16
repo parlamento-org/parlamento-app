@@ -21,6 +21,24 @@ public class ProjetoLeiController : ControllerBase
 
     }
 
+    [HttpGet("{id}", Name = "GetProposal")]
+    public IActionResult Get(int id)
+    {
+
+        var projectLawQuery = _dbProjectLawSet.Include(proposal => proposal.VotingResultGenerality!.votingBlocks)
+                .Include(proposal => proposal.VotingResultSpeciality!.votingBlocks)
+                .Include(proposal => proposal.ProposingParty).Where(x => x.Id == id);
+
+        if (!projectLawQuery.Any())
+        {
+            return NotFound("No ProjectLaw found with the given id.");
+        }
+
+        var projectLaw = projectLawQuery.First();
+
+        return Ok(projectLaw);
+    }
+
     [HttpGet(Name = "GetProposals")]
     public Dictionary<string, List<ProjectLaw>> Get(string? searchString)
     {
@@ -85,7 +103,7 @@ public class ProjetoLeiController : ControllerBase
 
         if (!proposalQuery.Any())
         {
-            return NotFound("No Proposal found with the given abbreviation.");
+            return NotFound("No Proposal found with the given id.");
         }
 
         var proposal = proposalQuery.First();
@@ -95,6 +113,15 @@ public class ProjetoLeiController : ControllerBase
 
         return Ok(proposal);
     }
+
+    [HttpDelete(Name = "DeleteAllProposals")]
+    public IActionResult Delete()
+    {
+        _dbProjectLawSet.RemoveRange(_dbProjectLawSet);
+        _context.SaveChanges();
+        return Ok();
+    }
+
 
 
 

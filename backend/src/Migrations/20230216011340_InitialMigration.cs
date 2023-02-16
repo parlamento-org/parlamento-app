@@ -163,6 +163,56 @@ namespace backend.Migrations
                         principalColumn: "Id");
                 });
 
+            migrationBuilder.InsertData(
+                table: "PoliticalParties",
+                columns: new[] { "partyAcronym", "fullName" },
+                values: new object[] { "BE", "Bloco de Esquerda" });
+
+            migrationBuilder.InsertData(
+                table: "PoliticalParties",
+                columns: new[] { "partyAcronym", "fullName" },
+                values: new object[] { "CDS-PP", "Coligação Democrática Unitária" });
+
+            migrationBuilder.InsertData(
+                table: "PoliticalParties",
+                columns: new[] { "partyAcronym", "fullName" },
+                values: new object[] { "CH", "Chega" });
+
+            migrationBuilder.InsertData(
+                table: "PoliticalParties",
+                columns: new[] { "partyAcronym", "fullName" },
+                values: new object[] { "Governo", "Governo" });
+
+            migrationBuilder.InsertData(
+                table: "PoliticalParties",
+                columns: new[] { "partyAcronym", "fullName" },
+                values: new object[] { "IL", "Iniciativa Liberal" });
+
+            migrationBuilder.InsertData(
+                table: "PoliticalParties",
+                columns: new[] { "partyAcronym", "fullName" },
+                values: new object[] { "L", "Partido Livre" });
+
+            migrationBuilder.InsertData(
+                table: "PoliticalParties",
+                columns: new[] { "partyAcronym", "fullName" },
+                values: new object[] { "PAN", "Pessoas-Animais-Natureza" });
+
+            migrationBuilder.InsertData(
+                table: "PoliticalParties",
+                columns: new[] { "partyAcronym", "fullName" },
+                values: new object[] { "PCP", "Partido Comunista Português" });
+
+            migrationBuilder.InsertData(
+                table: "PoliticalParties",
+                columns: new[] { "partyAcronym", "fullName" },
+                values: new object[] { "PS", "Partido Socialista" });
+
+            migrationBuilder.InsertData(
+                table: "PoliticalParties",
+                columns: new[] { "partyAcronym", "fullName" },
+                values: new object[] { "PSD", "Partido Social-Democrata" });
+
             migrationBuilder.CreateIndex(
                 name: "IX_PartyStats_PoliticalPartypartyAcronym",
                 table: "PartyStats",
