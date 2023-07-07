@@ -34,7 +34,7 @@ public class DatabaseContext : DbContext
         },
         new PoliticalParty
         {
-            partyAcronym = "CDS-PP",
+            partyAcronym = "CDSPP",
             fullName = "Coligação Democrática Unitária"
         },
         new PoliticalParty

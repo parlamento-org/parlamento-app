@@ -18,8 +18,9 @@ public class ProjetoLeiController : ControllerBase
         this._context = context;
         this._dbProjectLawSet = _context.Set<ProjectLaw>();
 
-
     }
+
+
 
     [HttpGet("{id}", Name = "GetProposal")]
     public IActionResult Get(int id)
@@ -49,18 +50,18 @@ public class ProjetoLeiController : ControllerBase
             return new Dictionary<string, List<ProjectLaw>>
             {
 
-                ["proposal"] = _dbProjectLawSet.Include(proposal => proposal.VotingResultGenerality!.votingBlocks)
+                ["proposals"] = _dbProjectLawSet.Include(proposal => proposal.VotingResultGenerality!.votingBlocks)
                 .Include(proposal => proposal.VotingResultSpeciality!.votingBlocks)
                 .Include(proposal => proposal.ProposingParty).
                 Where(proposal => proposal.ProposalTitle!
-                .ToLower().Contains(searchString)).ToList()
+                .ToLower().Contains(searchString) || proposal.SourceId.ToString().Contains(searchString)).ToList()
             };
         }
         else
             return new Dictionary<string, List<ProjectLaw>>
             {
 
-                ["proposal"] = _dbProjectLawSet.Include(proposal => proposal.VotingResultGenerality!.votingBlocks)
+                ["proposals"] = _dbProjectLawSet.Include(proposal => proposal.VotingResultGenerality!.votingBlocks)
                 .Include(proposal => proposal.VotingResultSpeciality!.votingBlocks)
                 .Include(proposal => proposal.ProposingParty).ToList()
             };
@@ -75,7 +76,10 @@ public class ProjetoLeiController : ControllerBase
         {
             return NotFound("This proposal already exists!");
         }
-
+        if (dto.sourceId == null)
+        {
+            return StatusCode(400, "SourceId is required!");
+        }
         ProjectLaw newProjectLaw = new ProjectLaw();
         newProjectLaw.Score = 0;
         newProjectLaw.ProposalTitle = dto.proposalTitle;
@@ -87,13 +91,48 @@ public class ProjetoLeiController : ControllerBase
         newProjectLaw.ProposalResult = dto.proposalResult;
         newProjectLaw.VotingResultGenerality = dto.votingResultGenerality;
         newProjectLaw.VotingResultSpeciality = dto.votingResultSpeciality;
+        newProjectLaw.ProposalTextHTML = dto.proposalTextHTML;
 
         newProjectLaw.Legislatura = dto.legislatura;
-        newProjectLaw.SourceId = dto.sourceId;
+        newProjectLaw.SourceId = dto.sourceId.Value;
 
         _dbProjectLawSet.Add(newProjectLaw);
         await _context.SaveChangesAsync();
         return Ok(newProjectLaw);
+    }
+
+    [HttpPut("{id}", Name = "UpdateProposal")]
+    public async Task<IActionResult> Update(int id, ProjectLawDTO dto)
+    {
+
+        Console.WriteLine("Updating proposal with id: " + id);
+        var projectLaw = _dbProjectLawSet.FirstOrDefault(x => x.SourceId == id);
+
+        if (projectLaw == null)
+        {
+            return NotFound("No Proposal found with the given id.");
+        }
+        if (dto.score != null) projectLaw.Score = dto.score.Value;
+        if (dto.proposalTitle != null) projectLaw.ProposalTitle = dto.proposalTitle;
+        if (dto.fullProposalTextLink != null) projectLaw.FullProposalTextLink = dto.fullProposalTextLink;
+
+        if (dto.proposingPartyAcronym != null)
+            projectLaw.ProposingParty = _context.PoliticalParties?.FirstOrDefault(x => x.partyAcronym == dto.proposingPartyAcronym);
+
+        if (dto.voteDate != null) projectLaw.VoteDate = dto.voteDate;
+
+        if (dto.proposalResult != null) projectLaw.ProposalResult = dto.proposalResult;
+        if (dto.votingResultGenerality != null) projectLaw.VotingResultGenerality = dto.votingResultGenerality;
+
+
+        if (dto.votingResultSpeciality != null) projectLaw.VotingResultSpeciality = dto.votingResultSpeciality;
+        if (dto.proposalTextHTML != null) projectLaw.ProposalTextHTML = dto.proposalTextHTML;
+        if (projectLaw.Legislatura != null) projectLaw.Legislatura = dto.legislatura;
+
+        if (dto.sourceId != null) projectLaw.SourceId = dto.sourceId.Value;
+
+        await _context.SaveChangesAsync();
+        return Ok(projectLaw);
     }
 
     [HttpDelete("{id}", Name = "DeleteProposal")]

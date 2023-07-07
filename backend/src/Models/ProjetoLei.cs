@@ -66,26 +66,27 @@ public class VotingResult
 public class ProjectLawDTO
 {
 
-    [Required]
+
     public String? legislatura { get; set; }
 
-    [Required]
-    public int sourceId { get; set; }
+    public int? sourceId { get; set; }
 
-    [Required]
+    public int? score { get; set; }
     public String? voteDate { get; set; }
 
-    [Required]
+
     public String? proposingPartyAcronym { get; set; }
 
-    [Required]
+
     public String? proposalTitle { get; set; }
-    [Required]
+
     public String? fullProposalTextLink { get; set; }
+
+    public String? proposalTextHTML { get; set; }
 
     [EnumDataType(typeof(ProposalResult), ErrorMessage = "Invalid Proposal Result")]
     public ProposalResult? proposalResult { get; set; }
-    [Required]
+
     public VotingResult? votingResultGenerality { get; set; }
     public VotingResult? votingResultSpeciality { get; set; }
 
@@ -127,6 +128,8 @@ public class ProjectLaw
     public String? ProposalTitle { get; set; }
     [Required]
     public String? FullProposalTextLink { get; set; }
+
+    public String? ProposalTextHTML { get; set; }
 
     [EnumDataType(typeof(ProposalResult), ErrorMessage = "Invalid Proposal Result")]
     public ProposalResult? ProposalResult { get; set; }

@@ -60,7 +60,6 @@ public class UserController : ControllerBase
         newUser.Password = dto.password;
         newUser.ProfilePic = dto.profilePic;
 
-
         _dbUserSet.Add(newUser);
 
         await _context.SaveChangesAsync();
