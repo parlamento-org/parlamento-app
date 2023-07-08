@@ -127,7 +127,7 @@ public class ProjetoLeiController : ControllerBase
 
         if (dto.votingResultSpeciality != null) projectLaw.VotingResultSpeciality = dto.votingResultSpeciality;
         if (dto.proposalTextHTML != null) projectLaw.ProposalTextHTML = dto.proposalTextHTML;
-        if (projectLaw.Legislatura != null) projectLaw.Legislatura = dto.legislatura;
+        if (dto.legislatura != null) projectLaw.Legislatura = dto.legislatura;
 
         if (dto.sourceId != null) projectLaw.SourceId = dto.sourceId.Value;
 
