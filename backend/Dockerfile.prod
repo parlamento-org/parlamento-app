@@ -17,7 +17,7 @@ RUN dotnet dev-certs https --trust
 
 COPY src src
 
-RUN dotnet ef database update --project src
+RUN dotnet ef database update --project src --runtime linux-x64
 
 RUN dotnet publish --configuration Release -o build src
 
