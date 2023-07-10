@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:6.0.402-alpine3.16-amd64
+FROM mcr.microsoft.com/dotnet/sdk:7.0.305-alpine3.18
 
 WORKDIR /usr/src/app
 
