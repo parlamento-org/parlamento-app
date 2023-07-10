@@ -1,19 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/constants/user_session.dart';
+import 'package:frontend/controllers/user_controller.dart';
+import 'package:frontend/models/user.dart';
 
-import '../components/myButton.dart';
-import '../components/myTextField.dart';
+import '../components/my_button.dart';
+import '../components/my_text_field.dart';
 import '../components/squareTile.dart';
+import '../exceptions/InvalidCredentials.dart';
 import '../themes/base_theme.dart';
 
 class Login extends StatelessWidget {
   Login({super.key});
 
-  // text editing controllers
-  final usernameController = TextEditingController();
-  final passwordController = TextEditingController();
-
+  final UserController _userController = UserController();
+  final MyTextField _usernameTextField = MyTextField(
+    hintText: 'Username',
+    obscureText: false,
+  );
+  final MyTextField _passwordTextField = MyTextField(
+    hintText: 'Password',
+    obscureText: true,
+  );
   // sign user in method
-  void signUserIn() {}
+  void signUserIn() async {
+    String username = _usernameTextField.currentTextValue;
+    String password = _passwordTextField.currentTextValue;
+    try {
+      UserSession user = await _userController.login(username, password);
+      globalUserSession = user;
+
+      print('User logged in successfully!');
+      //redirect to home page
+    } catch (e) {
+      if (e is InvalidCredentials) {
+        print("Please provide a correct username and password!");
+      } else {
+        print("Something went wrong!");
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,20 +72,12 @@ class Login extends StatelessWidget {
               const SizedBox(height: 25),
 
               // username textfield
-              MyTextField(
-                controller: usernameController,
-                hintText: 'Username',
-                obscureText: false,
-              ),
+              _usernameTextField,
 
               const SizedBox(height: 10),
 
               // password textfield
-              MyTextField(
-                controller: passwordController,
-                hintText: 'Password',
-                obscureText: true,
-              ),
+              _passwordTextField,
 
               const SizedBox(height: 10),
 
@@ -118,14 +135,12 @@ class Login extends StatelessWidget {
               const SizedBox(height: 50),
 
               // google + apple sign in buttons
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   // google button
                   SquareTile(imagePath: 'lib/images/google.png'),
-
                   SizedBox(width: 25),
-
                   // apple button
                   SquareTile(imagePath: 'lib/images/facebook.png')
                 ],

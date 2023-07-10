@@ -26,6 +26,17 @@ public class User
     public List<PartyStats> PartyStats { get; set; } = new List<PartyStats>();
 }
 
+public class UserValidateDTO
+{
+
+    [Required]
+    public String? Email { get; set; }
+
+    [Required]
+    public String? Password { get; set; }
+
+}
+
 public class UserDTO
 {
 
@@ -43,16 +54,6 @@ public class UserDTO
 
 }
 
-public class UserValidateDTO
-{
-
-    [Required]
-    public String? email { get; set; }
-
-    [Required]
-    public String? password { get; set; }
-
-}
 
 
 public class Vote

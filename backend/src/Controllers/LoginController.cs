@@ -26,15 +26,15 @@ public class LoginController : ControllerBase
     public IActionResult Validate(UserValidateDTO dto)
     {
 
-        var user = _context.Users?.FirstOrDefault(x => x.Email == dto.email);
+        var user = _context.Users?.FirstOrDefault(x => x.Email == dto.Email);
         if (user == null)
         {
-            return NotFound("There is no User with this Email!");
+            return StatusCode(401, "This User does not exist!");
         }
 
-        if (user.Password != dto.password)
+        if (user.Password != dto.Password)
         {
-            return NotFound("This User exists but you have provided the wrong password!");
+            return StatusCode(401, "Invalid Password!");
         }
 
         return Ok(user);

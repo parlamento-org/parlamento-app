@@ -42,6 +42,19 @@ if (app.Environment.IsDevelopment())
 
 // app.UseHttpsRedirection();
 
+app.UseCors(builder =>
+      {
+          builder
+                .WithOrigins("http://localhost:52357", "https://localhost:52357")
+                .SetIsOriginAllowedToAllowWildcardSubdomains()
+                .AllowAnyHeader()
+                .AllowCredentials()
+                .WithMethods("GET", "PUT", "POST", "DELETE", "OPTIONS")
+                .SetPreflightMaxAge(TimeSpan.FromSeconds(3600));
+
+      }
+);
+
 app.UseRouting();
 app.UseAuthorization();
 app.UseEndpoints(endpoints =>
@@ -50,7 +63,7 @@ app.UseEndpoints(endpoints =>
     endpoints.MapControllers();
 });
 
-app.UseCors("AllowAllOrigins");
+
 
 
 app.MapHealthChecks("/healthz");
