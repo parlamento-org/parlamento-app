@@ -14,4 +14,16 @@ class UserController {
       rethrow;
     }
   }
+
+  Future<bool> register(
+      String email, String userName, String password, int profilePicID) async {
+    try {
+      final registerSucess = await _repository.registerRequest(
+          email, userName, password, profilePicID);
+
+      return registerSucess;
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

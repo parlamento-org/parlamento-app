@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/themes/base_theme.dart';
 
 import 'pages/login.dart';
 
@@ -22,12 +23,9 @@ class MyHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        builder: (context, child) => Overlay(
-              initialEntries: [
-                OverlayEntry(
-                  builder: (context) => Login(),
-                ),
-              ],
-            ));
+      title: 'Flutter Demo',
+      theme: baseTheme,
+      home: const LoginPage(),
+    );
   }
 }

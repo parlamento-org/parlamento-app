@@ -45,10 +45,8 @@ if (app.Environment.IsDevelopment())
 app.UseCors(builder =>
       {
           builder
-                .WithOrigins("http://localhost:52357", "https://localhost:52357")
-                .SetIsOriginAllowedToAllowWildcardSubdomains()
+                .AllowAnyOrigin()
                 .AllowAnyHeader()
-                .AllowCredentials()
                 .WithMethods("GET", "PUT", "POST", "DELETE", "OPTIONS")
                 .SetPreflightMaxAge(TimeSpan.FromSeconds(3600));
 
