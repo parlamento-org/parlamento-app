@@ -24,7 +24,59 @@ public class User
     public List<Vote> Votes { get; set; } = new List<Vote>();
 
     public List<PartyStats> PartyStats { get; set; } = new List<PartyStats>();
+
+    public String? googleIDToken { get; set; }
+
+    public String? facebookIDToken { get; set; }
+
 }
+
+public class UserValidateDTO
+{
+    public String? Email { get; set; }
+
+    public String? userName { get; set; }
+
+    [Required]
+    public String? Password { get; set; }
+
+}
+
+public class GoogleLoginValidateDTO
+{
+
+    [Required]
+    public String? googleIDToken { get; set; }
+
+    [Required]
+    public String? email { get; set; }
+
+    [Required]
+    public String? userName { get; set; }
+
+    [Required]
+    public int profilePic { get; set; }
+
+
+}
+
+public class FacebookLoginValidateDTO
+{
+
+    [Required]
+    public String? facebookIDToken { get; set; }
+
+    [Required]
+    public String? email { get; set; }
+
+    [Required]
+    public String? userName { get; set; }
+
+    [Required]
+    public int profilePic { get; set; }
+
+}
+
 
 public class UserDTO
 {
@@ -43,16 +95,6 @@ public class UserDTO
 
 }
 
-public class UserValidateDTO
-{
-
-    [Required]
-    public String? email { get; set; }
-
-    [Required]
-    public String? password { get; set; }
-
-}
 
 
 public class Vote

@@ -1,6 +1,23 @@
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import 'package:frontend/themes/base_theme.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
+import 'pages/login.dart';
+
+void main() async {
+  await dotenv.load();
+
+  if (kIsWeb || defaultTargetPlatform == TargetPlatform.macOS) {
+    // initialiaze the facebook javascript SDK
+    await FacebookAuth.instance.webAndDesktopInitialize(
+      appId: dotenv.env['FACEBOOK_APP_ID']!,
+      cookie: true,
+      xfbml: true,
+      version: "v15.0",
+    );
+  }
   runApp(const MyApp());
 }
 
@@ -20,10 +37,9 @@ class MyHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        builder: (context, child) => Scaffold(
-            appBar: AppBar(
-              title: const Text("MyApp"),
-            ),
-            body: const Center(child: Text("Hello World"))));
+      title: 'Parlamento Project',
+      theme: baseTheme,
+      home: const LoginPage(),
+    );
   }
 }

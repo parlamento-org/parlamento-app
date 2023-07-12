@@ -9,15 +9,13 @@ namespace backend.Controllers;
 [Route("/user-login")]
 public class LoginController : ControllerBase
 {
-    private readonly DbSet<User> _dbUserSet;
+
     private readonly DatabaseContext _context;
 
 
     public LoginController(DatabaseContext context)
     {
         this._context = context;
-        this._dbUserSet = _context.Set<User>();
-
 
     }
 
@@ -25,20 +23,30 @@ public class LoginController : ControllerBase
     [HttpPost(Name = "ValidateUser")]
     public IActionResult Validate(UserValidateDTO dto)
     {
-
-        var user = _context.Users?.FirstOrDefault(x => x.Email == dto.email);
-        if (user == null)
+        User? user;
+        if (dto.Email == null)
         {
-            return NotFound("There is no User with this Email!");
+            user = _context.Users?.FirstOrDefault(x => x.UserName == dto.userName);
+
+        }
+        else
+        {
+            user = _context.Users?.FirstOrDefault(x => x.Email == dto.Email);
         }
 
-        if (user.Password != dto.password)
+        if (user == null)
         {
-            return NotFound("This User exists but you have provided the wrong password!");
+            return StatusCode(401, "This User does not exist!");
+        }
+
+        if (user.Password != dto.Password)
+        {
+            return StatusCode(401, "Invalid Password!");
         }
 
         return Ok(user);
     }
+
 
 
 

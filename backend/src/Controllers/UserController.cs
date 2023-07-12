@@ -43,6 +43,8 @@ public class UserController : ControllerBase
     }
 
 
+
+
     [HttpPost(Name = "CreateUser")]
     public async Task<IActionResult> Create(UserDTO dto)
     {
@@ -50,7 +52,12 @@ public class UserController : ControllerBase
         var user = _context.Users?.FirstOrDefault(x => x.Email == dto.email);
         if (user != null)
         {
-            return NotFound("There is already a User with this Email!");
+            return StatusCode(401, "An account with this email already exists!");
+        }
+        var checkUserName = _context.Users?.FirstOrDefault(x => x.UserName == dto.userName);
+        if (checkUserName != null)
+        {
+            return StatusCode(402, "An account with this username already exists!");
         }
 
         User newUser = new User();
