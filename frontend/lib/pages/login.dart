@@ -68,6 +68,30 @@ class _LoginPageState extends State<LoginPage> {
     controller: passwordController,
   );
   // sign user in method
+
+  void handleGoogleSign(BuildContext context) async {
+    setState(() {
+      _isLoggingIn = true;
+    });
+    _userController.googleSignIn().then((userSession) {
+      setState(() {
+        _isLoggingIn = false;
+      });
+      globalUserSession = userSession;
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: (context) => const MainPage()));
+    }).catchError((error) {
+      setState(() {
+        _isLoggingIn = false;
+      });
+      print(error);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Google Sign In has failed!"),
+        duration: Duration(seconds: 2),
+      ));
+    });
+  }
+
   void signUserIn(BuildContext context) async {
     final username = usernameController.text.trim();
     final password = passwordController.text.trim();
@@ -215,14 +239,26 @@ class _LoginPageState extends State<LoginPage> {
             const SizedBox(height: 50),
 
             // google + apple sign in buttons
-            const Row(
+            Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // google button
-                SquareTile(imagePath: 'lib/images/google.png'),
-                SizedBox(width: 25),
+                GestureDetector(
+                  onTap: () => handleGoogleSign(context),
+                  child: Container(
+                    height: 50,
+                    width: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Image.asset('lib/images/google.png'),
+                  ),
+                ),
+
+                const SizedBox(width: 25),
                 // apple button
-                SquareTile(imagePath: 'lib/images/facebook.png')
+                const SquareTile(imagePath: 'lib/images/facebook.png')
               ],
             ),
 

@@ -9,15 +9,13 @@ namespace backend.Controllers;
 [Route("/user-login")]
 public class LoginController : ControllerBase
 {
-    private readonly DbSet<User> _dbUserSet;
+
     private readonly DatabaseContext _context;
 
 
     public LoginController(DatabaseContext context)
     {
         this._context = context;
-        this._dbUserSet = _context.Set<User>();
-
 
     }
 
@@ -39,6 +37,7 @@ public class LoginController : ControllerBase
 
         return Ok(user);
     }
+
 
 
 

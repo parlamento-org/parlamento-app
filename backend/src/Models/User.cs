@@ -24,6 +24,9 @@ public class User
     public List<Vote> Votes { get; set; } = new List<Vote>();
 
     public List<PartyStats> PartyStats { get; set; } = new List<PartyStats>();
+
+    public String? googleIDToken { get; set; }
+
 }
 
 public class UserValidateDTO
@@ -36,6 +39,25 @@ public class UserValidateDTO
     public String? Password { get; set; }
 
 }
+
+public class GoogleLoginValidateDTO
+{
+
+    [Required]
+    public String? googleIDToken { get; set; }
+
+    [Required]
+    public String? email { get; set; }
+
+    [Required]
+    public String? userName { get; set; }
+
+    [Required]
+    public int profilePic { get; set; }
+
+
+}
+
 
 public class UserDTO
 {

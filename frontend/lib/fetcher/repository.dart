@@ -5,4 +5,7 @@ abstract class Repository {
 
   Future<bool> registerRequest(
       String email, String userName, String password, int profilePicId);
+
+  Future<UserSession> googleSignInRequest(
+      String idToken, String email, String name, int profilePicId);
 }
