@@ -23,8 +23,17 @@ public class LoginController : ControllerBase
     [HttpPost(Name = "ValidateUser")]
     public IActionResult Validate(UserValidateDTO dto)
     {
+        User? user;
+        if (dto.Email == null)
+        {
+            user = _context.Users?.FirstOrDefault(x => x.UserName == dto.userName);
 
-        var user = _context.Users?.FirstOrDefault(x => x.Email == dto.Email);
+        }
+        else
+        {
+            user = _context.Users?.FirstOrDefault(x => x.Email == dto.Email);
+        }
+
         if (user == null)
         {
             return StatusCode(401, "This User does not exist!");

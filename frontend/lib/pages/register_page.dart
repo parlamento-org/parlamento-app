@@ -5,18 +5,18 @@ import 'package:frontend/pages/login.dart';
 import '../components/my_button.dart';
 import '../components/my_text_field.dart';
 import '../components/selectable_image.dart';
+import 'package:email_validator/email_validator.dart';
 import '../themes/base_theme.dart';
 
 /// Validates the username input.
 String? validateEmail(String? email) {
-  RegExp validEmail = RegExp(
-      r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
   if (email == null || email.isEmpty) {
     return 'Email is required';
-  } else if (!email.contains('@')) {
-    return 'Valid email is required';
-  } else if (email.contains('@') && !validEmail.hasMatch(email)) {
-    return 'Invalid email';
+  } else {
+    final bool isValid = EmailValidator.validate(email);
+    if (!isValid) {
+      return 'Please enter a valid email';
+    }
   }
 
   return null;
@@ -104,9 +104,9 @@ class _RegisterPageState extends State<RegisterPage> {
 
       _userController
           .register(
+        email,
         username,
         password,
-        email,
         profilePicId,
       )
           .then((registerSucess) {

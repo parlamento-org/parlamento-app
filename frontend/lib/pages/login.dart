@@ -6,7 +6,6 @@ import 'package:frontend/pages/register_page.dart';
 
 import '../components/my_button.dart';
 import '../components/my_text_field.dart';
-import '../components/squareTile.dart';
 import '../exceptions/invalid_credentials.dart';
 import '../themes/base_theme.dart';
 
@@ -68,6 +67,29 @@ class _LoginPageState extends State<LoginPage> {
     controller: passwordController,
   );
   // sign user in method
+
+  void handleFacebookLogin(BuildContext context) async {
+    setState(() {
+      _isLoggingIn = true;
+    });
+    _userController.facebookSignIn().then((userSession) {
+      setState(() {
+        _isLoggingIn = false;
+      });
+      globalUserSession = userSession;
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: (context) => const MainPage()));
+    }).catchError((error) {
+      setState(() {
+        _isLoggingIn = false;
+      });
+      print(error);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Facebook Sign In has failed!"),
+        duration: Duration(seconds: 2),
+      ));
+    });
+  }
 
   void handleGoogleSign(BuildContext context) async {
     setState(() {
@@ -245,20 +267,23 @@ class _LoginPageState extends State<LoginPage> {
                 // google button
                 GestureDetector(
                   onTap: () => handleGoogleSign(context),
-                  child: Container(
-                    height: 50,
+                  child: Image.asset(
+                    'lib/images/google.png',
                     width: 50,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Image.asset('lib/images/google.png'),
+                    height: 50,
                   ),
                 ),
 
                 const SizedBox(width: 25),
                 // apple button
-                const SquareTile(imagePath: 'lib/images/facebook.png')
+                GestureDetector(
+                  onTap: () => handleFacebookLogin(context),
+                  child: Image.asset(
+                    'lib/images/facebook.png',
+                    width: 45,
+                    height: 45,
+                  ),
+                ),
               ],
             ),
 

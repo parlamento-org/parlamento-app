@@ -8,4 +8,7 @@ abstract class Repository {
 
   Future<UserSession> googleSignInRequest(
       String idToken, String email, String name, int profilePicId);
+
+  Future<UserSession> facebookSignInRequest(
+      String idToken, String email, String name, int profilePicId);
 }
