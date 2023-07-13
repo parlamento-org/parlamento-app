@@ -1,4 +1,4 @@
-FROM cirrusci/flutter:3.3.2
+FROM cirrusci/flutter:latest
 
 RUN apt-get update && apt-get install -y \
     fonts-liberation \
