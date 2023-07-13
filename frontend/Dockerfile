@@ -1,4 +1,4 @@
-FROM cirruslabs/flutter:3.10.5
+FROM ghcr.io/cirruslabs/flutter:3.10.5
 
 RUN apt-get update && apt-get install -y \
     fonts-liberation \
