@@ -1,4 +1,4 @@
-FROM cirrusci/flutter:latest as build
+FROM cirruslabs/flutter:3.10.5 as build
 
 WORKDIR /usr/src/app
 
