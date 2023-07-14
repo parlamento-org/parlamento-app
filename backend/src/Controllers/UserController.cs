@@ -67,6 +67,18 @@ public class UserController : ControllerBase
         newUser.Password = dto.password;
         newUser.ProfilePic = dto.profilePic;
 
+        //add an empty party stat for every party in the database
+        var parties = _context.PoliticalParties?.ToList();
+        foreach (var party in parties!)
+        {
+            PartyStats newPartyStat = new PartyStats();
+            newPartyStat.PoliticalParty = party;
+            newPartyStat.PartyAffectionScore = 0;
+            newPartyStat.totalAmountOfProposalsVotedOn = 0;
+            newPartyStat.totalAffectionPoints = 0;
+            newUser.PartyStats.Add(newPartyStat);
+        }
+
         _dbUserSet.Add(newUser);
 
         await _context.SaveChangesAsync();

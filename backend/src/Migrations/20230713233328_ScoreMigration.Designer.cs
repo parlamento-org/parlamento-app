@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using backend.Models;
 
@@ -10,9 +11,11 @@ using backend.Models;
 namespace backend.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20230713233328_ScoreMigration")]
+    partial class ScoreMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.8");
@@ -23,20 +26,14 @@ namespace backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<double>("PartyAffectionScore")
-                        .HasColumnType("REAL");
+                    b.Property<int>("PartyAffection")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("PoliticalPartypartyAcronym")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("UserId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<double>("totalAffectionPoints")
-                        .HasColumnType("REAL");
-
-                    b.Property<int>("totalAmountOfProposalsVotedOn")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
@@ -54,11 +51,6 @@ namespace backend.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("fullName")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("logoLink")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("partyAcronym");
@@ -69,62 +61,52 @@ namespace backend.Migrations
                         new
                         {
                             partyAcronym = "PSD",
-                            fullName = "Partido Social-Democrata",
-                            logoLink = "https://pt.wikipedia.org/wiki/Ficheiro:Logo_PSD_cor.PNG"
+                            fullName = "Partido Social-Democrata"
                         },
                         new
                         {
                             partyAcronym = "PS",
-                            fullName = "Partido Socialista",
-                            logoLink = "https://pt.wikipedia.org/wiki/Ficheiro:Partido_Socialista_%28Portugal%29.png"
+                            fullName = "Partido Socialista"
                         },
                         new
                         {
                             partyAcronym = "BE",
-                            fullName = "Bloco de Esquerda",
-                            logoLink = "https://pt.wikipedia.org/wiki/Bloco_de_Esquerda"
+                            fullName = "Bloco de Esquerda"
                         },
                         new
                         {
                             partyAcronym = "PCP",
-                            fullName = "Partido Comunista Português",
-                            logoLink = "https://pt.m.wikipedia.org/wiki/Ficheiro:Portuguese_Communist_Party_logo.svg"
+                            fullName = "Partido Comunista Português"
                         },
                         new
                         {
                             partyAcronym = "CDSPP",
-                            fullName = "Coligação Democrática Unitária",
-                            logoLink = "https://pt.m.wikipedia.org/wiki/Ficheiro:CDS_%E2%80%93_People%27s_Party_logo.svg"
+                            fullName = "Coligação Democrática Unitária"
                         },
                         new
                         {
                             partyAcronym = "PAN",
-                            fullName = "Pessoas-Animais-Natureza",
-                            logoLink = "https://pt.wikipedia.org/wiki/Pessoas%E2%80%93Animais%E2%80%93Natureza"
+                            fullName = "Pessoas-Animais-Natureza"
                         },
                         new
                         {
                             partyAcronym = "L",
-                            fullName = "Partido Livre",
-                            logoLink = "https://pt.m.wikipedia.org/wiki/Ficheiro:Partido_LIVRE_logo.png"
+                            fullName = "Partido Livre"
                         },
                         new
                         {
                             partyAcronym = "IL",
-                            fullName = "Iniciativa Liberal",
-                            logoLink = "https://pt.m.wikipedia.org/wiki/Ficheiro:Iniciativa_Liberal_logo_1.png"
+                            fullName = "Iniciativa Liberal"
                         },
                         new
                         {
                             partyAcronym = "CH",
-                            fullName = "Chega",
-                            logoLink = "https://en.wikipedia.org/wiki/File:Logo_of_the_Chega_(political_party).svg"
+                            fullName = "Chega"
                         },
                         new
                         {
                             partyAcronym = "Governo",
-                            fullName = "Governo",
-                            logoLink = "https://pt.wikipedia.org/wiki/Ficheiro:Trollface.png"
+                            fullName = "Governo"
                         });
                 });
 

@@ -141,5 +141,11 @@ public class PartyStats
     [Required]
     public PoliticalParty? PoliticalParty { get; set; }
     [Required]
-    public int PartyAffection { get; set; }
+    public double PartyAffectionScore { get; set; }
+
+    [Required]
+    public int totalAmountOfProposalsVotedOn { get; set; }
+
+    [Required]
+    public double totalAffectionPoints { get; set; }
 }

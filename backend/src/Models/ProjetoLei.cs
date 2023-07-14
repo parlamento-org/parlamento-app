@@ -20,6 +20,7 @@ public enum VotingOrientation
     InFavor,
     Against,
     Abstaining,
+    NotInterested
 }
 
 
@@ -29,7 +30,12 @@ public class PoliticalParty
     [Key]
     [Required]
     public String? partyAcronym { get; set; }
+    [Required]
     public String? fullName { get; set; }
+    [Required]
+    public String? logoLink { get; set; }
+
+
 
 }
 
@@ -60,6 +66,23 @@ public class VotingResult
     public Boolean isUninamous { get; set; }
 
     public List<VotingBlock>? votingBlocks { get; set; }
+}
+
+public class ProjectLawCriteria
+{
+    [Required]
+    public int userID { get; set; }
+
+    public List<String> legislaturas { get; set; } = new List<String>();
+
+    public String? oldestVoteDate { get; set; }
+
+    public String? newestVoteDate { get; set; }
+
+    [Required]
+    public int lowestScoreAllowed { get; set; }
+
+
 }
 
 
@@ -117,6 +140,12 @@ public class ProjectLaw
     public String? Legislatura { get; set; }
     [Required]
     public int Score { get; set; }
+
+    [Required]
+    public int amountOfUsersInterested { get; set; }
+
+    [Required]
+    public int totalAmountOfVotesFromUsers { get; set; }
 
     [Required]
     public String? VoteDate { get; set; }
