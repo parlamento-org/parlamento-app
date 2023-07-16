@@ -13,6 +13,8 @@ public class VotingController : ControllerBase
 
     private readonly DbSet<User> _dbUserSet;
 
+    private readonly DbSet<PoliticalParty> _dbPoliticalPartySet;
+
     private readonly DatabaseContext _context;
 
 
@@ -21,11 +23,13 @@ public class VotingController : ControllerBase
         this._context = context;
         this._dbUserSet = _context.Set<User>();
         this._dbProjectLawSet = _context.Set<ProjectLaw>();
+        this._dbPoliticalPartySet = _context.Set<PoliticalParty>();
+
 
     }
 
 
-    [HttpGet(Name = "GetProposalWithFilters")]
+    [HttpPut(Name = "GetProposalWithFilters")]
     public IActionResult Get(ProjectLawCriteria criteria)
     {
 
@@ -34,9 +38,9 @@ public class VotingController : ControllerBase
                 .Include(proposal => proposal.ProposingParty).AsQueryable();
 
 
-        if (criteria.legislaturas.Count > 0)
+        if (criteria.legislatura != null)
         {
-            projectLawQuery = projectLawQuery.Where(proposal => criteria.legislaturas.Contains(proposal.Legislatura!));
+            projectLawQuery = projectLawQuery.Where(proposal => criteria.legislatura.Contains(proposal.Legislatura!));
         }
 
         if (criteria.oldestVoteDate != null)
@@ -51,12 +55,14 @@ public class VotingController : ControllerBase
 
         projectLawQuery = projectLawQuery.Where(proposal => proposal.Score >= criteria.lowestScoreAllowed);
 
-        var user = _dbUserSet.FirstOrDefault(x => x.Id == criteria.userID);
+        var user = _dbUserSet.Include("Votes").FirstOrDefault(x => x.Id == criteria.userID);
+        var projectLawList = projectLawQuery.ToList();
 
         //filter proposals that the user has already voted on
         if (user != null)
         {
-            projectLawQuery = projectLawQuery.Where(proposal => !user.Votes.Any(vote => vote.ProjectLaw!.Id == proposal.Id));
+            projectLawList.RemoveAll(proposal => user.Votes.Any(x => x.ProjectLawID == proposal.Id));
+
         }
         if (projectLawQuery.Count() == 0)
         {
@@ -65,7 +71,7 @@ public class VotingController : ControllerBase
 
         //return a random proposal from the filtered list, but attribute a higher chance to proposals with higher score
         var random = new Random();
-        var proposals = projectLawQuery.ToList();
+        var proposals = projectLawList;
         var totalScore = proposals.Sum(proposal => proposal.Score);
         var randomScore = random.Next(totalScore);
         var currentScore = 0;
@@ -83,7 +89,7 @@ public class VotingController : ControllerBase
     }
 
     [HttpPost(Name = "Vote")]
-    public IActionResult Post(VoteDTO voteDTO)
+    public async Task<IActionResult> Post(VoteDTO voteDTO)
     {
         var projectLawQuery = _dbProjectLawSet.Include(proposal => proposal.VotingResultGenerality!.votingBlocks)
                 .Include(proposal => proposal.VotingResultSpeciality!.votingBlocks)
@@ -96,18 +102,19 @@ public class VotingController : ControllerBase
 
         var projectLaw = projectLawQuery.First();
 
-        var userQuery = _dbUserSet.Where(x => x.Id == voteDTO.userID);
+        var user = _dbUserSet.Include("Votes").Include("PartyStats.PoliticalParty")
+        .FirstOrDefault(x => x.Id == voteDTO.userID);
 
-        if (!userQuery.Any())
+        if (user == null)
         {
             return NotFound("No User found with the given id.");
         }
 
-        var user = userQuery.First();
+
 
         var vote = new Vote
         {
-            ProjectLaw = projectLaw,
+            ProjectLawID = voteDTO.projectLawID,
             VotingOrientation = voteDTO.votingOrientation,
             VoteDate = DateTime.Now,
         };
@@ -130,33 +137,51 @@ public class VotingController : ControllerBase
         //update the user party stats, granting +1 affectionPoint to parties that voted the same way as the user
         foreach (var votingBlock in projectLaw.VotingResultGenerality!.votingBlocks!)
         {
-            var partyStat = user.PartyStats.FirstOrDefault(x => x.PoliticalParty!.partyAcronym == votingBlock.politicalPartyAcronym)!;
+
+            bool partyStatExists = true;
+            var partyStat = user.PartyStats.FirstOrDefault(x => x.PoliticalParty!.partyAcronym == votingBlock.politicalPartyAcronym);
+            if (partyStat == null)
+            {
+                partyStat = new PartyStats
+                {
+                    PoliticalParty = _dbPoliticalPartySet.FirstOrDefault(x => x.partyAcronym == votingBlock.politicalPartyAcronym)!,
+                    totalAffectionPoints = 0,
+                    totalAmountOfProposalsVotedOn = 0,
+                    PartyAffectionScore = 0
+                };
+                partyStatExists = false;
+            }
             partyStat.totalAmountOfProposalsVotedOn += 1;
             if (partyStat.PoliticalParty == projectLaw.ProposingParty)
             {
                 if (votingBlock.votingOrientation == vote.VotingOrientation) partyStat.totalAffectionPoints += 1;
-                else partyStat.totalAffectionPoints -= 1;
+                else partyStat.totalAffectionPoints -= 0.2;
             }
             else if (votingBlock.votingOrientation == vote.VotingOrientation)
             {
-                partyStat.totalAffectionPoints += 0.7;
+                partyStat.totalAffectionPoints += 0.9;
             }
             else
             {
-                partyStat.totalAffectionPoints -= 0.5;
+                partyStat.totalAffectionPoints -= 0.1;
             }
 
             if (partyStat.totalAffectionPoints < 0) partyStat.totalAffectionPoints = 0;
 
             partyStat.PartyAffectionScore = (partyStat.totalAffectionPoints / partyStat.totalAmountOfProposalsVotedOn) * 100;
+
+            if (!partyStatExists)
+            {
+                user.PartyStats.Add(partyStat);
+            }
         }
 
 
-
         user.Votes.Add(vote);
-        _context.SaveChanges();
 
-        return Ok(vote);
+        await _context.SaveChangesAsync();
+
+        return Ok(user);
     }
 
 }

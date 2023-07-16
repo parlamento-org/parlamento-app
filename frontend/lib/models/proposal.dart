@@ -1,10 +1,11 @@
 import 'package:frontend/models/political_party.dart';
+import 'package:frontend/models/voting_result.dart';
 
-enum VotingResult {
-  approvedInGenereality,
-  approvedInSpeciality,
-  rejectedInGenereality,
-  rejectedInSpeciality
+enum VotingOutcome {
+  RejectedInGenerality,
+  RejectedInSpeciality,
+  ApprovedInGenerality,
+  ApprovedInSpeciality
 }
 
 class Proposal {
@@ -15,9 +16,9 @@ class Proposal {
   PoliticalParty proposingParty;
   String fullTextUrl;
   String censoredText;
-  VotingResult votingResult;
+  VotingOutcome votingResult;
   VotingResult votingResultInGenerality;
-  VotingResult votingResultInSpeciality;
+  VotingResult? votingResultInSpeciality;
 
   Proposal({
     required this.title,
@@ -29,36 +30,25 @@ class Proposal {
     required this.censoredText,
     required this.votingResult,
     required this.votingResultInGenerality,
-    required this.votingResultInSpeciality,
+    this.votingResultInSpeciality,
   });
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['title'] = title;
-    data['id'] = id;
-    data['legislatura'] = legislatura;
-    data['voteDate'] = voteDate;
-    data['proposingParty'] = proposingParty.toJson();
-    data['fullTextUrl'] = fullTextUrl;
-    data['censoredText'] = censoredText;
-    data['votingResult'] = votingResult;
-    data['votingResultInGenerality'] = votingResultInGenerality;
-    data['votingResultInSpeciality'] = votingResultInSpeciality;
-    return data;
-  }
 
   factory Proposal.fromJson(Map<String, dynamic> json) {
     return Proposal(
-      title: json['title'],
+      title: json['proposalTitle'],
       id: json['id'],
       legislatura: json['legislatura'],
       voteDate: json['voteDate'],
       proposingParty: PoliticalParty.fromJson(json['proposingParty']),
-      fullTextUrl: json['fullTextUrl'],
-      censoredText: json['censoredText'],
-      votingResult: json['votingResult'],
-      votingResultInGenerality: json['votingResultInGenerality'],
-      votingResultInSpeciality: json['votingResultInSpeciality'],
+      fullTextUrl: json['fullProposalTextLink'],
+      censoredText: json['proposalTextHTML'],
+      votingResult: VotingOutcome.values.firstWhere((element) =>
+          element.toString() == 'VotingOutcome.' + json['proposalResult']),
+      votingResultInGenerality:
+          VotingResult.fromJson(json['votingResultGenerality']),
+      votingResultInSpeciality: json['votingResultSpeciality'] == null
+          ? null
+          : VotingResult.fromJson(json['votingResultSpeciality']),
     );
   }
 }

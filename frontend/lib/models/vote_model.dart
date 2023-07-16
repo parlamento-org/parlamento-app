@@ -1,28 +1,31 @@
+enum VoteOrientation { InFavor, Against, Abstaining, NotInterested }
+
 class UserVote {
-  final String id;
-  final String voteId;
-  final String voteOptionId;
-  final String partyId;
+  final int? userID;
+  final int proposalID;
+  final VoteOrientation voteOrientation;
+  final String? voteDate;
 
   UserVote(
-      {required this.id,
-      required this.voteId,
-      required this.voteOptionId,
-      required this.partyId});
+      {this.userID,
+      required this.proposalID,
+      required this.voteOrientation,
+      this.voteDate});
 
   factory UserVote.fromJson(Map<String, dynamic> json) {
     return UserVote(
-      id: json['id'],
-      voteId: json['voteId'],
-      voteOptionId: json['voteOptionId'],
-      partyId: json['partyId'],
+      userID: json['userID'],
+      proposalID: json['projectLawID'],
+      voteOrientation: VoteOrientation.values.firstWhere((element) =>
+          element.toString() == "VoteOrientation." + json['votingOrientation']),
+      voteDate: json['voteDate'],
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'voteId': voteId,
-        'voteOptionId': voteOptionId,
-        'partyId': partyId,
+        'userID': userID,
+        'projectLawID': proposalID,
+        'votingOrientation':
+            voteOrientation.toString().replaceAll("VoteOrientation.", ""),
       };
 }

@@ -31,14 +31,14 @@ public class UserController : ControllerBase
             return new Dictionary<string, List<User>>
             {
 
-                ["users"] = _dbUserSet.Where(user => user.UserName!.ToLower().Contains(searchString)).ToList()
+                ["users"] = _dbUserSet.Include("Votes").Include("PartyStats.PoliticalParty").Where(user => user.UserName!.ToLower().Contains(searchString)).ToList()
             };
         }
         else
             return new Dictionary<string, List<User>>
             {
 
-                ["users"] = _dbUserSet.ToList()
+                ["users"] = _dbUserSet.Include("Votes").Include("PartyStats.PoliticalParty").ToList()
             };
     }
 
@@ -97,17 +97,13 @@ public class UserController : ControllerBase
             return NotFound("There is no User with this ID!");
         }
 
-        var projectLaw = _context.ProjectLaws?.FirstOrDefault(x => x.Id == dto.projectLawID);
-        if (projectLaw == null)
-        {
-            return NotFound("There is no ProjectLaw with this ID!");
-        }
+
 
         Vote newVote = new Vote();
 
         newVote.VoteDate = DateTime.Now;
 
-        newVote.ProjectLaw = projectLaw;
+        newVote.ProjectLawID = dto.projectLawID;
 
         newVote.VotingOrientation = dto.votingOrientation;
 
@@ -120,17 +116,21 @@ public class UserController : ControllerBase
 
 
 
-    [HttpDelete("{email}", Name = "DeleteUser")]
-    public IActionResult Delete(String email)
+    [HttpDelete("{id}", Name = "DeleteUser")]
+    public IActionResult Delete(int id)
     {
-        var userQuery = _dbUserSet.Where(x => x.Email == email);
+        var userQuery = _dbUserSet.Include(user => user.PartyStats).Include(user => user.Votes).Where(x => x.Id == id);
 
         if (!userQuery.Any())
         {
-            return NotFound("No User found with the given email.");
+            return NotFound("No User found with the given id.");
         }
 
         var user = userQuery.First();
+        //delete all party stats and votes
+        user.PartyStats.RemoveAll(x => true);
+        user.Votes.RemoveAll(x => true);
+
         _dbUserSet.Remove(user);
 
         _context.SaveChanges();

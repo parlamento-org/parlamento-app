@@ -1,4 +1,5 @@
 import 'package:frontend/models/party_stats.dart';
+import 'package:frontend/models/proposal_criteria.dart';
 import 'package:frontend/models/vote_model.dart';
 
 enum UserType { google, facebook, email }
@@ -12,6 +13,8 @@ class UserSession {
   List<PartyStats> partyStats;
   List<UserVote> userVotes;
   UserType userType;
+  ProposalCriteria? proposalCriteria;
+
   UserSession.empty()
       : name = '',
         userId = 0,
@@ -31,7 +34,9 @@ class UserSession {
     required this.partyStats,
     required this.userVotes,
     required this.userType,
-  });
+  }) {
+    proposalCriteria = ProposalCriteria(userID: userId, lowestScoreAllowed: 0);
+  }
 
   bool get isLoggedIn => userId != 0;
 
@@ -58,7 +63,9 @@ class UserSession {
         password: json['password'],
         profilePictureId: json['profilePic'],
         userType: userType,
-        partyStats: List<PartyStats>.from(json['partyStats']),
-        userVotes: List<UserVote>.from(json['votes']));
+        partyStats: List.generate(json['partyStats'].length,
+            (index) => PartyStats.fromJson(json['partyStats'][index])),
+        userVotes: List.generate(json['votes'].length,
+            (index) => UserVote.fromJson(json['votes'][index])));
   }
 }

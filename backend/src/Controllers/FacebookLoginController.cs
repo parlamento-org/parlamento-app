@@ -21,7 +21,7 @@ public class FacebookLoginController : ControllerBase
     public IActionResult ValidateFacebookUser(FacebookLoginValidateDTO dto)
     {
 
-        var user = _context.Users?.FirstOrDefault(x => x.facebookIDToken == dto.facebookIDToken);
+        var user = _context.Users?.Include("Votes").Include("PartyStats.PoliticalParty").FirstOrDefault(x => x.facebookIDToken == dto.facebookIDToken);
         if (user == null)
         {
             //add the new user to the database

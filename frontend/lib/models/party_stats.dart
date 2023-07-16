@@ -1,31 +1,33 @@
+import 'package:frontend/models/political_party.dart';
+
 class PartyStats {
-  int id;
-  int partyId;
-  int totalVotes;
-  int totalVotesPercentage;
+  PoliticalParty politicalParty;
+  double partyAffectionScore;
+  int totalAmountOfProposalsVotedOn;
+  double totalAffectionPoints;
 
   PartyStats({
-    required this.id,
-    required this.partyId,
-    required this.totalVotes,
-    required this.totalVotesPercentage,
+    required this.politicalParty,
+    required this.partyAffectionScore,
+    required this.totalAmountOfProposalsVotedOn,
+    required this.totalAffectionPoints,
   });
 
   factory PartyStats.fromJson(Map<String, dynamic> json) {
     return PartyStats(
-      id: json['id'],
-      partyId: json['party_id'],
-      totalVotes: json['total_votes'],
-      totalVotesPercentage: json['total_votes_percentage'],
+      politicalParty: PoliticalParty.fromJson(json['politicalParty']),
+      partyAffectionScore: json['partyAffectionScore'],
+      totalAmountOfProposalsVotedOn: json['totalAmountOfProposalsVotedOn'],
+      totalAffectionPoints: json['totalAffectionPoints'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'party_id': partyId,
-      'total_votes': totalVotes,
-      'total_votes_percentage': totalVotesPercentage,
+      'political_party': politicalParty.toJson(),
+      'party_affection_score': partyAffectionScore,
+      'total_amount_of_proposals_voted_on': totalAmountOfProposalsVotedOn,
+      'total_affection_points': totalAffectionPoints,
     };
   }
 }

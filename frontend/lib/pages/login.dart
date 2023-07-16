@@ -99,6 +99,7 @@ class _LoginPageState extends State<LoginPage> {
       setState(() {
         _isLoggingIn = false;
       });
+
       usernameController.text = '';
       passwordController.text = '';
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(

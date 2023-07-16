@@ -17,3 +17,14 @@ final baseTheme = ThemeData(
 );
 
 const BorderRadius dialogRadius = BorderRadius.all(Radius.circular(4));
+
+ButtonStyle buttonStyle = ButtonStyle(
+  backgroundColor:
+      MaterialStateProperty.all<Color>(baseTheme.colorScheme.background),
+  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+    RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(18.0),
+      side: const BorderSide(color: Color.fromARGB(255, 255, 255, 255)),
+    ),
+  ),
+);

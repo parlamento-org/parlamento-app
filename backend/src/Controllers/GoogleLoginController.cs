@@ -21,7 +21,7 @@ public class GoogleLoginController : ControllerBase
     public IActionResult ValidateGoogleUser(GoogleLoginValidateDTO dto)
     {
 
-        var user = _context.Users?.FirstOrDefault(x => x.googleIDToken == dto.googleIDToken);
+        var user = _context.Users?.Include("Votes").Include("PartyStats.PoliticalParty").FirstOrDefault(x => x.googleIDToken == dto.googleIDToken);
         if (user == null)
         {
             //add the new user to the database

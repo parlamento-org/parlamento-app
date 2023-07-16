@@ -73,7 +73,7 @@ public class ProjectLawCriteria
     [Required]
     public int userID { get; set; }
 
-    public List<String> legislaturas { get; set; } = new List<String>();
+    public List<String>? legislatura { get; set; }
 
     public String? oldestVoteDate { get; set; }
 

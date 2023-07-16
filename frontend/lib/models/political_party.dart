@@ -20,8 +20,8 @@ class PoliticalParty {
   factory PoliticalParty.fromJson(Map<String, dynamic> json) {
     return PoliticalParty(
       partyAcronym: json['partyAcronym'],
-      partyName: json['partyName'],
-      logoUrl: json['logoUrl'],
+      partyName: json['fullName'],
+      logoUrl: json['logoLink'],
     );
   }
 }

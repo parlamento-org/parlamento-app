@@ -26,12 +26,12 @@ public class LoginController : ControllerBase
         User? user;
         if (dto.Email == null)
         {
-            user = _context.Users?.FirstOrDefault(x => x.UserName == dto.userName);
+            user = _context.Users?.Include("Votes").Include("PartyStats.PoliticalParty").FirstOrDefault(x => x.UserName == dto.userName);
 
         }
         else
         {
-            user = _context.Users?.FirstOrDefault(x => x.Email == dto.Email);
+            user = _context.Users?.Include("Votes").Include("PartyStats.PoliticalParty").FirstOrDefault(x => x.Email == dto.Email);
         }
 
         if (user == null)
