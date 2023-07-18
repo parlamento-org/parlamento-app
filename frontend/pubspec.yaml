@@ -85,8 +85,10 @@ flutter:
   fonts:
     - family: Montseratt
       fonts:
-        - asset: fonts\Montserrat-VariableFont_wght.ttf
-          style: italic
+        - asset: fonts\static\Montserrat-Bold.ttf
+          weight: 700
+        - asset: fonts\static\Montserrat-Regular.ttf
+
   # fonts:
   #   - family: Schyler
   #     fonts:

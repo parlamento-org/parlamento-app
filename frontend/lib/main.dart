@@ -41,7 +41,7 @@ class MyHomePage extends StatelessWidget {
     return MaterialApp(
       title: 'Parlamento Project',
       theme: baseTheme,
-      home: const LoginPage(),
+      home: const MainPage(),
     );
   }
 }

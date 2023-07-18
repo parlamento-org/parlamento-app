@@ -8,6 +8,14 @@ enum VotingOutcome {
   ApprovedInSpeciality
 }
 
+String parseCensoredText(String censoredText) {
+  //replace <censored> with CENSURADO
+  censoredText = censoredText.replaceAll('<censored>', 'CENSURADO');
+  //remove \r
+  censoredText = censoredText.replaceAll('\n', '');
+  return censoredText.replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), '');
+}
+
 class Proposal {
   String title;
   int id;
@@ -41,7 +49,7 @@ class Proposal {
       voteDate: json['voteDate'],
       proposingParty: PoliticalParty.fromJson(json['proposingParty']),
       fullTextUrl: json['fullProposalTextLink'],
-      censoredText: json['proposalTextHTML'],
+      censoredText: parseCensoredText(json['proposalTextHTML']),
       votingResult: VotingOutcome.values.firstWhere((element) =>
           element.toString() == 'VotingOutcome.' + json['proposalResult']),
       votingResultInGenerality:

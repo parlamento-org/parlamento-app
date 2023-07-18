@@ -107,7 +107,7 @@ public class ProjetoLeiController : ControllerBase
     {
 
         Console.WriteLine("Updating proposal with id: " + id);
-        var projectLaw = _dbProjectLawSet.FirstOrDefault(x => x.SourceId == id);
+        var projectLaw = _dbProjectLawSet.FirstOrDefault(x => x.Id == id);
 
         if (projectLaw == null)
         {

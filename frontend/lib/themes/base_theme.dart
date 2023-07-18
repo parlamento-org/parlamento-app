@@ -11,7 +11,8 @@ final baseTheme = ThemeData(
   textTheme: Typography.blackCupertino.apply(
     bodyColor: const Color.fromARGB(255, 72, 72, 72),
     displayColor: const Color(0xffb62f0d),
-    fontFamily: 'Inter',
+    fontFamily: 'Montseratt',
+    fontSizeFactor: 1.0,
   ),
   iconTheme: const IconThemeData(color: Color.fromARGB(255, 255, 255, 255)),
 );
@@ -20,11 +21,10 @@ const BorderRadius dialogRadius = BorderRadius.all(Radius.circular(4));
 
 ButtonStyle buttonStyle = ButtonStyle(
   backgroundColor:
-      MaterialStateProperty.all<Color>(baseTheme.colorScheme.background),
+      MaterialStateProperty.all<Color>(baseTheme.colorScheme.primary),
   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
     RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(18.0),
-      side: const BorderSide(color: Color.fromARGB(255, 255, 255, 255)),
+      borderRadius: BorderRadius.circular(10.0),
     ),
   ),
 );

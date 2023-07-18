@@ -34,9 +34,13 @@ class MainPageState extends State<MainPage> {
     //create a page with a bottom bar with three options: home, search and profile
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: baseTheme.colorScheme.background,
         automaticallyImplyLeading: false,
         leading: IconButton(
-          icon: const Icon(Icons.logout),
+          icon: Icon(
+            Icons.logout,
+            color: baseTheme.colorScheme.primary,
+          ),
           onPressed: () {
             _userController.logout();
             Navigator.push(context,
@@ -46,12 +50,12 @@ class MainPageState extends State<MainPage> {
         title: Center(
             child: Image.asset(
           'lib/images/logo_parlamento.png',
-          height: 120,
-          width: 120,
+          height: 50,
+          width: 50,
         )),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: Icon(Icons.settings, color: baseTheme.colorScheme.primary),
             onPressed: () {
               Navigator.pushNamedAndRemoveUntil(
                   context, '/settings', (route) => false);
@@ -72,16 +76,24 @@ class MainPageState extends State<MainPage> {
         backgroundColor: baseTheme.colorScheme.background,
         items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            activeIcon:
-                Icon(Icons.speaker, color: baseTheme.colorScheme.primary),
+            activeIcon: Icon(
+              Icons.speaker,
+              color: baseTheme.colorScheme.primary,
+              weight: 5.0,
+              size: 30.0,
+            ),
             icon: Icon(Icons.speaker,
                 color: baseTheme.colorScheme.primary.withOpacity(0.66)),
             label: 'Partidos',
             backgroundColor: baseTheme.colorScheme.primary.withOpacity(0.66),
           ),
           BottomNavigationBarItem(
-            activeIcon:
-                Icon(Icons.how_to_vote, color: baseTheme.colorScheme.primary),
+            activeIcon: Icon(
+              Icons.how_to_vote,
+              color: baseTheme.colorScheme.primary,
+              weight: 5.0,
+              size: 30.0,
+            ),
             icon: Icon(
               Icons.how_to_vote,
               color: baseTheme.colorScheme.primary.withOpacity(0.66),
@@ -90,8 +102,12 @@ class MainPageState extends State<MainPage> {
             backgroundColor: baseTheme.colorScheme.primary.withOpacity(0.66),
           ),
           BottomNavigationBarItem(
-            activeIcon:
-                Icon(Icons.check_box, color: baseTheme.colorScheme.primary),
+            activeIcon: Icon(
+              Icons.check_box,
+              color: baseTheme.colorScheme.primary,
+              weight: 5.0,
+              size: 30.0,
+            ),
             icon: Icon(Icons.check_box,
                 color: baseTheme.colorScheme.primary.withOpacity(0.66)),
             label: 'Histórico',

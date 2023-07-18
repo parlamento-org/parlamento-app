@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/components/my_button.dart';
 import 'package:frontend/constants/user_session.dart';
 import 'package:frontend/controllers/vote_controller.dart';
 import 'package:frontend/models/proposal.dart';
@@ -72,78 +71,133 @@ class _VotePageState extends State<VotePage> {
   Widget build(BuildContext context) {
     //return a box with a border with three buttons at the bottom
     return Container(
+      color: baseTheme.colorScheme.background,
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          Expanded(
+          Positioned.fill(
+            bottom: 100,
             child: Container(
+              height: MediaQuery.of(context).size.height * 0.8,
+              width: MediaQuery.of(context).size.width * 0.9,
               decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18.0),
                 border: Border.all(
-                  color: Colors.black,
+                  color: baseTheme.colorScheme.primary,
                   width: 2.0,
                 ),
               ),
               child: Center(
                 child: _isLoading
-                    ? const CircularProgressIndicator()
+                    ? const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 10),
+                          Text("Carregando a próxima proposta")
+                        ],
+                      )
                     : FlipCard(
                         direction: FlipDirection.HORIZONTAL,
                         front: Center(
+                            child: Padding(
+                          padding: const EdgeInsets.only(left: 20, right: 20),
                           child: Text(
                             proposal!.title,
                             style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Inter'),
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
-                        ),
+                        )),
                         back: Center(
                             child: SingleChildScrollView(
                           child: Text(
                             proposal!.censoredText,
                             style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Inter'),
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
                         )),
                       ),
               ),
             ),
           ),
-          Wrap(
-            children: [
-              TextButton(
-                style: buttonStyle,
-                onPressed: () {
-                  castUserVote(VoteOrientation.InFavor);
-                },
-                child: Image.asset('lib/images/voto_favor.png',
-                    width: 50, height: 50),
-              ),
-              TextButton(
-                style: buttonStyle,
-                onPressed: () {
-                  castUserVote(VoteOrientation.Against);
-                },
-                child: Image.asset('lib/images/voto_contra.png',
-                    width: 50, height: 50),
-              ),
-              TextButton(
-                style: buttonStyle,
-                onPressed: () {
-                  castUserVote(VoteOrientation.Abstaining);
-                },
-                child: Image.asset('lib/images/voto_abster.png',
-                    width: 50, height: 50),
-              ),
-            ],
-          ),
+          Positioned.fill(
+              top: -10,
+              bottom: MediaQuery.of(context).size.height * 0.78,
+              left: MediaQuery.of(context).size.width * 0.4,
+              right: MediaQuery.of(context).size.width * 0.4,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: baseTheme.colorScheme.primary,
+                  borderRadius: BorderRadius.circular(18.0),
+                  border: Border.all(
+                    color: baseTheme.colorScheme.primary,
+                    width: 2.0,
+                  ),
+                ),
+                child: const Center(
+                    child: Text(
+                  "Proposta-Lei",
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold),
+                )),
+              )),
+          Positioned.fill(
+              bottom: -400.0,
+              child: Center(
+                  child: Wrap(
+                spacing: 20,
+                children: [
+                  IconButton(
+                    iconSize: 100,
+                    onPressed: () {
+                      castUserVote(VoteOrientation.InFavor);
+                    },
+                    icon: Image.asset(
+                      'lib/images/voto_favor.png',
+                    ),
+                  ),
+                  IconButton(
+                    iconSize: 100,
+                    onPressed: () {
+                      castUserVote(VoteOrientation.Against);
+                    },
+                    icon: Image.asset(
+                      'lib/images/voto_contra.png',
+                    ),
+                  ),
+                  IconButton(
+                    iconSize: 100,
+                    onPressed: () {
+                      castUserVote(VoteOrientation.Abstaining);
+                    },
+                    icon: Image.asset(
+                      'lib/images/voto_abster.png',
+                    ),
+                  ),
+                ],
+              ))),
           const SizedBox(height: 10),
-          MyButton(
-              onTap: () => castUserVote(VoteOrientation.NotInterested),
-              text: "Não interessado")
+          Positioned.fill(
+              bottom: -550.0,
+              child: Center(
+                  child: TextButton(
+                      style: buttonStyle,
+                      onPressed: () =>
+                          castUserVote(VoteOrientation.NotInterested),
+                      child: const Padding(
+                          padding: EdgeInsets.only(
+                              left: 50, right: 50, top: 5, bottom: 5),
+                          child: Text("Não interessado",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                              ))))))
         ],
       ),
     );
