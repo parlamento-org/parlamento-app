@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/pages/vote_page.dart';
+import 'package:frontend/pages/voting_section.dart';
 import 'package:frontend/themes/base_theme.dart';
 
 import '../controllers/user_controller.dart';
@@ -68,7 +68,7 @@ class MainPageState extends State<MainPage> {
         onPageChanged: (value) => setState(() => _currentIndex = value),
         children: const [
           Center(child: Text('Partidos')),
-          VotePage(),
+          VotingSection(),
           Center(child: Text('Profile')),
         ],
       ),

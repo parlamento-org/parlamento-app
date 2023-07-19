@@ -45,7 +45,7 @@ namespace backend.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("PartyStats");
+                    b.ToTable("PartyStats", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.PoliticalParty", b =>
@@ -63,7 +63,7 @@ namespace backend.Migrations
 
                     b.HasKey("partyAcronym");
 
-                    b.ToTable("PoliticalParties");
+                    b.ToTable("PoliticalParties", (string)null);
 
                     b.HasData(
                         new
@@ -186,7 +186,7 @@ namespace backend.Migrations
 
                     b.HasIndex("VotingResultSpecialityId");
 
-                    b.ToTable("ProjectLaws");
+                    b.ToTable("ProjectLaws", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.User", b =>
@@ -218,7 +218,7 @@ namespace backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.Vote", b =>
@@ -243,7 +243,7 @@ namespace backend.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Vote");
+                    b.ToTable("Vote", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.VotingBlock", b =>
@@ -272,7 +272,7 @@ namespace backend.Migrations
 
                     b.HasIndex("VotingResultId");
 
-                    b.ToTable("VotingBlock");
+                    b.ToTable("VotingBlock", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.VotingResult", b =>
@@ -286,7 +286,7 @@ namespace backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("VotingResult");
+                    b.ToTable("VotingResult", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.PartyStats", b =>

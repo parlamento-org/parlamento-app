@@ -7,7 +7,8 @@ import 'package:frontend/models/vote_model.dart';
 import 'package:frontend/themes/base_theme.dart';
 
 class VotePage extends StatefulWidget {
-  const VotePage({super.key});
+  const VotePage({super.key, required this.displayProposalResults});
+  final Function(Proposal, VoteOrientation) displayProposalResults;
 
   @override
   State<VotePage> createState() => _VotePageState();
@@ -19,6 +20,7 @@ class _VotePageState extends State<VotePage> {
   bool _isLoading = true;
 
   void castUserVote(VoteOrientation votingOrientation) async {
+    if (proposal == null) return;
     try {
       setState(() {
         _isLoading = true;
@@ -28,8 +30,11 @@ class _VotePageState extends State<VotePage> {
           proposalID: proposal!.id,
           voteOrientation: votingOrientation);
       await voteController.castUserVote(userVote);
-
-      getRandomProposal();
+      if (votingOrientation != VoteOrientation.NotInterested) {
+        widget.displayProposalResults(proposal!, votingOrientation);
+      } else {
+        getRandomProposal();
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -72,11 +77,13 @@ class _VotePageState extends State<VotePage> {
     //return a box with a border with three buttons at the bottom
     return Container(
       color: baseTheme.colorScheme.background,
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.only(
+          top: 16.0, bottom: 16.0, left: 32.0, right: 32.0),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           Positioned.fill(
+            top: 10,
             bottom: 100,
             child: Container(
               height: MediaQuery.of(context).size.height * 0.8,
@@ -127,11 +134,11 @@ class _VotePageState extends State<VotePage> {
             ),
           ),
           Positioned.fill(
-              top: -10,
-              bottom: MediaQuery.of(context).size.height * 0.78,
-              left: MediaQuery.of(context).size.width * 0.4,
-              right: MediaQuery.of(context).size.width * 0.4,
-              child: Container(
+              top: 0,
+              bottom: MediaQuery.of(context).size.height * 0.75,
+              child: Center(
+                  child: Container(
+                width: MediaQuery.of(context).size.width * 0.4,
                 decoration: BoxDecoration(
                   color: baseTheme.colorScheme.primary,
                   borderRadius: BorderRadius.circular(18.0),
@@ -141,12 +148,14 @@ class _VotePageState extends State<VotePage> {
                   ),
                 ),
                 child: const Center(
-                    child: Text(
-                  "Proposta-Lei",
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold),
-                )),
-              )),
+                    child: Padding(
+                        padding: EdgeInsets.only(left: 50, right: 50),
+                        child: Text(
+                          "Proposta-Lei",
+                          style: TextStyle(
+                              color: Colors.white, fontWeight: FontWeight.bold),
+                        ))),
+              ))),
           Positioned.fill(
               bottom: -400.0,
               child: Center(

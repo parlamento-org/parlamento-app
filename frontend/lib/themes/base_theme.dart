@@ -18,6 +18,10 @@ final baseTheme = ThemeData(
 );
 
 const BorderRadius dialogRadius = BorderRadius.all(Radius.circular(4));
+const approvedGreenBold = Color(0xff14C044);
+var approvedGreenNormal = const Color(0xff2ABE4B).withOpacity(0.48);
+const rejectedRedBold = Color(0xffEC1C24);
+const rejectedRedNormal = Color(0xffFAAEAE);
 
 ButtonStyle buttonStyle = ButtonStyle(
   backgroundColor:

@@ -97,6 +97,7 @@ public class ProjetoLeiController : ControllerBase
         newProjectLaw.Legislatura = dto.legislatura;
         newProjectLaw.SourceId = dto.sourceId.Value;
 
+
         _dbProjectLawSet.Add(newProjectLaw);
         await _context.SaveChangesAsync();
         return Ok(newProjectLaw);

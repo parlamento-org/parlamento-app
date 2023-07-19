@@ -51,6 +51,8 @@ public class VotingBlock
     [Required]
     public String? politicalPartyAcronym { get; set; }
 
+
+
     [Required]
     [EnumDataType(typeof(VotingOrientation), ErrorMessage = "Invalid Voting Orientation")]
     public VotingOrientation votingOrientation { get; set; }

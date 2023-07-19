@@ -1,8 +1,6 @@
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
-import 'package:frontend/pages/main_page.dart';
-import 'package:frontend/pages/vote_page.dart';
 import 'package:frontend/themes/base_theme.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -41,7 +39,7 @@ class MyHomePage extends StatelessWidget {
     return MaterialApp(
       title: 'Parlamento Project',
       theme: baseTheme,
-      home: const MainPage(),
+      home: const LoginPage(),
     );
   }
 }
