@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/constants/user_session.dart';
 import 'package:frontend/controllers/user_controller.dart';
+import 'package:frontend/models/user.dart';
 import 'package:frontend/pages/main_page.dart';
 import 'package:frontend/pages/register_page.dart';
 
 import '../components/my_button.dart';
 import '../components/my_text_field.dart';
-import '../exceptions/invalid_credentials.dart';
 import '../themes/base_theme.dart';
 
 /// Validates the username input.
@@ -30,6 +30,8 @@ String? validatePassword(String? password) {
 
   return null;
 }
+
+enum LoginType { google, facebook, email }
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -68,86 +70,43 @@ class _LoginPageState extends State<LoginPage> {
   );
   // sign user in method
 
-  void handleFacebookLogin(BuildContext context) async {
+  void handleLogIn(LoginType loginType, BuildContext context) async {
     setState(() {
       _isLoggingIn = true;
     });
-    _userController.facebookSignIn().then((userSession) {
-      setState(() {
-        _isLoggingIn = false;
-      });
-      globalUserSession = userSession;
-      Navigator.of(context)
-          .push(MaterialPageRoute(builder: (context) => const MainPage()));
-    }).catchError((error) {
-      setState(() {
-        _isLoggingIn = false;
-      });
-      print(error);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("Facebook Sign In has failed!"),
-        duration: Duration(seconds: 2),
-      ));
-    });
-  }
-
-  void handleGoogleSign(BuildContext context) async {
-    setState(() {
-      _isLoggingIn = true;
-    });
-    _userController.googleSignIn().then((userSession) {
-      setState(() {
-        _isLoggingIn = false;
-      });
-      globalUserSession = userSession;
-      Navigator.of(context)
-          .push(MaterialPageRoute(builder: (context) => const MainPage()));
-    }).catchError((error) {
-      setState(() {
-        _isLoggingIn = false;
-      });
-      print(error);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("Google Sign In has failed!"),
-        duration: Duration(seconds: 2),
-      ));
-    });
-  }
-
-  void signUserIn(BuildContext context) async {
-    final username = usernameController.text.trim();
-    final password = passwordController.text.trim();
-
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoggingIn = true;
-      });
-
-      _userController.login(username, password).then((userSession) {
-        setState(() {
-          _isLoggingIn = false;
-        });
-        globalUserSession = userSession;
-        Navigator.of(context)
-            .push(MaterialPageRoute(builder: (context) => const MainPage()));
-      }).catchError((error) {
-        usernameController.text = '';
-        passwordController.text = '';
-        setState(() {
-          _isLoggingIn = false;
-        });
-        if (error is InvalidCredentials) {
-          print("Please provide a correct username and password!");
-        } else {
-          print(error);
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("Please provide a correct username and password!"),
-          duration: Duration(seconds: 2),
-        ));
-      });
+    Future<UserSession> signInRequest;
+    switch (loginType) {
+      case LoginType.google:
+        signInRequest = _userController.googleSignIn();
+        break;
+      case LoginType.facebook:
+        signInRequest = _userController.facebookSignIn();
+        break;
+      case LoginType.email:
+        final username = usernameController.text.trim();
+        final password = passwordController.text.trim();
+        signInRequest = _userController.login(username, password);
+        break;
     }
+    signInRequest.then((userSession) {
+      setState(() {
+        _isLoggingIn = false;
+      });
+      globalUserSession = userSession;
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: (context) => MainPage()));
+    }).catchError((error) {
+      setState(() {
+        _isLoggingIn = false;
+      });
+
+      usernameController.text = '';
+      passwordController.text = '';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(error.toString()),
+        duration: const Duration(seconds: 2),
+      ));
+    });
   }
 
   @override
@@ -224,9 +183,8 @@ class _LoginPageState extends State<LoginPage> {
 
             // sign in button
             MyButton(
-              text: 'Sign In',
-              onTap: () => signUserIn(context),
-            ),
+                text: 'Sign In',
+                onTap: () => handleLogIn(LoginType.email, context)),
 
             const SizedBox(height: 20),
 
@@ -266,7 +224,7 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 // google button
                 GestureDetector(
-                  onTap: () => handleGoogleSign(context),
+                  onTap: () => handleLogIn(LoginType.google, context),
                   child: Image.asset(
                     'lib/images/google.png',
                     width: 50,
@@ -277,7 +235,7 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(width: 25),
                 // apple button
                 GestureDetector(
-                  onTap: () => handleFacebookLogin(context),
+                  onTap: () => handleLogIn(LoginType.facebook, context),
                   child: Image.asset(
                     'lib/images/facebook.png',
                     width: 45,

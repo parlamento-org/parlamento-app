@@ -50,6 +50,7 @@ public class PoliticalPartyController : ControllerBase
 
         newParty.partyAcronym = dto.partyAcronym;
         newParty.fullName = dto.fullName;
+        newParty.logoLink = dto.logoLink;
         var party = _context.PoliticalParties?.FirstOrDefault(x => x.partyAcronym == newParty.partyAcronym);
         if (party != null)
         {

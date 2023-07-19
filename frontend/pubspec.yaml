@@ -41,6 +41,7 @@ dependencies:
   flutter_facebook_auth: ^6.0.0
   email_validator: ^2.1.17
   flutter_dotenv: ^5.1.0
+  flip_card: ^0.7.0
 
 dev_dependencies:
   flutter_test:
@@ -84,8 +85,10 @@ flutter:
   fonts:
     - family: Montseratt
       fonts:
-        - asset: fonts\Montserrat-VariableFont_wght.ttf
-          style: italic
+        - asset: fonts\static\Montserrat-Bold.ttf
+          weight: 700
+        - asset: fonts\static\Montserrat-Regular.ttf
+
   # fonts:
   #   - family: Schyler
   #     fonts:

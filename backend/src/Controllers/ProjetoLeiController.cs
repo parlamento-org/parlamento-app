@@ -21,7 +21,6 @@ public class ProjetoLeiController : ControllerBase
     }
 
 
-
     [HttpGet("{id}", Name = "GetProposal")]
     public IActionResult Get(int id)
     {
@@ -81,7 +80,9 @@ public class ProjetoLeiController : ControllerBase
             return StatusCode(400, "SourceId is required!");
         }
         ProjectLaw newProjectLaw = new ProjectLaw();
-        newProjectLaw.Score = 0;
+        newProjectLaw.Score = 100;
+        newProjectLaw.amountOfUsersInterested = 0;
+        newProjectLaw.totalAmountOfVotesFromUsers = 0;
         newProjectLaw.ProposalTitle = dto.proposalTitle;
         newProjectLaw.FullProposalTextLink = dto.fullProposalTextLink;
 
@@ -96,6 +97,7 @@ public class ProjetoLeiController : ControllerBase
         newProjectLaw.Legislatura = dto.legislatura;
         newProjectLaw.SourceId = dto.sourceId.Value;
 
+
         _dbProjectLawSet.Add(newProjectLaw);
         await _context.SaveChangesAsync();
         return Ok(newProjectLaw);
@@ -106,7 +108,7 @@ public class ProjetoLeiController : ControllerBase
     {
 
         Console.WriteLine("Updating proposal with id: " + id);
-        var projectLaw = _dbProjectLawSet.FirstOrDefault(x => x.SourceId == id);
+        var projectLaw = _dbProjectLawSet.FirstOrDefault(x => x.Id == id);
 
         if (projectLaw == null)
         {

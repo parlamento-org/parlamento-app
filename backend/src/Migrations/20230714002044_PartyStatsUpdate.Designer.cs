@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using backend.Models;
 
@@ -10,9 +11,11 @@ using backend.Models;
 namespace backend.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20230714002044_PartyStatsUpdate")]
+    partial class PartyStatsUpdate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.8");
@@ -45,7 +48,7 @@ namespace backend.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("PartyStats", (string)null);
+                    b.ToTable("PartyStats");
                 });
 
             modelBuilder.Entity("backend.Models.PoliticalParty", b =>
@@ -63,7 +66,7 @@ namespace backend.Migrations
 
                     b.HasKey("partyAcronym");
 
-                    b.ToTable("PoliticalParties", (string)null);
+                    b.ToTable("PoliticalParties");
 
                     b.HasData(
                         new
@@ -186,7 +189,7 @@ namespace backend.Migrations
 
                     b.HasIndex("VotingResultSpecialityId");
 
-                    b.ToTable("ProjectLaws", (string)null);
+                    b.ToTable("ProjectLaws");
                 });
 
             modelBuilder.Entity("backend.Models.User", b =>
@@ -218,7 +221,7 @@ namespace backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("backend.Models.Vote", b =>
@@ -227,7 +230,7 @@ namespace backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("ProjectLawID")
+                    b.Property<int>("ProjectLawId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int?>("UserId")
@@ -241,9 +244,11 @@ namespace backend.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ProjectLawId");
+
                     b.HasIndex("UserId");
 
-                    b.ToTable("Vote", (string)null);
+                    b.ToTable("Vote");
                 });
 
             modelBuilder.Entity("backend.Models.VotingBlock", b =>
@@ -272,7 +277,7 @@ namespace backend.Migrations
 
                     b.HasIndex("VotingResultId");
 
-                    b.ToTable("VotingBlock", (string)null);
+                    b.ToTable("VotingBlock");
                 });
 
             modelBuilder.Entity("backend.Models.VotingResult", b =>
@@ -286,7 +291,7 @@ namespace backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("VotingResult", (string)null);
+                    b.ToTable("VotingResult");
                 });
 
             modelBuilder.Entity("backend.Models.PartyStats", b =>
@@ -329,9 +334,17 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.Vote", b =>
                 {
+                    b.HasOne("backend.Models.ProjectLaw", "ProjectLaw")
+                        .WithMany()
+                        .HasForeignKey("ProjectLawId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("backend.Models.User", null)
                         .WithMany("Votes")
                         .HasForeignKey("UserId");
+
+                    b.Navigation("ProjectLaw");
                 });
 
             modelBuilder.Entity("backend.Models.VotingBlock", b =>

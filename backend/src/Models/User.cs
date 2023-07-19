@@ -107,7 +107,8 @@ public class Vote
     public DateTime VoteDate { get; set; }
 
     [Required]
-    public ProjectLaw? ProjectLaw { get; set; }
+
+    public int ProjectLawID { get; set; }
 
     [Required]
     [EnumDataType(typeof(VotingOrientation), ErrorMessage = "Invalid Voting Orientation")]
@@ -120,10 +121,9 @@ public class VoteDTO
 
     [Required]
     public int userID { get; set; }
-    [Required]
-    public String? voteDate { get; set; }
 
     [Required]
+    [ForeignKey("ProjectLaw")]
     public int projectLawID { get; set; }
 
     [Required]
@@ -141,5 +141,11 @@ public class PartyStats
     [Required]
     public PoliticalParty? PoliticalParty { get; set; }
     [Required]
-    public int PartyAffection { get; set; }
+    public double PartyAffectionScore { get; set; }
+
+    [Required]
+    public int totalAmountOfProposalsVotedOn { get; set; }
+
+    [Required]
+    public double totalAffectionPoints { get; set; }
 }
