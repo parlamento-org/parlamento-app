@@ -1,3 +1,4 @@
+import 'package:frontend/models/political_party.dart';
 import 'package:frontend/models/proposal.dart';
 
 import '../models/proposal_criteria.dart';
@@ -19,4 +20,6 @@ abstract class Repository {
   Future<Proposal> getProposal(ProposalCriteria proposalCriteria);
 
   Future<void> castUserVote(UserVote userVote);
+
+  Future<List<PoliticalParty>> getAllPoliticalParties();
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/pages/user_vote_history.dart';
 import 'package:frontend/pages/voting_section.dart';
 import 'package:frontend/themes/base_theme.dart';
 
@@ -69,7 +70,7 @@ class MainPageState extends State<MainPage> {
         children: const [
           Center(child: Text('Partidos')),
           VotingSection(),
-          Center(child: Text('Profile')),
+          UserVoteHistory(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(

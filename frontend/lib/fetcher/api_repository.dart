@@ -3,6 +3,7 @@ import 'package:frontend/exceptions/email_has_account.dart';
 import 'package:frontend/exceptions/invalid_credentials.dart';
 import 'package:frontend/exceptions/username_already_exists.dart';
 import 'package:frontend/fetcher/repository.dart';
+import 'package:frontend/models/political_party.dart';
 import 'package:frontend/models/proposal_criteria.dart';
 import 'package:frontend/models/user.dart';
 import 'dart:convert';
@@ -13,7 +14,17 @@ import 'package:http/http.dart' as http;
 import '../models/proposal.dart';
 
 class APIRepository implements Repository {
+  //make this class a singleton
+  static final APIRepository _instance = APIRepository._internal();
+
+  factory APIRepository() {
+    return _instance;
+  }
+
   String api_url = dotenv.env['BACKEND_URL']!;
+  var client = http.Client();
+
+  APIRepository._internal();
 
   @override
   Future<Proposal> getProposal(ProposalCriteria criteria) async {
@@ -22,7 +33,7 @@ class APIRepository implements Repository {
     try {
       print(criteria.toJson());
       final response =
-          await http.put(url, body: jsonEncode(criteria.toJson()), headers: {
+          await client.put(url, body: jsonEncode(criteria.toJson()), headers: {
         'Content-Type': 'application/json',
       });
 
@@ -57,7 +68,7 @@ class APIRepository implements Repository {
     final jsonData = jsonEncode(data);
 
     try {
-      final response = await http.post(url, body: jsonData, headers: {
+      final response = await client.post(url, body: jsonData, headers: {
         'Content-Type': 'application/json',
       });
 
@@ -92,7 +103,7 @@ class APIRepository implements Repository {
     final jsonData = jsonEncode(data);
 
     try {
-      final response = await http.post(url, body: jsonData, headers: {
+      final response = await client.post(url, body: jsonData, headers: {
         'Content-Type': 'application/json',
       });
 
@@ -134,7 +145,7 @@ class APIRepository implements Repository {
     final jsonData = jsonEncode(data);
 
     try {
-      final response = await http.post(url, body: jsonData, headers: {
+      final response = await client.post(url, body: jsonData, headers: {
         'Content-Type': 'application/json',
       });
 
@@ -174,7 +185,7 @@ class APIRepository implements Repository {
     final jsonData = jsonEncode(data);
 
     try {
-      final response = await http.post(url, body: jsonData, headers: {
+      final response = await client.post(url, body: jsonData, headers: {
         'Content-Type': 'application/json',
       });
 
@@ -205,7 +216,7 @@ class APIRepository implements Repository {
     final jsonData = jsonEncode(data);
 
     try {
-      final response = await http.post(url, body: jsonData, headers: {
+      final response = await client.post(url, body: jsonData, headers: {
         'Content-Type': 'application/json',
       });
 
@@ -216,6 +227,28 @@ class APIRepository implements Repository {
         return;
       } else {
         throw Exception('Failed to cast vote');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<PoliticalParty>> getAllPoliticalParties() async {
+    final url = Uri.parse('$api_url/party');
+
+    try {
+      final response = await client.get(url);
+
+      // Check the response status code
+      if (response.statusCode == 200) {
+        print('Response body: ${response.body}');
+        final jsonResponse = jsonDecode(response.body)["parties"];
+        final parties = List<PoliticalParty>.from(
+            jsonResponse.map((x) => PoliticalParty.fromJson(x)));
+        return parties;
+      } else {
+        throw Exception('Failed to load parties');
       }
     } catch (e) {
       rethrow;
