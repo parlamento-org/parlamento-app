@@ -76,7 +76,7 @@ class _VotePageState extends State<VotePage> {
   Widget build(BuildContext context) {
     //return a box with a border with three buttons at the bottom
     return Container(
-      color: baseTheme.colorScheme.background,
+      color: baseTheme.colorScheme.surface,
       padding: const EdgeInsets.only(
           top: 16.0, bottom: 16.0, left: 32.0, right: 32.0),
       child: Stack(

@@ -94,7 +94,7 @@ class _LoginPageState extends State<LoginPage> {
       });
       globalUserSession = userSession;
       Navigator.of(context)
-          .push(MaterialPageRoute(builder: (context) => MainPage()));
+          .push(MaterialPageRoute(builder: (context) => const MainPage()));
     }).catchError((error) {
       setState(() {
         _isLoggingIn = false;
@@ -114,7 +114,7 @@ class _LoginPageState extends State<LoginPage> {
     final MediaQueryData queryData = MediaQuery.of(context);
 
     return Scaffold(
-        backgroundColor: baseTheme.colorScheme.background,
+        backgroundColor: baseTheme.colorScheme.surface,
         body: SingleChildScrollView(
             child: _isLoggingIn
                 ? Container(

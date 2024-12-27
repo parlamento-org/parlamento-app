@@ -39,6 +39,24 @@ public class ProjetoLeiController : ControllerBase
         return Ok(projectLaw);
     }
 
+    [HttpGet("source/{sourceId}", Name = "GetProposalBySourceId")]
+    public IActionResult GetBySourceId(int sourceId)
+    {
+
+        var projectLawQuery = _dbProjectLawSet.Include(proposal => proposal.VotingResultGenerality!.votingBlocks)
+                .Include(proposal => proposal.VotingResultSpeciality!.votingBlocks)
+                .Include(proposal => proposal.ProposingParty).Where(x => x.SourceId == sourceId);
+
+        if (!projectLawQuery.Any())
+        {
+            return NotFound("No ProjectLaw found with the given sourceId.");
+        }
+
+        var projectLaw = projectLawQuery.First();
+
+        return Ok(projectLaw);
+    }
+
     [HttpGet(Name = "GetProposals")]
     public Dictionary<string, List<ProjectLaw>> Get(string? searchString)
     {

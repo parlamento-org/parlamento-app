@@ -150,7 +150,7 @@ class ProposalResult extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-        color: baseTheme.colorScheme.background,
+        color: baseTheme.colorScheme.surface,
         padding: const EdgeInsets.only(
             top: 16.0, bottom: 16.0, left: 32.0, right: 32.0),
         child: SingleChildScrollView(
@@ -239,7 +239,7 @@ class ProposalResult extends StatelessWidget {
                         "lib/images/${proposal.proposingParty.partyAcronym}_logo.png",
                         height: 70),
                     const SizedBox(height: 10),
-                    Container(
+                    SizedBox(
                         width: MediaQuery.of(context).size.width * 0.8,
                         child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,

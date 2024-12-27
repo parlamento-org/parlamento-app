@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 final baseTheme = ThemeData(
-  scaffoldBackgroundColor: const Color(0xfff5f5),
-  dialogBackgroundColor: const Color(0xfff5f5),
+  scaffoldBackgroundColor: const Color(0x00fff5f5),
+  dialogBackgroundColor: const Color(0x00fff5f5),
   colorScheme: ColorScheme.fromSwatch().copyWith(
     primary: const Color(0xffb62f0d),
     secondary: const Color(0xffB6830D),
-    background: const Color(0xffFFF5F5),
+    surface: const Color(0xffFFF5F5),
   ),
   textTheme: Typography.blackCupertino.apply(
     bodyColor: const Color.fromARGB(255, 72, 72, 72),
@@ -25,8 +25,8 @@ const rejectedRedNormal = Color(0xffFAAEAE);
 
 ButtonStyle buttonStyle = ButtonStyle(
   backgroundColor:
-      MaterialStateProperty.all<Color>(baseTheme.colorScheme.primary),
-  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+      WidgetStateProperty.all<Color>(baseTheme.colorScheme.primary),
+  shape: WidgetStateProperty.all<RoundedRectangleBorder>(
     RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(10.0),
     ),

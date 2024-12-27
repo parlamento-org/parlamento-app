@@ -142,7 +142,7 @@ class _RegisterPageState extends State<RegisterPage> {
     final MediaQueryData queryData = MediaQuery.of(context);
 
     return Scaffold(
-        backgroundColor: baseTheme.colorScheme.background,
+        backgroundColor: baseTheme.colorScheme.surface,
         body: SingleChildScrollView(
             child: _isSigningUp
                 ? Container(

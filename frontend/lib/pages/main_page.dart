@@ -34,7 +34,7 @@ class MainPageState extends State<MainPage> {
     //create a page with a bottom bar with three options: home, search and profile
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: baseTheme.colorScheme.background,
+        backgroundColor: baseTheme.colorScheme.surface,
         automaticallyImplyLeading: false,
         leading: IconButton(
           icon: Icon(
@@ -73,7 +73,7 @@ class MainPageState extends State<MainPage> {
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: baseTheme.colorScheme.background,
+        backgroundColor: baseTheme.colorScheme.surface,
         items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             activeIcon: Icon(
