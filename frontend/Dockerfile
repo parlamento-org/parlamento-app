@@ -1,8 +1,8 @@
-FROM ghcr.io/cirruslabs/flutter:3.10.5
+FROM ghcr.io/cirruslabs/flutter:stable
 
 RUN apt-get update && apt-get install -y \
     fonts-liberation \
-    libasound2 \
+    libasound2t64 \
     libatk-bridge2.0-0 \
     libatk1.0-0 \
     libatspi2.0-0 \
@@ -11,7 +11,6 @@ RUN apt-get update && apt-get install -y \
     libdrm2 \
     libgbm1 \
     libgtk-3-0 \
-    #    libgtk-4-1 \
     libnspr4 \
     libnss3 \
     libwayland-client0 \

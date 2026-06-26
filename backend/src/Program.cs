@@ -1,4 +1,6 @@
+using FluentValidation;
 using FluentValidation.AspNetCore;
+
 
 using Microsoft.OpenApi.Models;
 
@@ -28,6 +30,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 builder.Services.AddHealthChecks();
+
 
 builder.Services.AddCors(options =>
     options.AddPolicy("AllowAllOrigins",
