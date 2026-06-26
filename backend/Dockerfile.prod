@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:7.0.305-alpine3.18 as build
+FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine as build
 
 ENV PATH="${PATH}:/root/.dotnet/tools"
 
@@ -6,9 +6,10 @@ WORKDIR /usr/src/app
 
 RUN dotnet --info
 
-RUN dotnet tool install --global dotnet-ef
+RUN dotnet tool install --global dotnet-ef --version 8.0.0
 
 # Copy csproj and restore as distinct layers
+COPY global.json .
 COPY src/backend.csproj src/backend.csproj
 
 RUN dotnet restore src
@@ -21,7 +22,7 @@ RUN dotnet ef database update --project src
 
 RUN dotnet publish --configuration Release -o build src
 
-FROM mcr.microsoft.com/dotnet/sdk:7.0.305-alpine3.18
+FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine
 
 WORKDIR /usr/src/app
 

@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:7.0.305-alpine3.18
+FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine
 
 WORKDIR /usr/src/app
 
@@ -7,6 +7,7 @@ RUN dotnet --info
 COPY backend.sln .
 
 # Copy csproj and restore as distinct layers
+COPY global.json .
 COPY test/test.csproj ./test/test.csproj
 COPY integration-tests/integration-tests.csproj ./integration-tests/integration-tests.csproj
 COPY src/backend.csproj ./src/backend.csproj
