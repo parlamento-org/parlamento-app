@@ -9,7 +9,6 @@
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.2.2"/>
     <PackageReference Include="Macross.Json.Extensions" Version="3.0.0"/>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.0"/>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0"/>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -17,6 +16,11 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3"/>
     <PackageReference Include="prometheus-net" Version="7.0.0"/>
     <PackageReference Include="prometheus-net.AspNetCore" Version="7.0.0"/>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Application\Parlamento.Application.csproj" />
+    <ProjectReference Include="..\Domain\Parlamento.Domain.csproj" />
+    <ProjectReference Include="..\Infrastructure\Parlamento.Infrastructure.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Migrations"/>

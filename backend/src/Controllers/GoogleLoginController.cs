@@ -1,7 +1,7 @@
-using backend.Models;
-
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+
+using Parlamento.Application.Abstractions;
+using Parlamento.Application.Auth;
 
 namespace backend.Controllers;
 
@@ -9,37 +9,17 @@ namespace backend.Controllers;
 [Route("/google-login")]
 public class GoogleLoginController : ControllerBase
 {
-    private readonly DatabaseContext _context;
+    private readonly IAuthService _authService;
 
-    public GoogleLoginController(DatabaseContext context)
+    public GoogleLoginController(IAuthService authService)
     {
-        this._context = context;
-
+        _authService = authService;
     }
 
     [HttpPost(Name = "ValidateGoogleUser")]
-    public IActionResult ValidateGoogleUser(GoogleLoginValidateDTO dto)
+    public async Task<IActionResult> ValidateGoogleUser(GoogleLoginRequest request, CancellationToken cancellationToken)
     {
-
-        var user = _context.Users?.Include("Votes").Include("PartyStats.PoliticalParty").FirstOrDefault(x => x.googleIDToken == dto.googleIDToken);
-        if (user == null)
-        {
-            //add the new user to the database
-            var newUser = new User
-            {
-                Email = dto.email,
-                googleIDToken = dto.googleIDToken,
-                ProfilePic = dto.profilePic,
-                UserName = dto.userName,
-                Password = "google"
-            };
-            _context.Users?.Add(newUser);
-            _context.SaveChanges();
-            return Ok(newUser);
-        }
-
-
+        var user = await _authService.AuthenticateGoogleAsync(request, cancellationToken);
         return Ok(user);
     }
-
 }

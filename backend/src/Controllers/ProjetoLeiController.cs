@@ -1,7 +1,10 @@
-using backend.Models;
-
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+
+using backend.Extensions;
+
+using Parlamento.Application.Abstractions;
+using Parlamento.Application.Proposals;
+using Parlamento.Domain.Entities;
 
 namespace backend.Controllers;
 
@@ -9,179 +12,62 @@ namespace backend.Controllers;
 [Route("/proposal")]
 public class ProjetoLeiController : ControllerBase
 {
-    private readonly DbSet<ProjectLaw> _dbProjectLawSet;
-    private readonly DatabaseContext _context;
+    private readonly IProposalService _proposalService;
 
-
-    public ProjetoLeiController(DatabaseContext context)
+    public ProjetoLeiController(IProposalService proposalService)
     {
-        this._context = context;
-        this._dbProjectLawSet = _context.Set<ProjectLaw>();
-
+        _proposalService = proposalService;
     }
 
-
     [HttpGet("{id}", Name = "GetProposal")]
-    public IActionResult Get(int id)
+    public async Task<IActionResult> Get(int id, CancellationToken cancellationToken)
     {
-
-        var projectLawQuery = _dbProjectLawSet.Include(proposal => proposal.VotingResultGenerality!.votingBlocks)
-                .Include(proposal => proposal.VotingResultSpeciality!.votingBlocks)
-                .Include(proposal => proposal.ProposingParty).Where(x => x.Id == id);
-
-        if (!projectLawQuery.Any())
-        {
-            return NotFound("No ProjectLaw found with the given id.");
-        }
-
-        var projectLaw = projectLawQuery.First();
-
-        return Ok(projectLaw);
+        var result = await _proposalService.GetByIdAsync(id, cancellationToken);
+        return this.ToActionResult(result);
     }
 
     [HttpGet("source/{sourceId}", Name = "GetProposalBySourceId")]
-    public IActionResult GetBySourceId(int sourceId)
+    public async Task<IActionResult> GetBySourceId(int sourceId, CancellationToken cancellationToken)
     {
-
-        var projectLawQuery = _dbProjectLawSet.Include(proposal => proposal.VotingResultGenerality!.votingBlocks)
-                .Include(proposal => proposal.VotingResultSpeciality!.votingBlocks)
-                .Include(proposal => proposal.ProposingParty).Where(x => x.SourceId == sourceId);
-
-        if (!projectLawQuery.Any())
-        {
-            return NotFound("No ProjectLaw found with the given sourceId.");
-        }
-
-        var projectLaw = projectLawQuery.First();
-
-        return Ok(projectLaw);
+        var result = await _proposalService.GetBySourceIdAsync(sourceId, cancellationToken);
+        return this.ToActionResult(result);
     }
 
     [HttpGet(Name = "GetProposals")]
-    public Dictionary<string, List<ProjectLaw>> Get(string? searchString)
+    public async Task<Dictionary<string, List<ProjectLaw>>> Get(string? searchString, CancellationToken cancellationToken)
     {
-
-        if (!String.IsNullOrEmpty(searchString))
+        var proposals = await _proposalService.SearchAsync(searchString, cancellationToken);
+        return new Dictionary<string, List<ProjectLaw>>
         {
-            searchString = searchString.ToLower();
-            return new Dictionary<string, List<ProjectLaw>>
-            {
-
-                ["proposals"] = _dbProjectLawSet.Include(proposal => proposal.VotingResultGenerality!.votingBlocks)
-                .Include(proposal => proposal.VotingResultSpeciality!.votingBlocks)
-                .Include(proposal => proposal.ProposingParty).
-                Where(proposal => proposal.ProposalTitle!
-                .ToLower().Contains(searchString) || proposal.SourceId.ToString().Contains(searchString)).ToList()
-            };
-        }
-        else
-            return new Dictionary<string, List<ProjectLaw>>
-            {
-
-                ["proposals"] = _dbProjectLawSet.Include(proposal => proposal.VotingResultGenerality!.votingBlocks)
-                .Include(proposal => proposal.VotingResultSpeciality!.votingBlocks)
-                .Include(proposal => proposal.ProposingParty).ToList()
-            };
+            ["proposals"] = proposals.ToList()
+        };
     }
 
     [HttpPost(Name = "AddProposal")]
-    public async Task<IActionResult> Vote(ProjectLawDTO dto)
+    public async Task<IActionResult> Create(CreateProposalRequest request, CancellationToken cancellationToken)
     {
-
-        var projectLaw = _dbProjectLawSet.FirstOrDefault(x => x.FullProposalTextLink == dto.fullProposalTextLink);
-        if (projectLaw != null)
-        {
-            return NotFound("This proposal already exists!");
-        }
-        if (dto.sourceId == null)
-        {
-            return StatusCode(400, "SourceId is required!");
-        }
-        ProjectLaw newProjectLaw = new ProjectLaw();
-        newProjectLaw.Score = 100;
-        newProjectLaw.amountOfUsersInterested = 0;
-        newProjectLaw.totalAmountOfVotesFromUsers = 0;
-        newProjectLaw.ProposalTitle = dto.proposalTitle;
-        newProjectLaw.FullProposalTextLink = dto.fullProposalTextLink;
-
-        newProjectLaw.ProposingParty = _context.PoliticalParties?.FirstOrDefault(x => x.partyAcronym == dto.proposingPartyAcronym);
-        newProjectLaw.VoteDate = dto.voteDate;
-
-        newProjectLaw.ProposalResult = dto.proposalResult;
-        newProjectLaw.VotingResultGenerality = dto.votingResultGenerality;
-        newProjectLaw.VotingResultSpeciality = dto.votingResultSpeciality;
-        newProjectLaw.ProposalTextHTML = dto.proposalTextHTML;
-
-        newProjectLaw.Legislatura = dto.legislatura;
-        newProjectLaw.SourceId = dto.sourceId.Value;
-
-
-        _dbProjectLawSet.Add(newProjectLaw);
-        await _context.SaveChangesAsync();
-        return Ok(newProjectLaw);
+        var result = await _proposalService.CreateAsync(request, cancellationToken);
+        return this.ToActionResult(result);
     }
 
     [HttpPut("{id}", Name = "UpdateProposal")]
-    public async Task<IActionResult> Update(int id, ProjectLawDTO dto)
+    public async Task<IActionResult> Update(int id, UpdateProposalRequest request, CancellationToken cancellationToken)
     {
-
-        Console.WriteLine("Updating proposal with id: " + id);
-        var projectLaw = _dbProjectLawSet.FirstOrDefault(x => x.Id == id);
-
-        if (projectLaw == null)
-        {
-            return NotFound("No Proposal found with the given id.");
-        }
-        if (dto.score != null) projectLaw.Score = dto.score.Value;
-        if (dto.proposalTitle != null) projectLaw.ProposalTitle = dto.proposalTitle;
-        if (dto.fullProposalTextLink != null) projectLaw.FullProposalTextLink = dto.fullProposalTextLink;
-
-        if (dto.proposingPartyAcronym != null)
-            projectLaw.ProposingParty = _context.PoliticalParties?.FirstOrDefault(x => x.partyAcronym == dto.proposingPartyAcronym);
-
-        if (dto.voteDate != null) projectLaw.VoteDate = dto.voteDate;
-
-        if (dto.proposalResult != null) projectLaw.ProposalResult = dto.proposalResult;
-        if (dto.votingResultGenerality != null) projectLaw.VotingResultGenerality = dto.votingResultGenerality;
-
-
-        if (dto.votingResultSpeciality != null) projectLaw.VotingResultSpeciality = dto.votingResultSpeciality;
-        if (dto.proposalTextHTML != null) projectLaw.ProposalTextHTML = dto.proposalTextHTML;
-        if (dto.legislatura != null) projectLaw.Legislatura = dto.legislatura;
-
-        if (dto.sourceId != null) projectLaw.SourceId = dto.sourceId.Value;
-
-        await _context.SaveChangesAsync();
-        return Ok(projectLaw);
+        var result = await _proposalService.UpdateAsync(id, request, cancellationToken);
+        return this.ToActionResult(result);
     }
 
     [HttpDelete("{id}", Name = "DeleteProposal")]
-    public IActionResult Delete(int id)
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
-        var proposalQuery = _dbProjectLawSet.Where(x => x.Id == id);
-
-        if (!proposalQuery.Any())
-        {
-            return NotFound("No Proposal found with the given id.");
-        }
-
-        var proposal = proposalQuery.First();
-        _dbProjectLawSet.Remove(proposal);
-
-        _context.SaveChanges();
-
-        return Ok(proposal);
+        var result = await _proposalService.DeleteAsync(id, cancellationToken);
+        return this.ToActionResult(result);
     }
 
     [HttpDelete(Name = "DeleteAllProposals")]
-    public IActionResult Delete()
+    public async Task<IActionResult> Delete(CancellationToken cancellationToken)
     {
-        _dbProjectLawSet.RemoveRange(_dbProjectLawSet);
-        _context.SaveChanges();
+        await _proposalService.DeleteAllAsync(cancellationToken);
         return Ok();
     }
-
-
-
-
 }

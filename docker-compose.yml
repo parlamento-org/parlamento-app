@@ -23,6 +23,21 @@ services:
       dockerfile: ./Dockerfile.prod
     ports:
       - "80:80"
+  postgres-parlamento:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${PARLAMENTO_DB_NAME:-parlamento}
+      POSTGRES_USER: ${PARLAMENTO_DB_USER:-parlamento}
+      POSTGRES_PASSWORD: ${PARLAMENTO_DB_PASSWORD:-parlamento}
+    ports:
+      - "5432:5432"
+    volumes:
+      - parlamento-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PARLAMENTO_DB_USER:-parlamento} -d ${PARLAMENTO_DB_NAME:-parlamento}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
   dev-parlamento-be:
     build:
       context: ./backend
@@ -30,10 +45,19 @@ services:
     ports:
       - "8180:8080"
       - "8181:8081"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: Host=postgres-parlamento;Port=5432;Database=${PARLAMENTO_DB_NAME:-parlamento};Username=${PARLAMENTO_DB_USER:-parlamento};Password=${PARLAMENTO_DB_PASSWORD:-parlamento}
     volumes:
       - ./backend/src:/usr/src/app/src
+      - ./backend/Domain:/usr/src/app/Domain
+      - ./backend/Application:/usr/src/app/Application
+      - ./backend/Infrastructure:/usr/src/app/Infrastructure
     depends_on:
-      - db-parlamento-migrate
+      postgres-parlamento:
+        condition: service_healthy
+      db-parlamento-migrate:
+        condition: service_completed_successfully
   prod-parlamento-be:
     build:
       context: ./backend
@@ -41,19 +65,43 @@ services:
     ports:
       - "8080:8080"
       - "8081:8081"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: Host=postgres-parlamento;Port=5432;Database=${PARLAMENTO_DB_NAME:-parlamento};Username=${PARLAMENTO_DB_USER:-parlamento};Password=${PARLAMENTO_DB_PASSWORD:-parlamento}
+    depends_on:
+      postgres-parlamento:
+        condition: service_healthy
+      db-parlamento-migrate:
+        condition: service_completed_successfully
   test-parlamento-be:
     build:
       context: ./backend
       dockerfile: ./Dockerfile.test
+    environment:
+      ASPNETCORE_ENVIRONMENT: Test
+      ConnectionStrings__DefaultConnection: Host=postgres-parlamento;Port=5432;Database=${PARLAMENTO_DB_NAME:-parlamento};Username=${PARLAMENTO_DB_USER:-parlamento};Password=${PARLAMENTO_DB_PASSWORD:-parlamento}
     volumes:
       - ./backend/src:/usr/src/app/src
       - ./backend/test:/usr/src/app/test
       - ./backend/integration-tests:/usr/src/app/integration-tests
+      - ./backend/Domain:/usr/src/app/Domain
+      - ./backend/Application:/usr/src/app/Application
+      - ./backend/Infrastructure:/usr/src/app/Infrastructure
     depends_on:
-      - db-parlamento-migrate
+      postgres-parlamento:
+        condition: service_healthy
+      db-parlamento-migrate:
+        condition: service_completed_successfully
   db-parlamento-migrate:
     build:
       context: ./backend
       dockerfile: ./Dockerfile.migrate
-    volumes:
-      - ./backend/src/db.sqlite:/usr/src/app/src/db.sqlite
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: Host=postgres-parlamento;Port=5432;Database=${PARLAMENTO_DB_NAME:-parlamento};Username=${PARLAMENTO_DB_USER:-parlamento};Password=${PARLAMENTO_DB_PASSWORD:-parlamento}
+    depends_on:
+      postgres-parlamento:
+        condition: service_healthy
+
+volumes:
+  parlamento-postgres-data:

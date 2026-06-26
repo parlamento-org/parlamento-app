@@ -6,11 +6,17 @@ RUN dotnet --info
 
 # Copy csproj and restore as distinct layers
 COPY global.json .
-COPY src/backend.csproj .
+COPY Domain/Parlamento.Domain.csproj ./Domain/Parlamento.Domain.csproj
+COPY Application/Parlamento.Application.csproj ./Application/Parlamento.Application.csproj
+COPY Infrastructure/Parlamento.Infrastructure.csproj ./Infrastructure/Parlamento.Infrastructure.csproj
+COPY src/backend.csproj ./src/backend.csproj
 
-RUN dotnet restore
+RUN dotnet restore src
 
-COPY src .
+COPY Domain ./Domain
+COPY Application ./Application
+COPY Infrastructure ./Infrastructure
+COPY src ./src
 
 RUN dotnet dev-certs https --trust
 
