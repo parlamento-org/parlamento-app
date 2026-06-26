@@ -18,7 +18,7 @@ COPY Application ./Application
 COPY Infrastructure ./Infrastructure
 COPY src ./src
 
-RUN dotnet dev-certs https --trust
+#RUN dotnet dev-certs https --trust
 
 WORKDIR /usr/src/app/src
 

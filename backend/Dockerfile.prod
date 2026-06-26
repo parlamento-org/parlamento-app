@@ -17,7 +17,7 @@ COPY src/backend.csproj src/backend.csproj
 
 RUN dotnet restore src
 
-RUN dotnet dev-certs https --trust
+#RUN dotnet dev-certs https --trust
 
 COPY Domain Domain
 COPY Application Application
