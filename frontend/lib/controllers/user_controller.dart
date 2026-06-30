@@ -8,7 +8,10 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 
 class UserController {
-  final Repository _repository = APIRepository();
+  UserController({Repository? repository})
+    : _repository = repository ?? APIRepository();
+
+  final Repository _repository;
   static Future<void>? _googleSignInInitialization;
 
   Future<void> _initializeGoogleSignIn() {
