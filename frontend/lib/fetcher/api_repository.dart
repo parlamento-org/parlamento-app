@@ -2,40 +2,38 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:frontend/exceptions/email_has_account.dart';
 import 'package:frontend/exceptions/invalid_credentials.dart';
 import 'package:frontend/exceptions/username_already_exists.dart';
+import 'package:frontend/fetcher/api_client.dart';
 import 'package:frontend/fetcher/repository.dart';
 import 'package:frontend/models/proposal_criteria.dart';
 import 'package:frontend/models/user.dart';
-import 'dart:convert';
 import 'package:frontend/models/vote_model.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/proposal.dart';
 
 class APIRepository implements Repository {
-  String api_url = dotenv.env['BACKEND_URL']!;
+  APIRepository({ApiClient? apiClient})
+    : _apiClient =
+          apiClient ??
+          ApiClient(
+            baseUrl: Uri.parse(dotenv.env['BACKEND_URL']!),
+            httpClient: http.Client(),
+          );
+
+  final ApiClient _apiClient;
 
   @override
   Future<Proposal> getProposal(ProposalCriteria criteria) async {
-    final url = Uri.parse('$api_url/vote');
+    final response = await _apiClient.putJson('/vote', criteria.toJson());
 
-    try {
-      final response = await http.put(
-        url,
-        body: jsonEncode(criteria.toJson()),
-        headers: {'Content-Type': 'application/json'},
-      );
-
-      // Check the response status code
-      if (response.statusCode == 200) {
-        final jsonResponse = jsonDecode(response.body);
-        final proposal = Proposal.fromJson(jsonResponse);
-        return proposal;
-      } else {
-        throw Exception('Failed to load proposal');
-      }
-    } catch (e) {
-      rethrow;
+    if (response.statusCode == 200) {
+      return Proposal.fromJson(response.jsonObject());
     }
+
+    throw ApiException(
+      'Failed to load proposal',
+      statusCode: response.statusCode,
+    );
   }
 
   @override
@@ -45,9 +43,6 @@ class APIRepository implements Repository {
     String name,
     int profilePicId,
   ) async {
-    final url = Uri.parse('$api_url/fb-login');
-
-    // Create a Map object containing the data to be sent in the request body
     final Map<String, dynamic> data = {
       "facebookIDToken": idToken,
       "email": email,
@@ -55,30 +50,16 @@ class APIRepository implements Repository {
       "profilePic": profilePicId,
     };
 
-    // Convert the data to JSON format
-    final jsonData = jsonEncode(data);
+    final response = await _apiClient.postJson('/fb-login', data);
 
-    try {
-      final response = await http.post(
-        url,
-        body: jsonData,
-        headers: {'Content-Type': 'application/json'},
+    if (response.statusCode == 200) {
+      return UserSession.fromJson(
+        response.jsonObject(),
+        userType: UserType.facebook,
       );
-
-      // Check the response status code
-      if (response.statusCode == 200) {
-        final jsonResponse = jsonDecode(response.body);
-        final user = UserSession.fromJson(
-          jsonResponse,
-          userType: UserType.facebook,
-        );
-        return user;
-      } else {
-        throw InvalidCredentials();
-      }
-    } catch (e) {
-      rethrow;
     }
+
+    throw InvalidCredentials();
   }
 
   @override
@@ -88,9 +69,6 @@ class APIRepository implements Repository {
     String name,
     int profilePicId,
   ) async {
-    final url = Uri.parse('$api_url/google-login');
-
-    // Create a Map object containing the data to be sent in the request body
     final Map<String, dynamic> data = {
       "googleIDToken": idToken,
       "email": email,
@@ -98,66 +76,34 @@ class APIRepository implements Repository {
       "profilePic": profilePicId,
     };
 
-    // Convert the data to JSON format
-    final jsonData = jsonEncode(data);
+    final response = await _apiClient.postJson('/google-login', data);
 
-    try {
-      final response = await http.post(
-        url,
-        body: jsonData,
-        headers: {'Content-Type': 'application/json'},
+    if (response.statusCode == 200) {
+      return UserSession.fromJson(
+        response.jsonObject(),
+        userType: UserType.google,
       );
-
-      // Check the response status code
-      if (response.statusCode == 200) {
-        final jsonResponse = jsonDecode(response.body);
-        final user = UserSession.fromJson(
-          jsonResponse,
-          userType: UserType.google,
-        );
-        return user;
-      } else {
-        throw InvalidCredentials();
-      }
-    } catch (e) {
-      rethrow;
     }
+
+    throw InvalidCredentials();
   }
 
   @override
   Future<UserSession> loginRequest(String email, String password) async {
-    final url = Uri.parse('$api_url/user-login');
-
     var identifier = 'userName';
-    //determine if email or username
     if (email.contains('@')) {
       identifier = 'email';
     }
 
-    // Create a Map object containing the data to be sent in the request body
     final Map<String, dynamic> data = {identifier: email, "password": password};
 
-    // Convert the data to JSON format
-    final jsonData = jsonEncode(data);
+    final response = await _apiClient.postJson('/user-login', data);
 
-    try {
-      final response = await http.post(
-        url,
-        body: jsonData,
-        headers: {'Content-Type': 'application/json'},
-      );
-
-      // Check the response status code
-      if (response.statusCode == 200) {
-        final jsonResponse = jsonDecode(response.body);
-        final user = UserSession.fromJson(jsonResponse);
-        return user;
-      } else {
-        throw InvalidCredentials();
-      }
-    } catch (e) {
-      rethrow;
+    if (response.statusCode == 200) {
+      return UserSession.fromJson(response.jsonObject());
     }
+
+    throw InvalidCredentials();
   }
 
   @override
@@ -167,9 +113,6 @@ class APIRepository implements Repository {
     String password,
     int profilePicId,
   ) async {
-    final url = Uri.parse('$api_url/user');
-
-    // Create a Map object containing the data to be sent in the request body
     final Map<String, dynamic> data = {
       "email": email,
       "userName": userName,
@@ -177,55 +120,27 @@ class APIRepository implements Repository {
       "profilePic": profilePicId,
     };
 
-    // Convert the data to JSON format
-    final jsonData = jsonEncode(data);
+    final response = await _apiClient.postJson('/user', data);
 
-    try {
-      final response = await http.post(
-        url,
-        body: jsonData,
-        headers: {'Content-Type': 'application/json'},
-      );
-
-      // Check the response status code
-      if (response.statusCode == 200) {
-        return true;
-      } else if (response.statusCode == 401) {
-        throw EmailHasAccount();
-      } else if (response.statusCode == 402) {
-        throw UsernameAlreadyExists();
-      }
-      return false;
-    } catch (e) {
-      rethrow;
+    if (response.statusCode == 200) {
+      return true;
+    } else if (response.statusCode == 401) {
+      throw EmailHasAccount();
+    } else if (response.statusCode == 402) {
+      throw UsernameAlreadyExists();
     }
+
+    return false;
   }
 
   @override
   Future<void> castUserVote(UserVote userVote) async {
-    final url = Uri.parse('$api_url/vote');
+    final response = await _apiClient.postJson('/vote', userVote.toJson());
 
-    // Create a Map object containing the data to be sent in the request body
-    final Map<String, dynamic> data = userVote.toJson();
-
-    // Convert the data to JSON format
-    final jsonData = jsonEncode(data);
-
-    try {
-      final response = await http.post(
-        url,
-        body: jsonData,
-        headers: {'Content-Type': 'application/json'},
-      );
-
-      // Check the response status code
-      if (response.statusCode == 200) {
-        return;
-      } else {
-        throw Exception('Failed to cast vote');
-      }
-    } catch (e) {
-      rethrow;
+    if (response.statusCode == 200) {
+      return;
     }
+
+    throw ApiException('Failed to cast vote', statusCode: response.statusCode);
   }
 }
