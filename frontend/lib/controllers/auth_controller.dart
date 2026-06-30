@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:frontend/controllers/user_controller.dart';
 import 'package:frontend/models/user.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthController extends ChangeNotifier {
   AuthController({UserController? userController})
@@ -20,6 +21,16 @@ class AuthController extends ChangeNotifier {
 
   Future<UserSession> googleSignIn() async {
     final userSession = await _userController.googleSignIn();
+    _setSession(userSession);
+    return userSession;
+  }
+
+  Future<UserSession> googleSignInWithAccount(
+    GoogleSignInAccount googleSignInAccount,
+  ) async {
+    final userSession = await _userController.googleSignInWithAccount(
+      googleSignInAccount,
+    );
     _setSession(userSession);
     return userSession;
   }

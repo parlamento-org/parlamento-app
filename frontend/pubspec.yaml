@@ -37,6 +37,7 @@ dependencies:
   cupertino_icons: ^1.0.2
   http: ^1.1.0
   google_sign_in: ^7.2.0
+  google_sign_in_web: ^1.1.0
   flutter_facebook_auth: ^6.0.0
   email_validator: ^2.1.17
   flutter_dotenv: ^5.1.0

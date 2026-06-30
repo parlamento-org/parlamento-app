@@ -1,9 +1,14 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:frontend/controllers/auth_controller.dart';
 import 'package:frontend/pages/main_page.dart';
 import 'package:frontend/pages/register_page.dart';
 import 'package:provider/provider.dart';
 
+import '../components/google_web_sign_in_button.dart';
 import '../components/my_button.dart';
 import '../components/my_text_field.dart';
 import '../themes/base_theme.dart';
@@ -50,14 +55,86 @@ class _LoginPageState extends State<LoginPage> {
   final FocusNode passwordFocus = FocusNode();
 
   bool _isLoggingIn = false;
+  StreamSubscription<GoogleSignInAuthenticationEvent>?
+  _googleAuthenticationSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    if (kIsWeb) {
+      _googleAuthenticationSubscription = GoogleSignIn
+          .instance
+          .authenticationEvents
+          .listen(
+            _handleGoogleAuthenticationEvent,
+            onError: _handleGoogleAuthenticationError,
+          );
+    }
+  }
 
   @override
   void dispose() {
+    _googleAuthenticationSubscription?.cancel();
     usernameController.dispose();
     passwordController.dispose();
     usernameFocus.dispose();
     passwordFocus.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleGoogleAuthenticationEvent(
+    GoogleSignInAuthenticationEvent event,
+  ) async {
+    if (event is! GoogleSignInAuthenticationEventSignIn) {
+      return;
+    }
+
+    await _completeGoogleSignIn(event.user);
+  }
+
+  void _handleGoogleAuthenticationError(Object error) {
+    if (!mounted) return;
+    setState(() {
+      _isLoggingIn = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(error.toString()),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Future<void> _completeGoogleSignIn(GoogleSignInAccount account) async {
+    if (_isLoggingIn) {
+      return;
+    }
+
+    setState(() {
+      _isLoggingIn = true;
+    });
+
+    try {
+      await context.read<AuthController>().googleSignInWithAccount(account);
+      if (!mounted) return;
+      setState(() {
+        _isLoggingIn = false;
+      });
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (context) => const MainPage()));
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _isLoggingIn = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   Future<void> handleLogIn(LoginType loginType) async {
@@ -230,15 +307,7 @@ class _LoginPageState extends State<LoginPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                IconButton(
-                  tooltip: 'Google',
-                  onPressed: () => handleLogIn(LoginType.google),
-                  icon: Image.asset(
-                    'lib/images/google.png',
-                    width: 50,
-                    height: 50,
-                  ),
-                ),
+                _buildGoogleSignInButton(),
 
                 const SizedBox(width: 25),
                 IconButton(
@@ -284,6 +353,18 @@ class _LoginPageState extends State<LoginPage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildGoogleSignInButton() {
+    if (kIsWeb) {
+      return buildGoogleWebSignInButton();
+    }
+
+    return IconButton(
+      tooltip: 'Google',
+      onPressed: () => handleLogIn(LoginType.google),
+      icon: Image.asset('lib/images/google.png', width: 50, height: 50),
     );
   }
 }

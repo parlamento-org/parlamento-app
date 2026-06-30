@@ -14,7 +14,7 @@ class UserController {
   final Repository _repository;
   static Future<void>? _googleSignInInitialization;
 
-  Future<void> _initializeGoogleSignIn() {
+  static Future<void> initializeGoogleSignIn() {
     return _googleSignInInitialization ??= GoogleSignIn.instance.initialize(
       clientId: dotenv.env['GOOGLE_CLIENT_ID'],
     );
@@ -22,7 +22,7 @@ class UserController {
 
   Future<void> logout(UserType userType) async {
     if (userType == UserType.google) {
-      await _initializeGoogleSignIn();
+      await initializeGoogleSignIn();
       await GoogleSignIn.instance.signOut();
     } else if (userType == UserType.facebook) {
       await FacebookAuth.instance.logOut();
@@ -51,7 +51,7 @@ class UserController {
 
   Future<UserSession> googleSignIn() async {
     try {
-      await _initializeGoogleSignIn();
+      await initializeGoogleSignIn();
       if (!GoogleSignIn.instance.supportsAuthenticate()) {
         throw GoogleSignInError();
       }
@@ -59,25 +59,25 @@ class UserController {
           .instance
           .authenticate(scopeHint: const ['email', 'profile']);
 
-      final email = googleSignInAccount.email;
-      final name = googleSignInAccount.displayName ?? email;
-      const profilePic = 0;
-      final idToken = googleSignInAccount.authentication.idToken;
-
-      if (idToken == null) {
-        throw GoogleSignInError();
-      }
-
-      final user = await _repository.googleSignInRequest(
-        idToken,
-        email,
-        name,
-        profilePic,
-      );
-      return user;
+      return googleSignInWithAccount(googleSignInAccount);
     } catch (error) {
       throw GoogleSignInError();
     }
+  }
+
+  Future<UserSession> googleSignInWithAccount(
+    GoogleSignInAccount googleSignInAccount,
+  ) async {
+    final email = googleSignInAccount.email;
+    final name = googleSignInAccount.displayName ?? email;
+    const profilePic = 0;
+    final idToken = googleSignInAccount.authentication.idToken;
+
+    if (idToken == null) {
+      throw GoogleSignInError();
+    }
+
+    return _repository.googleSignInRequest(idToken, email, name, profilePic);
   }
 
   Future<UserSession> login(String email, String password) async {

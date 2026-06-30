@@ -9,7 +9,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./frontend/lib:/usr/src/app/lib
+      - ./frontend:/usr/src/app
   test-parlamento-fe:
     build:
       context: ./frontend
