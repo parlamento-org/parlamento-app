@@ -38,13 +38,13 @@ class APIRepository implements Repository {
 
   @override
   Future<UserSession> facebookSignInRequest(
-    String idToken,
+    String accessToken,
     String email,
     String name,
     int profilePicId,
   ) async {
     final Map<String, dynamic> data = {
-      "facebookIDToken": idToken,
+      "facebookAccessToken": accessToken,
       "email": email,
       "userName": name,
       "profilePic": profilePicId,

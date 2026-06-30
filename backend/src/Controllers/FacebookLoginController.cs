@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 
+using backend.Extensions;
+
 using Parlamento.Application.Abstractions;
 using Parlamento.Application.Auth;
 
@@ -19,7 +21,7 @@ public class FacebookLoginController : ControllerBase
     [HttpPost(Name = "ValidateFacebookUser")]
     public async Task<IActionResult> ValidateFacebookUser(FacebookLoginRequest request, CancellationToken cancellationToken)
     {
-        var user = await _authService.AuthenticateFacebookAsync(request, cancellationToken);
-        return Ok(user);
+        var result = await _authService.AuthenticateFacebookAsync(request, cancellationToken);
+        return this.ToActionResult(result);
     }
 }

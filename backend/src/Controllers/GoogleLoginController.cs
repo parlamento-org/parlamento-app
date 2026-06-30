@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 
+using backend.Extensions;
+
 using Parlamento.Application.Abstractions;
 using Parlamento.Application.Auth;
 
@@ -19,7 +21,7 @@ public class GoogleLoginController : ControllerBase
     [HttpPost(Name = "ValidateGoogleUser")]
     public async Task<IActionResult> ValidateGoogleUser(GoogleLoginRequest request, CancellationToken cancellationToken)
     {
-        var user = await _authService.AuthenticateGoogleAsync(request, cancellationToken);
-        return Ok(user);
+        var result = await _authService.AuthenticateGoogleAsync(request, cancellationToken);
+        return this.ToActionResult(result);
     }
 }

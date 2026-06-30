@@ -6,9 +6,7 @@ public class FacebookLoginRequestValidator : AbstractValidator<FacebookLoginRequ
 {
     public FacebookLoginRequestValidator()
     {
-        RuleFor(x => x.FacebookIdToken).NotEmpty();
-        RuleFor(x => x.Email).NotEmpty().EmailAddress();
-        RuleFor(x => x.UserName).NotEmpty();
+        RuleFor(x => x.FacebookAccessToken).NotEmpty();
         RuleFor(x => x.ProfilePic).GreaterThanOrEqualTo(0);
     }
 }

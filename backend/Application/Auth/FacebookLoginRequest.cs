@@ -4,8 +4,8 @@ namespace Parlamento.Application.Auth;
 
 public class FacebookLoginRequest
 {
-    [JsonPropertyName("facebookIDToken")]
-    public string? FacebookIdToken { get; set; }
+    [JsonPropertyName("facebookAccessToken")]
+    public string? FacebookAccessToken { get; set; }
 
     [JsonPropertyName("email")]
     public string? Email { get; set; }

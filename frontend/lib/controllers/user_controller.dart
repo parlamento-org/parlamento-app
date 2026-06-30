@@ -1,4 +1,5 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:frontend/exceptions/invalid_credentials.dart';
 import 'package:frontend/exceptions/google_sign_in_error.dart';
 import 'package:frontend/fetcher/api_repository.dart';
 import 'package:frontend/fetcher/repository.dart';
@@ -27,13 +28,19 @@ class UserController {
 
   Future<UserSession> facebookSignIn() async {
     try {
-      await FacebookAuth.instance.login();
-      //final AccessToken accessToken = result.accessToken!;
+      final loginResult = await FacebookAuth.instance.login();
+      final accessToken = loginResult.accessToken;
+      if (loginResult.status != LoginStatus.success ||
+          accessToken == null ||
+          accessToken.isExpired) {
+        throw InvalidCredentials();
+      }
+
       final userData = await FacebookAuth.instance.getUserData();
 
       const profilePic = 0;
       final user = await _repository.facebookSignInRequest(
-        userData['id'],
+        accessToken.token,
         userData['email'],
         userData['name'],
         profilePic,
@@ -52,14 +59,14 @@ class UserController {
       }
       final GoogleSignInAccount googleSignInAccount = await GoogleSignIn
           .instance
-          .authenticate(scopeHint: const ['email']);
+          .authenticate(scopeHint: const ['email', 'profile']);
 
       final email = googleSignInAccount.email;
-      final name = googleSignInAccount.displayName;
+      final name = googleSignInAccount.displayName ?? email;
       const profilePic = 0;
       final idToken = googleSignInAccount.authentication.idToken;
 
-      if (idToken == null || name == null) {
+      if (idToken == null) {
         throw GoogleSignInError();
       }
 

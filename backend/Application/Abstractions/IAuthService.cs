@@ -8,7 +8,7 @@ public interface IAuthService
 {
     Task<ServiceResult<User>> LoginAsync(UserLoginRequest request, CancellationToken cancellationToken = default);
 
-    Task<User> AuthenticateGoogleAsync(GoogleLoginRequest request, CancellationToken cancellationToken = default);
+    Task<ServiceResult<User>> AuthenticateGoogleAsync(GoogleLoginRequest request, CancellationToken cancellationToken = default);
 
-    Task<User> AuthenticateFacebookAsync(FacebookLoginRequest request, CancellationToken cancellationToken = default);
+    Task<ServiceResult<User>> AuthenticateFacebookAsync(FacebookLoginRequest request, CancellationToken cancellationToken = default);
 }
