@@ -37,9 +37,15 @@ public class AuthService : IAuthService
             return ServiceResult<User>.Failure(401, "This User does not exist!");
         }
 
-        if (user.Password != request.Password)
+        if (!PasswordHashingService.VerifyPassword(request.Password!, user.Password))
         {
             return ServiceResult<User>.Failure(401, "Invalid Password!");
+        }
+
+        if (PasswordHashingService.NeedsRehash(user.Password))
+        {
+            user.Password = PasswordHashingService.HashPassword(request.Password!);
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
         return ServiceResult<User>.Success(user);
@@ -61,7 +67,7 @@ public class AuthService : IAuthService
             googleIDToken = request.GoogleIdToken,
             ProfilePic = request.ProfilePic,
             UserName = request.UserName,
-            Password = "google"
+            Password = "external:google"
         };
 
         await UserPartyStatsBuilder.PopulateAsync(newUser, _context, cancellationToken);
@@ -88,7 +94,7 @@ public class AuthService : IAuthService
             facebookIDToken = request.FacebookIdToken,
             ProfilePic = request.ProfilePic,
             UserName = request.UserName,
-            Password = "facebook"
+            Password = "external:facebook"
         };
 
         await UserPartyStatsBuilder.PopulateAsync(newUser, _context, cancellationToken);

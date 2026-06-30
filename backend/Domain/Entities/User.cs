@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Parlamento.Domain.Entities;
 
@@ -16,6 +17,7 @@ public class User
     public string? Email { get; set; }
 
     [Required]
+    [JsonIgnore]
     public string? Password { get; set; }
 
     [Required]
@@ -25,7 +27,9 @@ public class User
 
     public List<PartyStats> PartyStats { get; set; } = new();
 
+    [JsonIgnore]
     public string? googleIDToken { get; set; }
 
+    [JsonIgnore]
     public string? facebookIDToken { get; set; }
 }

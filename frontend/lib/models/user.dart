@@ -8,7 +8,6 @@ class UserSession {
   String name;
   int userId;
   String email;
-  String password;
   int profilePictureId = 0;
   List<PartyStats> partyStats;
   List<UserVote> userVotes;
@@ -16,20 +15,18 @@ class UserSession {
   ProposalCriteria? proposalCriteria;
 
   UserSession.empty()
-      : name = '',
-        userId = 0,
-        email = '',
-        password = '',
-        profilePictureId = 0,
-        userType = UserType.email,
-        partyStats = [],
-        userVotes = [];
+    : name = '',
+      userId = 0,
+      email = '',
+      profilePictureId = 0,
+      userType = UserType.email,
+      partyStats = [],
+      userVotes = [];
 
   UserSession({
     required this.name,
     required this.userId,
     required this.email,
-    required this.password,
     required this.profilePictureId,
     required this.partyStats,
     required this.userVotes,
@@ -44,28 +41,28 @@ class UserSession {
     final Map<String, dynamic> data = <String, dynamic>{};
     // data['name'] = this.name;
     data['email'] = email;
-    data['password'] = password;
     // data['token'] = this.token;
     return data;
   }
 
-  factory UserSession.fromJson(Map<String, dynamic> json) {
-    UserType userType = UserType.email;
-    if (json['googleIDToken'] != null) {
-      userType = UserType.google;
-    } else if (json['facebookIDToken'] != null) {
-      userType = UserType.facebook;
-    }
+  factory UserSession.fromJson(
+    Map<String, dynamic> json, {
+    UserType userType = UserType.email,
+  }) {
     return UserSession(
-        name: json['userName'],
-        userId: json['id'],
-        email: json['email'],
-        password: json['password'],
-        profilePictureId: json['profilePic'],
-        userType: userType,
-        partyStats: List.generate(json['partyStats'].length,
-            (index) => PartyStats.fromJson(json['partyStats'][index])),
-        userVotes: List.generate(json['votes'].length,
-            (index) => UserVote.fromJson(json['votes'][index])));
+      name: json['userName'],
+      userId: json['id'],
+      email: json['email'],
+      profilePictureId: json['profilePic'],
+      userType: userType,
+      partyStats: List.generate(
+        json['partyStats'].length,
+        (index) => PartyStats.fromJson(json['partyStats'][index]),
+      ),
+      userVotes: List.generate(
+        json['votes'].length,
+        (index) => UserVote.fromJson(json['votes'][index]),
+      ),
+    );
   }
 }

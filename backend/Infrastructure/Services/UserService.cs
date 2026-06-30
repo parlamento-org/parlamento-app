@@ -50,7 +50,7 @@ public class UserService : IUserService
         {
             UserName = request.UserName,
             Email = request.Email,
-            Password = request.Password,
+            Password = PasswordHashingService.HashPassword(request.Password!),
             ProfilePic = request.ProfilePic
         };
 

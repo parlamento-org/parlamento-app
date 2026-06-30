@@ -6,7 +6,6 @@ import 'package:frontend/fetcher/repository.dart';
 import 'package:frontend/models/proposal_criteria.dart';
 import 'package:frontend/models/user.dart';
 import 'dart:convert';
-import 'package:crypto/crypto.dart';
 import 'package:frontend/models/vote_model.dart';
 import 'package:http/http.dart' as http;
 
@@ -20,15 +19,14 @@ class APIRepository implements Repository {
     final url = Uri.parse('$api_url/vote');
 
     try {
-      print(criteria.toJson());
-      final response =
-          await http.put(url, body: jsonEncode(criteria.toJson()), headers: {
-        'Content-Type': 'application/json',
-      });
+      final response = await http.put(
+        url,
+        body: jsonEncode(criteria.toJson()),
+        headers: {'Content-Type': 'application/json'},
+      );
 
       // Check the response status code
       if (response.statusCode == 200) {
-        print('Response body: ${response.body}');
         final jsonResponse = jsonDecode(response.body);
         final proposal = Proposal.fromJson(jsonResponse);
         return proposal;
@@ -42,7 +40,11 @@ class APIRepository implements Repository {
 
   @override
   Future<UserSession> facebookSignInRequest(
-      String idToken, String email, String name, int profilePicId) async {
+    String idToken,
+    String email,
+    String name,
+    int profilePicId,
+  ) async {
     final url = Uri.parse('$api_url/fb-login');
 
     // Create a Map object containing the data to be sent in the request body
@@ -50,22 +52,26 @@ class APIRepository implements Repository {
       "facebookIDToken": idToken,
       "email": email,
       "userName": name,
-      "profilePic": profilePicId
+      "profilePic": profilePicId,
     };
 
     // Convert the data to JSON format
     final jsonData = jsonEncode(data);
 
     try {
-      final response = await http.post(url, body: jsonData, headers: {
-        'Content-Type': 'application/json',
-      });
+      final response = await http.post(
+        url,
+        body: jsonData,
+        headers: {'Content-Type': 'application/json'},
+      );
 
       // Check the response status code
       if (response.statusCode == 200) {
-        print('Response body: ${response.body}');
         final jsonResponse = jsonDecode(response.body);
-        final user = UserSession.fromJson(jsonResponse);
+        final user = UserSession.fromJson(
+          jsonResponse,
+          userType: UserType.facebook,
+        );
         return user;
       } else {
         throw InvalidCredentials();
@@ -77,7 +83,11 @@ class APIRepository implements Repository {
 
   @override
   Future<UserSession> googleSignInRequest(
-      String idToken, String email, String name, int profilePicId) async {
+    String idToken,
+    String email,
+    String name,
+    int profilePicId,
+  ) async {
     final url = Uri.parse('$api_url/google-login');
 
     // Create a Map object containing the data to be sent in the request body
@@ -85,22 +95,26 @@ class APIRepository implements Repository {
       "googleIDToken": idToken,
       "email": email,
       "userName": name,
-      "profilePic": profilePicId
+      "profilePic": profilePicId,
     };
 
     // Convert the data to JSON format
     final jsonData = jsonEncode(data);
 
     try {
-      final response = await http.post(url, body: jsonData, headers: {
-        'Content-Type': 'application/json',
-      });
+      final response = await http.post(
+        url,
+        body: jsonData,
+        headers: {'Content-Type': 'application/json'},
+      );
 
       // Check the response status code
       if (response.statusCode == 200) {
-        print('Response body: ${response.body}');
         final jsonResponse = jsonDecode(response.body);
-        final user = UserSession.fromJson(jsonResponse);
+        final user = UserSession.fromJson(
+          jsonResponse,
+          userType: UserType.google,
+        );
         return user;
       } else {
         throw InvalidCredentials();
@@ -114,10 +128,6 @@ class APIRepository implements Repository {
   Future<UserSession> loginRequest(String email, String password) async {
     final url = Uri.parse('$api_url/user-login');
 
-    //encode password
-    final passwordBytes = utf8.encode(password);
-    final passwordHash = sha256.convert(passwordBytes);
-    final encodedPassword = passwordHash.toString();
     var identifier = 'userName';
     //determine if email or username
     if (email.contains('@')) {
@@ -125,22 +135,20 @@ class APIRepository implements Repository {
     }
 
     // Create a Map object containing the data to be sent in the request body
-    final Map<String, dynamic> data = {
-      identifier: email,
-      "password": encodedPassword
-    };
+    final Map<String, dynamic> data = {identifier: email, "password": password};
 
     // Convert the data to JSON format
     final jsonData = jsonEncode(data);
 
     try {
-      final response = await http.post(url, body: jsonData, headers: {
-        'Content-Type': 'application/json',
-      });
+      final response = await http.post(
+        url,
+        body: jsonData,
+        headers: {'Content-Type': 'application/json'},
+      );
 
       // Check the response status code
       if (response.statusCode == 200) {
-        print('Response body: ${response.body}');
         final jsonResponse = jsonDecode(response.body);
         final user = UserSession.fromJson(jsonResponse);
         return user;
@@ -154,34 +162,33 @@ class APIRepository implements Repository {
 
   @override
   Future<bool> registerRequest(
-      String email, String userName, String password, int profilePicId) async {
+    String email,
+    String userName,
+    String password,
+    int profilePicId,
+  ) async {
     final url = Uri.parse('$api_url/user');
-
-    //encode password LATER
-    final passwordBytes = utf8.encode(password);
-    final passwordHash = sha256.convert(passwordBytes);
-    final encodedPassword = passwordHash.toString();
 
     // Create a Map object containing the data to be sent in the request body
     final Map<String, dynamic> data = {
       "email": email,
       "userName": userName,
-      "password": encodedPassword,
-      "profilePic": profilePicId
+      "password": password,
+      "profilePic": profilePicId,
     };
 
     // Convert the data to JSON format
     final jsonData = jsonEncode(data);
 
     try {
-      final response = await http.post(url, body: jsonData, headers: {
-        'Content-Type': 'application/json',
-      });
+      final response = await http.post(
+        url,
+        body: jsonData,
+        headers: {'Content-Type': 'application/json'},
+      );
 
       // Check the response status code
       if (response.statusCode == 200) {
-        print('Post request successful!');
-        print('Response body: ${response.body}');
         return true;
       } else if (response.statusCode == 401) {
         throw EmailHasAccount();
@@ -205,14 +212,14 @@ class APIRepository implements Repository {
     final jsonData = jsonEncode(data);
 
     try {
-      final response = await http.post(url, body: jsonData, headers: {
-        'Content-Type': 'application/json',
-      });
+      final response = await http.post(
+        url,
+        body: jsonData,
+        headers: {'Content-Type': 'application/json'},
+      );
 
       // Check the response status code
       if (response.statusCode == 200) {
-        print('Post request successful!');
-        print('Response body: ${response.body}');
         return;
       } else {
         throw Exception('Failed to cast vote');
