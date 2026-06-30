@@ -88,10 +88,14 @@ class MainPageState extends State<MainPage> {
             ),
             icon: Icon(
               Icons.speaker,
-              color: baseTheme.colorScheme.primary.withOpacity(0.66),
+              color: baseTheme.colorScheme.primary.withValues(
+                alpha: fadedPrimaryOpacity,
+              ),
             ),
             label: 'Partidos',
-            backgroundColor: baseTheme.colorScheme.primary.withOpacity(0.66),
+            backgroundColor: baseTheme.colorScheme.primary.withValues(
+              alpha: fadedPrimaryOpacity,
+            ),
           ),
           BottomNavigationBarItem(
             activeIcon: Icon(
@@ -102,10 +106,14 @@ class MainPageState extends State<MainPage> {
             ),
             icon: Icon(
               Icons.how_to_vote,
-              color: baseTheme.colorScheme.primary.withOpacity(0.66),
+              color: baseTheme.colorScheme.primary.withValues(
+                alpha: fadedPrimaryOpacity,
+              ),
             ),
             label: 'Vota',
-            backgroundColor: baseTheme.colorScheme.primary.withOpacity(0.66),
+            backgroundColor: baseTheme.colorScheme.primary.withValues(
+              alpha: fadedPrimaryOpacity,
+            ),
           ),
           BottomNavigationBarItem(
             activeIcon: Icon(
@@ -116,10 +124,14 @@ class MainPageState extends State<MainPage> {
             ),
             icon: Icon(
               Icons.check_box,
-              color: baseTheme.colorScheme.primary.withOpacity(0.66),
+              color: baseTheme.colorScheme.primary.withValues(
+                alpha: fadedPrimaryOpacity,
+              ),
             ),
             label: 'Histórico',
-            backgroundColor: baseTheme.colorScheme.primary.withOpacity(0.66),
+            backgroundColor: baseTheme.colorScheme.primary.withValues(
+              alpha: fadedPrimaryOpacity,
+            ),
           ),
         ],
         onTap: (index) {

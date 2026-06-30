@@ -167,7 +167,7 @@ class ProposalResult extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.65),
+            color: Colors.white.withValues(alpha: selectedResultOpacity),
             borderRadius: BorderRadius.circular(18.0),
             border: Border.all(color: Colors.white, width: 2.0),
           ),

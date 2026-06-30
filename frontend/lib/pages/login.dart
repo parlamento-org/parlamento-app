@@ -230,10 +230,10 @@ class _LoginPageState extends State<LoginPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // google button
-                GestureDetector(
-                  onTap: () => handleLogIn(LoginType.google),
-                  child: Image.asset(
+                IconButton(
+                  tooltip: 'Google',
+                  onPressed: () => handleLogIn(LoginType.google),
+                  icon: Image.asset(
                     'lib/images/google.png',
                     width: 50,
                     height: 50,
@@ -241,10 +241,10 @@ class _LoginPageState extends State<LoginPage> {
                 ),
 
                 const SizedBox(width: 25),
-                // apple button
-                GestureDetector(
-                  onTap: () => handleLogIn(LoginType.facebook),
-                  child: Image.asset(
+                IconButton(
+                  tooltip: 'Facebook',
+                  onPressed: () => handleLogIn(LoginType.facebook),
+                  icon: Image.asset(
                     'lib/images/facebook.png',
                     width: 45,
                     height: 45,
