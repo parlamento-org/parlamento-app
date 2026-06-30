@@ -1,10 +1,10 @@
 import 'package:frontend/models/political_party.dart';
 
 class PartyStats {
-  PoliticalParty politicalParty;
-  double partyAffectionScore;
-  int totalAmountOfProposalsVotedOn;
-  double totalAffectionPoints;
+  final PoliticalParty politicalParty;
+  final double partyAffectionScore;
+  final int totalAmountOfProposalsVotedOn;
+  final double totalAffectionPoints;
 
   PartyStats({
     required this.politicalParty,

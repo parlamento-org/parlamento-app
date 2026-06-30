@@ -27,28 +27,23 @@ class UserController {
   }
 
   Future<UserSession> facebookSignIn() async {
-    try {
-      final loginResult = await FacebookAuth.instance.login();
-      final accessToken = loginResult.accessToken;
-      if (loginResult.status != LoginStatus.success ||
-          accessToken == null ||
-          accessToken.isExpired) {
-        throw InvalidCredentials();
-      }
-
-      final userData = await FacebookAuth.instance.getUserData();
-
-      const profilePic = 0;
-      final user = await _repository.facebookSignInRequest(
-        accessToken.token,
-        userData['email'],
-        userData['name'],
-        profilePic,
-      );
-      return user;
-    } catch (error) {
-      rethrow;
+    final loginResult = await FacebookAuth.instance.login();
+    final accessToken = loginResult.accessToken;
+    if (loginResult.status != LoginStatus.success ||
+        accessToken == null ||
+        accessToken.isExpired) {
+      throw InvalidCredentials();
     }
+
+    final userData = await FacebookAuth.instance.getUserData();
+
+    const profilePic = 0;
+    return _repository.facebookSignInRequest(
+      accessToken.token,
+      userData['email'],
+      userData['name'],
+      profilePic,
+    );
   }
 
   Future<UserSession> googleSignIn() async {
@@ -83,13 +78,7 @@ class UserController {
   }
 
   Future<UserSession> login(String email, String password) async {
-    try {
-      final user = await _repository.loginRequest(email, password);
-
-      return user;
-    } catch (e) {
-      rethrow;
-    }
+    return _repository.loginRequest(email, password);
   }
 
   Future<bool> register(
@@ -98,17 +87,6 @@ class UserController {
     String password,
     int profilePicID,
   ) async {
-    try {
-      final registerSucess = await _repository.registerRequest(
-        email,
-        userName,
-        password,
-        profilePicID,
-      );
-
-      return registerSucess;
-    } catch (e) {
-      rethrow;
-    }
+    return _repository.registerRequest(email, userName, password, profilePicID);
   }
 }

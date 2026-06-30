@@ -41,33 +41,24 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  static final TextEditingController usernameController =
-      TextEditingController();
+  final TextEditingController usernameController = TextEditingController();
 
-  static final TextEditingController passwordController =
-      TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  static final FocusNode usernameFocus = FocusNode();
-  static final FocusNode passwordFocus = FocusNode();
+  final FocusNode usernameFocus = FocusNode();
+  final FocusNode passwordFocus = FocusNode();
 
   bool _isLoggingIn = false;
 
-  final MyTextField _usernameTextField = MyTextField(
-    hintText: 'Username',
-    obscureText: false,
-    validateInput: validateUsername,
-    focusNode: usernameFocus,
-    controller: usernameController,
-  );
-  final MyTextField _passwordTextField = MyTextField(
-    hintText: 'Password',
-    obscureText: true,
-    validateInput: validatePassword,
-    focusNode: passwordFocus,
-    controller: passwordController,
-  );
-  // sign user in method
+  @override
+  void dispose() {
+    usernameController.dispose();
+    passwordController.dispose();
+    usernameFocus.dispose();
+    passwordFocus.dispose();
+    super.dispose();
+  }
 
   Future<void> handleLogIn(LoginType loginType) async {
     if (loginType == LoginType.email && !_formKey.currentState!.validate()) {
@@ -163,12 +154,24 @@ class _LoginPageState extends State<LoginPage> {
             const SizedBox(height: 25),
 
             // username textfield
-            _usernameTextField,
+            MyTextField(
+              hintText: 'Username',
+              obscureText: false,
+              validateInput: validateUsername,
+              focusNode: usernameFocus,
+              controller: usernameController,
+            ),
 
             const SizedBox(height: 10),
 
             // password textfield
-            _passwordTextField,
+            MyTextField(
+              hintText: 'Password',
+              obscureText: true,
+              validateInput: validatePassword,
+              focusNode: passwordFocus,
+              controller: passwordController,
+            ),
 
             const SizedBox(height: 10),
 

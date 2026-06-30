@@ -13,15 +13,20 @@ class VotingSection extends StatefulWidget {
 
 class _MyVotingSectionState extends State<VotingSection> {
   void displayProposalResults(
-      Proposal proposal, VoteOrientation userVoteOrientation) {
+    Proposal proposal,
+    VoteOrientation userVoteOrientation,
+  ) {
     setState(() {
       _proposalResult = ProposalResult(
-          userVoteOrientation: userVoteOrientation,
-          proposal: proposal,
-          nextStep: proposal.votingResultInSpeciality == null
-              ? displayVotePage
-              : displaySpecialityVotePage,
-          votingStage: VotingStage.generality);
+        userVoteOrientation: userVoteOrientation,
+        proposal: proposal,
+        nextStep:
+            proposal.votingResultInSpeciality == null
+                ? displayVotePage
+                : () =>
+                    displaySpecialityVotePage(proposal, userVoteOrientation),
+        votingStage: VotingStage.generality,
+      );
       _displayVotePage = false;
     });
   }
@@ -33,22 +38,23 @@ class _MyVotingSectionState extends State<VotingSection> {
   ProposalResult? _proposalResult;
 
   void displaySpecialityVotePage(
-      Proposal proposal, VoteOrientation userVoteOrientation) {
+    Proposal proposal,
+    VoteOrientation userVoteOrientation,
+  ) {
     setState(() {
       _proposalResult = ProposalResult(
-          userVoteOrientation: userVoteOrientation,
-          proposal: proposal,
-          nextStep: displayVotePage,
-          votingStage: VotingStage.generality);
+        userVoteOrientation: userVoteOrientation,
+        proposal: proposal,
+        nextStep: displayVotePage,
+        votingStage: VotingStage.speciality,
+      );
       _displayVotePage = false;
     });
   }
 
   void displayVotePage() {
     setState(() {
-      _votePage = VotePage(
-        displayProposalResults: displayProposalResults,
-      );
+      _votePage = VotePage(displayProposalResults: displayProposalResults);
       _displayVotePage = true;
     });
   }

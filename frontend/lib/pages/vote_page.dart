@@ -7,9 +7,12 @@ import 'package:frontend/models/vote_model.dart';
 import 'package:frontend/themes/base_theme.dart';
 import 'package:provider/provider.dart';
 
+typedef ProposalVoteCallback =
+    void Function(Proposal proposal, VoteOrientation voteOrientation);
+
 class VotePage extends StatefulWidget {
   const VotePage({super.key, required this.displayProposalResults});
-  final Function(Proposal, VoteOrientation) displayProposalResults;
+  final ProposalVoteCallback displayProposalResults;
 
   @override
   State<VotePage> createState() => _VotePageState();
@@ -36,7 +39,7 @@ class _VotePageState extends State<VotePage> {
       );
       await voteController.castUserVote(userVote);
       if (!mounted) return;
-      if (votingOrientation != VoteOrientation.NotInterested) {
+      if (votingOrientation != VoteOrientation.notInterested) {
         widget.displayProposalResults(proposal!, votingOrientation);
       } else {
         getRandomProposal();
@@ -200,21 +203,21 @@ class _VotePageState extends State<VotePage> {
                   IconButton(
                     iconSize: 100,
                     onPressed: () {
-                      castUserVote(VoteOrientation.InFavor);
+                      castUserVote(VoteOrientation.inFavor);
                     },
                     icon: Image.asset('lib/images/voto_favor.png'),
                   ),
                   IconButton(
                     iconSize: 100,
                     onPressed: () {
-                      castUserVote(VoteOrientation.Against);
+                      castUserVote(VoteOrientation.against);
                     },
                     icon: Image.asset('lib/images/voto_contra.png'),
                   ),
                   IconButton(
                     iconSize: 100,
                     onPressed: () {
-                      castUserVote(VoteOrientation.Abstaining);
+                      castUserVote(VoteOrientation.abstaining);
                     },
                     icon: Image.asset('lib/images/voto_abster.png'),
                   ),
@@ -228,7 +231,7 @@ class _VotePageState extends State<VotePage> {
             child: Center(
               child: TextButton(
                 style: buttonStyle,
-                onPressed: () => castUserVote(VoteOrientation.NotInterested),
+                onPressed: () => castUserVote(VoteOrientation.notInterested),
                 child: const Padding(
                   padding: EdgeInsets.only(
                     left: 50,

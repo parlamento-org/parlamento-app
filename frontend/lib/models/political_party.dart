@@ -1,7 +1,7 @@
 class PoliticalParty {
-  String partyAcronym;
-  String partyName;
-  String logoUrl;
+  final String partyAcronym;
+  final String partyName;
+  final String logoUrl;
 
   PoliticalParty({
     required this.partyAcronym,

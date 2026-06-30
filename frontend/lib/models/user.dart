@@ -5,14 +5,14 @@ import 'package:frontend/models/vote_model.dart';
 enum UserType { google, facebook, email }
 
 class UserSession {
-  String name;
-  int userId;
-  String email;
-  int profilePictureId = 0;
-  List<PartyStats> partyStats;
-  List<UserVote> userVotes;
-  UserType userType;
-  ProposalCriteria? proposalCriteria;
+  final String name;
+  final int userId;
+  final String email;
+  final int profilePictureId;
+  final List<PartyStats> partyStats;
+  final List<UserVote> userVotes;
+  final UserType userType;
+  final ProposalCriteria? proposalCriteria;
 
   UserSession.empty()
     : name = '',
@@ -21,7 +21,8 @@ class UserSession {
       profilePictureId = 0,
       userType = UserType.email,
       partyStats = [],
-      userVotes = [];
+      userVotes = [],
+      proposalCriteria = null;
 
   UserSession({
     required this.name,
@@ -31,9 +32,10 @@ class UserSession {
     required this.partyStats,
     required this.userVotes,
     required this.userType,
-  }) {
-    proposalCriteria = ProposalCriteria(userID: userId, lowestScoreAllowed: 0);
-  }
+  }) : proposalCriteria = ProposalCriteria(
+         userID: userId,
+         lowestScoreAllowed: 0,
+       );
 
   bool get isLoggedIn => userId != 0;
 
