@@ -1,5 +1,4 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:frontend/constants/user_session.dart';
 import 'package:frontend/exceptions/google_sign_in_error.dart';
 import 'package:frontend/fetcher/api_repository.dart';
 import 'package:frontend/fetcher/repository.dart';
@@ -17,14 +16,13 @@ class UserController {
     );
   }
 
-  Future<void> logout() async {
-    if (globalUserSession.userType == UserType.google) {
+  Future<void> logout(UserType userType) async {
+    if (userType == UserType.google) {
       await _initializeGoogleSignIn();
       await GoogleSignIn.instance.signOut();
-    } else if (globalUserSession.userType == UserType.facebook) {
+    } else if (userType == UserType.facebook) {
       await FacebookAuth.instance.logOut();
     }
-    globalUserSession = UserSession.empty();
   }
 
   Future<UserSession> facebookSignIn() async {
