@@ -1,7 +1,9 @@
-using backend.Models;
-
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+
+using backend.Extensions;
+
+using Parlamento.Application.Abstractions;
+using Parlamento.Application.Auth;
 
 namespace backend.Controllers;
 
@@ -9,37 +11,17 @@ namespace backend.Controllers;
 [Route("/fb-login")]
 public class FacebookLoginController : ControllerBase
 {
-    private readonly DatabaseContext _context;
+    private readonly IAuthService _authService;
 
-    public FacebookLoginController(DatabaseContext context)
+    public FacebookLoginController(IAuthService authService)
     {
-        this._context = context;
-
+        _authService = authService;
     }
 
     [HttpPost(Name = "ValidateFacebookUser")]
-    public IActionResult ValidateFacebookUser(FacebookLoginValidateDTO dto)
+    public async Task<IActionResult> ValidateFacebookUser(FacebookLoginRequest request, CancellationToken cancellationToken)
     {
-
-        var user = _context.Users?.Include("Votes").Include("PartyStats.PoliticalParty").FirstOrDefault(x => x.facebookIDToken == dto.facebookIDToken);
-        if (user == null)
-        {
-            //add the new user to the database
-            var newUser = new User
-            {
-                Email = dto.email,
-                facebookIDToken = dto.facebookIDToken,
-                ProfilePic = dto.profilePic,
-                UserName = dto.userName,
-                Password = "facebook"
-            };
-            _context.Users?.Add(newUser);
-            _context.SaveChanges();
-            return Ok(newUser);
-        }
-
-
-        return Ok(user);
+        var result = await _authService.AuthenticateFacebookAsync(request, cancellationToken);
+        return this.ToActionResult(result);
     }
-
 }

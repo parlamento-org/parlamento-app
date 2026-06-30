@@ -2,6 +2,17 @@
 
 A new Flutter project.
 
+## Client configuration
+
+The `.env` file is bundled into the Flutter app as a runtime configuration
+asset. Values in this file, including OAuth client IDs, Facebook app IDs, and
+backend URLs, are public client-side configuration and must not be treated as
+secrets.
+
+Restrict provider API keys and OAuth clients in the provider consoles by
+package name, bundle identifier, SHA fingerprints, and allowed domains. Server
+secrets must live only in backend configuration.
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.

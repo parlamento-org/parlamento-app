@@ -1,19 +1,21 @@
 using System;
 using System.Linq;
 
-using backend.Models;
-
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+
+using Parlamento.Domain.Entities;
+using Parlamento.Infrastructure.Persistence;
 
 namespace integration_tests;
 
 public class TestingWebAppFactory : WebApplicationFactory<Program>
 {
+    private readonly string _databaseName = $"InMemoryDatabaseTest-{Guid.NewGuid()}";
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureServices(services =>
@@ -27,7 +29,7 @@ public class TestingWebAppFactory : WebApplicationFactory<Program>
 
             services.AddDbContext<DatabaseContext>(options =>
             {
-                options.UseInMemoryDatabase("InMemoryDatabaseTest");
+                options.UseInMemoryDatabase(_databaseName);
             });
 
             var sp = services.BuildServiceProvider();

@@ -11,18 +11,18 @@ jobs:
         working-directory: backend
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Setup .NET Core SDK
-        uses: actions/setup-dotnet@v3
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "6.0.403"
+          dotnet-version: "8.0.x"
 
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+          key: ${{ runner.os }}-nuget-${{ hashFiles('backend/global.json', 'backend/**/*.csproj') }}
           restore-keys: |
             ${{ runner.os }}-nuget
 
@@ -40,18 +40,18 @@ jobs:
         working-directory: backend
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Setup .NET Core SDK
-        uses: actions/setup-dotnet@v3
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "6.0.403"
+          dotnet-version: "8.0.x"
 
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+          key: ${{ runner.os }}-nuget-${{ hashFiles('backend/global.json', 'backend/**/*.csproj') }}
           restore-keys: |
             ${{ runner.os }}-nuget
 

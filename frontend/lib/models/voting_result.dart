@@ -1,8 +1,8 @@
 import 'package:frontend/models/voting_block.dart';
 
 class VotingResult {
-  bool isUnanimous;
-  List<VotingBlock> votingBlocks;
+  final bool isUnanimous;
+  final List<VotingBlock> votingBlocks;
 
   VotingResult({required this.isUnanimous, required this.votingBlocks});
 
@@ -10,13 +10,16 @@ class VotingResult {
     int numberOfVotingBlocks = json['votingBlocks'].length;
 
     return VotingResult(
-        isUnanimous: json['isUninamous'],
-        votingBlocks: List.generate(numberOfVotingBlocks,
-            (index) => VotingBlock.fromJson(json['votingBlocks'][index])));
+      isUnanimous: json['isUninamous'],
+      votingBlocks: List.generate(
+        numberOfVotingBlocks,
+        (index) => VotingBlock.fromJson(json['votingBlocks'][index]),
+      ),
+    );
   }
 
   Map<String, dynamic> toJson() => {
-        'isUninamous': isUnanimous,
-        'votingBlocks': votingBlocks,
-      };
+    'isUninamous': isUnanimous,
+    'votingBlocks': votingBlocks,
+  };
 }

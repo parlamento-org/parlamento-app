@@ -1,20 +1,21 @@
 class ProposalCriteria {
-  int userID;
+  final int userID;
 
-  List<String>? legislaturas;
+  final List<String>? legislaturas;
 
-  String? oldestVoteDate;
+  final String? oldestVoteDate;
 
-  String? newestVoteDate;
+  final String? newestVoteDate;
 
-  int lowestScoreAllowed;
+  final int lowestScoreAllowed;
 
-  ProposalCriteria(
-      {required this.userID,
-      this.legislaturas,
-      this.oldestVoteDate,
-      this.newestVoteDate,
-      required this.lowestScoreAllowed});
+  ProposalCriteria({
+    required this.userID,
+    this.legislaturas,
+    this.oldestVoteDate,
+    this.newestVoteDate,
+    required this.lowestScoreAllowed,
+  });
 
   factory ProposalCriteria.fromJson(Map<String, dynamic> json) {
     return ProposalCriteria(
@@ -27,10 +28,10 @@ class ProposalCriteria {
   }
 
   Map<String, dynamic> toJson() => {
-        'userID': userID,
-        'legislaturas': legislaturas,
-        'oldestVoteDate': oldestVoteDate,
-        'newestVoteDate': newestVoteDate,
-        'lowestScoreAllowed': lowestScoreAllowed,
-      };
+    'userID': userID,
+    'legislaturas': legislaturas,
+    'oldestVoteDate': oldestVoteDate,
+    'newestVoteDate': newestVoteDate,
+    'lowestScoreAllowed': lowestScoreAllowed,
+  };
 }

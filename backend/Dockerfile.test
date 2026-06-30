@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:7.0.305-alpine3.18
+FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine
 
 WORKDIR /usr/src/app
 
@@ -7,12 +7,19 @@ RUN dotnet --info
 COPY backend.sln .
 
 # Copy csproj and restore as distinct layers
+COPY global.json .
+COPY Domain/Parlamento.Domain.csproj ./Domain/Parlamento.Domain.csproj
+COPY Application/Parlamento.Application.csproj ./Application/Parlamento.Application.csproj
+COPY Infrastructure/Parlamento.Infrastructure.csproj ./Infrastructure/Parlamento.Infrastructure.csproj
 COPY test/test.csproj ./test/test.csproj
 COPY integration-tests/integration-tests.csproj ./integration-tests/integration-tests.csproj
 COPY src/backend.csproj ./src/backend.csproj
 
 RUN dotnet restore
 
+COPY Domain Domain
+COPY Application Application
+COPY Infrastructure Infrastructure
 COPY src src
 COPY test test
 COPY integration-tests integration-tests

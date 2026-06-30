@@ -1,10 +1,14 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:frontend/constants/user_session.dart';
-import 'package:frontend/controllers/user_controller.dart';
-import 'package:frontend/models/user.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:frontend/controllers/auth_controller.dart';
 import 'package:frontend/pages/main_page.dart';
 import 'package:frontend/pages/register_page.dart';
+import 'package:provider/provider.dart';
 
+import '../components/google_web_sign_in_button.dart';
 import '../components/my_button.dart';
 import '../components/my_text_field.dart';
 import '../themes/base_theme.dart';
@@ -12,7 +16,8 @@ import '../themes/base_theme.dart';
 /// Validates the username input.
 String? validateUsername(String? username) {
   RegExp validEmail = RegExp(
-      r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
+    r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
+  );
   if (username == null || username.isEmpty) {
     return 'Username is required';
   } else if (username.contains('@') && !validEmail.hasMatch(username)) {
@@ -41,72 +46,144 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final UserController _userController = UserController();
-  static final TextEditingController usernameController =
-      TextEditingController();
+  final TextEditingController usernameController = TextEditingController();
 
-  static final TextEditingController passwordController =
-      TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  static final FocusNode usernameFocus = FocusNode();
-  static final FocusNode passwordFocus = FocusNode();
+  final FocusNode usernameFocus = FocusNode();
+  final FocusNode passwordFocus = FocusNode();
 
   bool _isLoggingIn = false;
+  StreamSubscription<GoogleSignInAuthenticationEvent>?
+  _googleAuthenticationSubscription;
 
-  final MyTextField _usernameTextField = MyTextField(
-    hintText: 'Username',
-    obscureText: false,
-    validateInput: validateUsername,
-    focusNode: usernameFocus,
-    controller: usernameController,
-  );
-  final MyTextField _passwordTextField = MyTextField(
-    hintText: 'Password',
-    obscureText: true,
-    validateInput: validatePassword,
-    focusNode: passwordFocus,
-    controller: passwordController,
-  );
-  // sign user in method
+  @override
+  void initState() {
+    super.initState();
+    if (kIsWeb) {
+      _googleAuthenticationSubscription = GoogleSignIn
+          .instance
+          .authenticationEvents
+          .listen(
+            _handleGoogleAuthenticationEvent,
+            onError: _handleGoogleAuthenticationError,
+          );
+    }
+  }
 
-  void handleLogIn(LoginType loginType, BuildContext context) async {
+  @override
+  void dispose() {
+    _googleAuthenticationSubscription?.cancel();
+    usernameController.dispose();
+    passwordController.dispose();
+    usernameFocus.dispose();
+    passwordFocus.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleGoogleAuthenticationEvent(
+    GoogleSignInAuthenticationEvent event,
+  ) async {
+    if (event is! GoogleSignInAuthenticationEventSignIn) {
+      return;
+    }
+
+    await _completeGoogleSignIn(event.user);
+  }
+
+  void _handleGoogleAuthenticationError(Object error) {
+    if (!mounted) return;
+    setState(() {
+      _isLoggingIn = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(error.toString()),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Future<void> _completeGoogleSignIn(GoogleSignInAccount account) async {
+    if (_isLoggingIn) {
+      return;
+    }
+
     setState(() {
       _isLoggingIn = true;
     });
-    Future<UserSession> signInRequest;
-    switch (loginType) {
-      case LoginType.google:
-        signInRequest = _userController.googleSignIn();
-        break;
-      case LoginType.facebook:
-        signInRequest = _userController.facebookSignIn();
-        break;
-      case LoginType.email:
-        final username = usernameController.text.trim();
-        final password = passwordController.text.trim();
-        signInRequest = _userController.login(username, password);
-        break;
-    }
-    signInRequest.then((userSession) {
+
+    try {
+      await context.read<AuthController>().googleSignInWithAccount(account);
+      if (!mounted) return;
       setState(() {
         _isLoggingIn = false;
       });
-      globalUserSession = userSession;
-      Navigator.of(context)
-          .push(MaterialPageRoute(builder: (context) => const MainPage()));
-    }).catchError((error) {
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (context) => const MainPage()));
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _isLoggingIn = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> handleLogIn(LoginType loginType) async {
+    if (loginType == LoginType.email && !_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isLoggingIn = true;
+    });
+
+    try {
+      final authController = context.read<AuthController>();
+      switch (loginType) {
+        case LoginType.google:
+          await authController.googleSignIn();
+          break;
+        case LoginType.facebook:
+          await authController.facebookSignIn();
+          break;
+        case LoginType.email:
+          final username = usernameController.text.trim();
+          final password = passwordController.text.trim();
+          await authController.login(username, password);
+          break;
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _isLoggingIn = false;
+      });
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (context) => const MainPage()));
+    } catch (error) {
+      if (!mounted) return;
       setState(() {
         _isLoggingIn = false;
       });
 
       usernameController.text = '';
       passwordController.text = '';
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(error.toString()),
-        duration: const Duration(seconds: 2),
-      ));
-    });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   @override
@@ -114,16 +191,18 @@ class _LoginPageState extends State<LoginPage> {
     final MediaQueryData queryData = MediaQuery.of(context);
 
     return Scaffold(
-        backgroundColor: baseTheme.colorScheme.surface,
-        body: SingleChildScrollView(
-            child: _isLoggingIn
+      backgroundColor: baseTheme.colorScheme.surface,
+      body: SingleChildScrollView(
+        child:
+            _isLoggingIn
                 ? Container(
-                    margin: EdgeInsets.only(top: queryData.size.height / 7.5),
-                    alignment: Alignment.center,
-                    child: const CircularProgressIndicator())
-                : Container(
-                    child: buildLoginPage(context),
-                  )));
+                  margin: EdgeInsets.only(top: queryData.size.height / 7.5),
+                  alignment: Alignment.center,
+                  child: const CircularProgressIndicator(),
+                )
+                : Container(child: buildLoginPage(context)),
+      ),
+    );
   }
 
   Widget buildLoginPage(BuildContext context) {
@@ -136,11 +215,7 @@ class _LoginPageState extends State<LoginPage> {
             const SizedBox(height: 50),
 
             // logo
-            Image.asset(
-              'lib/images/logo.png',
-              height: 120,
-              width: 120,
-            ),
+            Image.asset('lib/images/logo.png', height: 120, width: 120),
 
             const SizedBox(height: 30),
 
@@ -156,12 +231,24 @@ class _LoginPageState extends State<LoginPage> {
             const SizedBox(height: 25),
 
             // username textfield
-            _usernameTextField,
+            MyTextField(
+              hintText: 'Username',
+              obscureText: false,
+              validateInput: validateUsername,
+              focusNode: usernameFocus,
+              controller: usernameController,
+            ),
 
             const SizedBox(height: 10),
 
             // password textfield
-            _passwordTextField,
+            MyTextField(
+              hintText: 'Password',
+              obscureText: true,
+              validateInput: validatePassword,
+              focusNode: passwordFocus,
+              controller: passwordController,
+            ),
 
             const SizedBox(height: 10),
 
@@ -183,8 +270,9 @@ class _LoginPageState extends State<LoginPage> {
 
             // sign in button
             MyButton(
-                text: 'Sign In',
-                onTap: () => handleLogIn(LoginType.email, context)),
+              text: 'Sign In',
+              onTap: () => handleLogIn(LoginType.email),
+            ),
 
             const SizedBox(height: 20),
 
@@ -207,10 +295,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   Expanded(
-                    child: Divider(
-                      thickness: 0.5,
-                      color: Colors.grey[400],
-                    ),
+                    child: Divider(thickness: 0.5, color: Colors.grey[400]),
                   ),
                 ],
               ),
@@ -222,21 +307,13 @@ class _LoginPageState extends State<LoginPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // google button
-                GestureDetector(
-                  onTap: () => handleLogIn(LoginType.google, context),
-                  child: Image.asset(
-                    'lib/images/google.png',
-                    width: 50,
-                    height: 50,
-                  ),
-                ),
+                _buildGoogleSignInButton(),
 
                 const SizedBox(width: 25),
-                // apple button
-                GestureDetector(
-                  onTap: () => handleLogIn(LoginType.facebook, context),
-                  child: Image.asset(
+                IconButton(
+                  tooltip: 'Facebook',
+                  onPressed: () => handleLogIn(LoginType.facebook),
+                  icon: Image.asset(
                     'lib/images/facebook.png',
                     width: 45,
                     height: 45,
@@ -264,14 +341,30 @@ class _LoginPageState extends State<LoginPage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => const RegisterPage())),
+                  onPressed:
+                      () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const RegisterPage(),
+                        ),
+                      ),
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildGoogleSignInButton() {
+    if (kIsWeb) {
+      return buildGoogleWebSignInButton();
+    }
+
+    return IconButton(
+      tooltip: 'Google',
+      onPressed: () => handleLogIn(LoginType.google),
+      icon: Image.asset('lib/images/google.png', width: 50, height: 50),
     );
   }
 }

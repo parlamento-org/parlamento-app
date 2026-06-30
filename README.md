@@ -38,7 +38,7 @@ The project also includes tooling for scraping and processing parliamentary prop
 - ASP.NET Core Web API
 - C#
 - Entity Framework Core
-- SQLite
+- PostgreSQL
 
 ## Tooling & Infrastructure
 
@@ -122,6 +122,7 @@ The backend also includes:
 - FluentValidation integration
 - health check endpoints
 - monitoring instrumentation
+- layered separation across `src`, `Application`, `Domain`, and `Infrastructure`
 
 ---
 

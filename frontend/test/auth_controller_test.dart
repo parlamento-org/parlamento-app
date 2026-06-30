@@ -1,0 +1,106 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:frontend/controllers/auth_controller.dart';
+import 'package:frontend/controllers/user_controller.dart';
+import 'package:frontend/fetcher/repository.dart';
+import 'package:frontend/models/proposal.dart';
+import 'package:frontend/models/proposal_criteria.dart';
+import 'package:frontend/models/user.dart';
+import 'package:frontend/models/vote_model.dart';
+
+void main() {
+  group('AuthController', () {
+    test('stores the session and notifies listeners after login', () async {
+      final repository = _FakeRepository(
+        userSession: _userSession(userId: 42, userType: UserType.email),
+      );
+      final controller = AuthController(
+        userController: UserController(repository: repository),
+      );
+      var notifications = 0;
+      controller.addListener(() => notifications++);
+
+      final session = await controller.login('person@example.com', 'password');
+
+      expect(session.userId, 42);
+      expect(controller.session, same(session));
+      expect(controller.isLoggedIn, isTrue);
+      expect(notifications, 1);
+    });
+
+    test('clears the session and notifies listeners on logout', () async {
+      final repository = _FakeRepository(
+        userSession: _userSession(userId: 7, userType: UserType.email),
+      );
+      final controller = AuthController(
+        userController: UserController(repository: repository),
+      );
+      await controller.login('person@example.com', 'password');
+
+      await controller.logout();
+
+      expect(controller.session, isNull);
+      expect(controller.isLoggedIn, isFalse);
+    });
+  });
+}
+
+UserSession _userSession({required int userId, required UserType userType}) {
+  return UserSession(
+    name: 'Test User',
+    userId: userId,
+    email: 'person@example.com',
+    profilePictureId: 0,
+    partyStats: const [],
+    userVotes: const [],
+    userType: userType,
+  );
+}
+
+class _FakeRepository implements Repository {
+  _FakeRepository({required this.userSession});
+
+  final UserSession userSession;
+
+  @override
+  Future<void> castUserVote(UserVote userVote) async {}
+
+  @override
+  Future<UserSession> facebookSignInRequest(
+    String accessToken,
+    String email,
+    String name,
+    int profilePicId,
+  ) async {
+    return userSession;
+  }
+
+  @override
+  Future<Proposal> getProposal(ProposalCriteria proposalCriteria) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<UserSession> googleSignInRequest(
+    String idToken,
+    String email,
+    String name,
+    int profilePicId,
+  ) async {
+    return userSession;
+  }
+
+  @override
+  Future<UserSession> loginRequest(String email, String password) async {
+    return userSession;
+  }
+
+  @override
+  Future<bool> registerRequest(
+    String email,
+    String userName,
+    String password,
+    int profilePicId,
+  ) async {
+    return true;
+  }
+}

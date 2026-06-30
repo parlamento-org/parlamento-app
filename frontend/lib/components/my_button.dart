@@ -3,31 +3,29 @@ import 'package:flutter/material.dart';
 import '../themes/base_theme.dart';
 
 class MyButton extends StatelessWidget {
-  final Function()? onTap;
+  final VoidCallback? onTap;
   final String text;
 
   const MyButton({super.key, required this.onTap, required this.text});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(5),
-        margin: const EdgeInsets.symmetric(horizontal: 25),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 25),
+      child: SizedBox(
         height: 40,
-        decoration: BoxDecoration(
-          color: baseTheme.colorScheme.primary,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Center(
+        width: double.infinity,
+        child: FilledButton(
+          onPressed: onTap,
+          style: FilledButton.styleFrom(
+            backgroundColor: baseTheme.colorScheme.primary,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
           child: Text(
             text,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
         ),
       ),

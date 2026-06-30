@@ -2,10 +2,20 @@ import 'package:frontend/models/political_party.dart';
 import 'package:frontend/models/voting_result.dart';
 
 enum VotingOutcome {
-  RejectedInGenerality,
-  RejectedInSpeciality,
-  ApprovedInGenerality,
-  ApprovedInSpeciality
+  rejectedInGenerality('RejectedInGenerality'),
+  rejectedInSpeciality('RejectedInSpeciality'),
+  approvedInGenerality('ApprovedInGenerality'),
+  approvedInSpeciality('ApprovedInSpeciality');
+
+  const VotingOutcome(this.wireName);
+
+  final String wireName;
+
+  static VotingOutcome fromWireName(String value) {
+    return VotingOutcome.values.firstWhere(
+      (outcome) => outcome.wireName == value,
+    );
+  }
 }
 
 String parseCensoredText(String censoredText) {
@@ -17,16 +27,16 @@ String parseCensoredText(String censoredText) {
 }
 
 class Proposal {
-  String title;
-  int id;
-  String legislatura;
-  String voteDate;
-  PoliticalParty proposingParty;
-  String fullTextUrl;
-  String censoredText;
-  VotingOutcome votingResult;
-  VotingResult votingResultInGenerality;
-  VotingResult? votingResultInSpeciality;
+  final String title;
+  final int id;
+  final String legislatura;
+  final String voteDate;
+  final PoliticalParty proposingParty;
+  final String fullTextUrl;
+  final String censoredText;
+  final VotingOutcome votingResult;
+  final VotingResult votingResultInGenerality;
+  final VotingResult? votingResultInSpeciality;
 
   Proposal({
     required this.title,
@@ -50,13 +60,14 @@ class Proposal {
       proposingParty: PoliticalParty.fromJson(json['proposingParty']),
       fullTextUrl: json['fullProposalTextLink'],
       censoredText: parseCensoredText(json['proposalTextHTML']),
-      votingResult: VotingOutcome.values.firstWhere((element) =>
-          element.toString() == 'VotingOutcome.' + json['proposalResult']),
-      votingResultInGenerality:
-          VotingResult.fromJson(json['votingResultGenerality']),
-      votingResultInSpeciality: json['votingResultSpeciality'] == null
-          ? null
-          : VotingResult.fromJson(json['votingResultSpeciality']),
+      votingResult: VotingOutcome.fromWireName(json['proposalResult']),
+      votingResultInGenerality: VotingResult.fromJson(
+        json['votingResultGenerality'],
+      ),
+      votingResultInSpeciality:
+          json['votingResultSpeciality'] == null
+              ? null
+              : VotingResult.fromJson(json['votingResultSpeciality']),
     );
   }
 }

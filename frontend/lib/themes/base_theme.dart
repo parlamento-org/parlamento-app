@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 final baseTheme = ThemeData(
   scaffoldBackgroundColor: const Color(0x00fff5f5),
-  dialogBackgroundColor: const Color(0x00fff5f5),
+  dialogTheme: const DialogThemeData(backgroundColor: Color(0x00fff5f5)),
   colorScheme: ColorScheme.fromSwatch().copyWith(
     primary: const Color(0xffb62f0d),
     secondary: const Color(0xffB6830D),
@@ -11,7 +11,7 @@ final baseTheme = ThemeData(
   textTheme: Typography.blackCupertino.apply(
     bodyColor: const Color.fromARGB(255, 72, 72, 72),
     displayColor: const Color(0xffb62f0d),
-    fontFamily: 'Montseratt',
+    fontFamily: 'Montserrat',
     fontSizeFactor: 1.0,
   ),
   iconTheme: const IconThemeData(color: Color.fromARGB(255, 255, 255, 255)),
@@ -19,16 +19,17 @@ final baseTheme = ThemeData(
 
 const BorderRadius dialogRadius = BorderRadius.all(Radius.circular(4));
 const approvedGreenBold = Color(0xff14C044);
-var approvedGreenNormal = const Color(0xff2ABE4B).withOpacity(0.48);
+const approvedGreenNormal = Color.fromRGBO(42, 190, 75, 0.48);
 const rejectedRedBold = Color(0xffEC1C24);
 const rejectedRedNormal = Color(0xffFAAEAE);
+const fadedPrimaryOpacity = 0.66;
+const selectedResultOpacity = 0.65;
 
 ButtonStyle buttonStyle = ButtonStyle(
-  backgroundColor:
-      WidgetStateProperty.all<Color>(baseTheme.colorScheme.primary),
+  backgroundColor: WidgetStateProperty.all<Color>(
+    baseTheme.colorScheme.primary,
+  ),
   shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-    RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(10.0),
-    ),
+    RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
   ),
 );

@@ -1,7 +1,9 @@
-using backend.Models;
-
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+
+using backend.Extensions;
+
+using Parlamento.Application.Abstractions;
+using Parlamento.Application.Users;
 
 namespace backend.Controllers;
 
@@ -9,53 +11,17 @@ namespace backend.Controllers;
 [Route("/user-login")]
 public class LoginController : ControllerBase
 {
+    private readonly IAuthService _authService;
 
-    private readonly DatabaseContext _context;
-
-
-    public LoginController(DatabaseContext context)
+    public LoginController(IAuthService authService)
     {
-        this._context = context;
-
+        _authService = authService;
     }
-
 
     [HttpPost(Name = "ValidateUser")]
-    public IActionResult Validate(UserValidateDTO dto)
+    public async Task<IActionResult> Validate(UserLoginRequest request, CancellationToken cancellationToken)
     {
-        User? user;
-        if (dto.Email == null)
-        {
-            user = _context.Users?.Include("Votes").Include("PartyStats.PoliticalParty").FirstOrDefault(x => x.UserName == dto.userName);
-
-        }
-        else
-        {
-            user = _context.Users?.Include("Votes").Include("PartyStats.PoliticalParty").FirstOrDefault(x => x.Email == dto.Email);
-        }
-
-        if (user == null)
-        {
-            return StatusCode(401, "This User does not exist!");
-        }
-
-        if (user.Password != dto.Password)
-        {
-            return StatusCode(401, "Invalid Password!");
-        }
-
-        return Ok(user);
+        var result = await _authService.LoginAsync(request, cancellationToken);
+        return this.ToActionResult(result);
     }
-
-
-
-
-
-
-
-
-
-
-
-
 }

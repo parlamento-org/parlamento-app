@@ -5,9 +5,10 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
-using backend.Models;
-
 using Newtonsoft.Json;
+
+using Parlamento.Domain.Entities;
+using Parlamento.Infrastructure.Persistence;
 
 using Xunit;
 using Xunit.Extensions.Ordering;
