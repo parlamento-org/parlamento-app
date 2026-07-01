@@ -8,7 +8,7 @@ namespace Parlamento.Infrastructure.Services.Documents;
 
 public partial class DocumentModelRedactor : IDocumentModelRedactor
 {
-    public string PolicyVersion => "party-and-deputy-names-structured-v1";
+    public string PolicyVersion => "party-and-deputy-names-structured-v2-no-government";
 
     public ParliamentDocumentModel Redact(
         ParliamentDocumentModel document,

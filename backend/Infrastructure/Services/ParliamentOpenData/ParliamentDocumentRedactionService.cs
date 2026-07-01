@@ -222,6 +222,7 @@ public partial class ParliamentDocumentRedactionService : IParliamentDocumentRed
 
         return terms
             .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Where(x => !IsGovernmentTerm(x))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
     }

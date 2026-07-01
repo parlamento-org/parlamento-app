@@ -422,8 +422,19 @@ public class ParliamentOpenDataImportServiceTests
             NullLogger<ParliamentBaseInfoImportService>.Instance);
         await baseInfoService.ImportFromFileAsync("XVII", baseInfoPath);
 
+        context.ParliamentRedactionTerms.Add(new ParliamentRedactionTerm
+        {
+            Legislature = "XVII",
+            Term = "Governo",
+            TermKind = "StalePartyName"
+        });
+        await context.SaveChangesAsync();
+
         Assert.DoesNotContain(
-            await context.ParliamentRedactionTerms.Where(x => x.Legislature == "XVII").Select(x => x.Term).ToListAsync(),
+            await context.ParliamentRedactionTerms
+                .Where(x => x.Legislature == "XVII" && x.TermKind != "StalePartyName")
+                .Select(x => x.Term)
+                .ToListAsync(),
             x => string.Equals(x, "Governo", StringComparison.OrdinalIgnoreCase));
 
         var government = await context.PoliticalParties.SingleAsync(x => x.partyAcronym == "Governo");
