@@ -1,10 +1,8 @@
-using System.IO.Compression;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
-using System.Xml.Linq;
+using System.Text.Json.Serialization;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -20,15 +18,24 @@ public partial class ParliamentDocumentRedactionService : IParliamentDocumentRed
 {
     private readonly DatabaseContext _context;
     private readonly HttpClient _httpClient;
+    private readonly IReadOnlyList<IDocumentExtractor> _extractors;
+    private readonly IDocumentModelRedactor _redactor;
+    private readonly IDocumentModelRenderer _renderer;
     private readonly ILogger<ParliamentDocumentRedactionService> _logger;
 
     public ParliamentDocumentRedactionService(
         DatabaseContext context,
         HttpClient httpClient,
+        IEnumerable<IDocumentExtractor> extractors,
+        IDocumentModelRedactor redactor,
+        IDocumentModelRenderer renderer,
         ILogger<ParliamentDocumentRedactionService> logger)
     {
         _context = context;
         _httpClient = httpClient;
+        _extractors = extractors.ToList();
+        _redactor = redactor;
+        _renderer = renderer;
         _logger = logger;
     }
 
@@ -40,7 +47,11 @@ public partial class ParliamentDocumentRedactionService : IParliamentDocumentRed
     {
         var query = _context.ParliamentInitiativeDocuments
             .Include(x => x.Content)
-            .Where(x => x.Scope == "InitiativeText");
+            .Include(x => x.ProjectLaw)
+            .Where(x => x.Scope == "InitiativeText")
+            .Where(x => x.ProjectLaw != null)
+            .Where(x => !string.IsNullOrWhiteSpace(x.ProjectLaw!.FullProposalTextLink))
+            .Where(x => x.Url == x.ProjectLaw!.FullProposalTextLink);
 
         if (!string.IsNullOrWhiteSpace(legislature))
         {
@@ -112,29 +123,41 @@ public partial class ParliamentDocumentRedactionService : IParliamentDocumentRed
             _context.ParliamentDocumentContents.Add(content);
         }
 
+        var sourceName = TryGetFileName(document.Url);
+        var extractor = _extractors.FirstOrDefault(x => x.CanExtract(sourceName))
+                        ?? throw new NotSupportedException($"No document extractor is registered for '{sourceName}'.");
+
         if (content.SourceContentHash == sourceHash &&
+            content.ExtractorVersion == extractor.ExtractorVersion &&
+            content.RedactionPolicyVersion == _redactor.PolicyVersion &&
+            content.RendererVersion == _renderer.RendererVersion &&
             content.ExtractionStatus == "Succeeded" &&
             content.RedactionStatus == "Succeeded")
         {
             return false;
         }
 
-        var extracted = Extract(bytes, document.Url);
+        var extracted = await extractor.ExtractAsync(bytes, sourceName, cancellationToken);
         var terms = await LoadTermsAsync(document.ProjectLawId, cancellationToken);
-        var redactedText = RedactionTextService.RedactText(extracted.PlainText, terms);
-        var redactedHtml = RedactionTextService.PlainTextToHtml(redactedText);
+        var redactedModel = _redactor.Redact(extracted.Document, terms);
+        var redactedModelJson = JsonSerializer.Serialize(redactedModel, JsonOptions);
+        var rendered = _renderer.Render(redactedModel);
 
         content.SourceUrl = document.Url;
         content.SourceContentHash = sourceHash;
         content.SourceContentLength = bytes.Length;
-        content.ExtractedContentHash = ComputeSha256(extracted.PlainText);
-        content.RedactedContentHash = ComputeSha256(redactedText);
-        content.RedactedContentText = redactedText;
-        content.RedactedContentHtml = redactedHtml;
+        content.ExtractedContentHash = ComputeSha256(redactedModelJson);
+        content.RedactedContentHash = ComputeSha256(rendered.PlainText + "\n" + rendered.Html);
+        content.RedactedDocumentModelJson = redactedModelJson;
+        content.RedactedContentText = rendered.PlainText;
+        content.RedactedContentHtml = rendered.Html;
         content.ExtractionStatus = "Succeeded";
         content.RedactionStatus = "Succeeded";
         content.ExtractorKind = extracted.ExtractorKind;
-        content.RedactionPolicyVersion = RedactionTextService.PolicyVersion;
+        content.ExtractorVersion = extracted.ExtractorVersion;
+        content.RendererVersion = rendered.RendererVersion;
+        content.DocumentModelSchemaVersion = redactedModel.SchemaVersion;
+        content.RedactionPolicyVersion = _redactor.PolicyVersion;
         content.ErrorMessage = null;
         content.ExtractedAtUtc = DateTime.UtcNow;
         content.RedactedAtUtc = DateTime.UtcNow;
@@ -190,55 +213,6 @@ public partial class ParliamentDocumentRedactionService : IParliamentDocumentRed
         using var response = await _httpClient.GetAsync(url, cancellationToken);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsByteArrayAsync(cancellationToken);
-    }
-
-    private static ExtractedDocument Extract(byte[] bytes, string sourceUrl)
-    {
-        var fileName = TryGetFileName(sourceUrl).ToLowerInvariant();
-
-        if (fileName.EndsWith(".docx", StringComparison.OrdinalIgnoreCase))
-        {
-            return ExtractDocx(bytes);
-        }
-
-        if (fileName.EndsWith(".html", StringComparison.OrdinalIgnoreCase) ||
-            fileName.EndsWith(".htm", StringComparison.OrdinalIgnoreCase))
-        {
-            var html = Encoding.UTF8.GetString(bytes);
-            var text = WebUtility.HtmlDecode(TagRegex().Replace(html, " "));
-            return new ExtractedDocument(NormalizeWhitespace(text), "Html");
-        }
-
-        if (fileName.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
-        {
-            return new ExtractedDocument(Encoding.UTF8.GetString(bytes), "Text");
-        }
-
-        if (fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
-        {
-            throw new NotSupportedException(
-                "PDF extraction is not implemented yet. Add a PDF extractor library or external tool before processing PDF-only initiative texts.");
-        }
-
-        return new ExtractedDocument(Encoding.UTF8.GetString(bytes), "Utf8Fallback");
-    }
-
-    private static ExtractedDocument ExtractDocx(byte[] bytes)
-    {
-        using var stream = new MemoryStream(bytes);
-        using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
-        var entry = archive.GetEntry("word/document.xml")
-                    ?? throw new InvalidOperationException("DOCX file does not contain word/document.xml.");
-
-        using var entryStream = entry.Open();
-        var document = XDocument.Load(entryStream);
-        var paragraphs = document
-            .Descendants()
-            .Where(x => x.Name.LocalName == "p")
-            .Select(x => string.Concat(x.Descendants().Where(y => y.Name.LocalName == "t").Select(y => y.Value)).Trim())
-            .Where(x => !string.IsNullOrWhiteSpace(x));
-
-        return new ExtractedDocument(string.Join(Environment.NewLine + Environment.NewLine, paragraphs), "Docx");
     }
 
     private async Task MarkFailedAsync(
@@ -303,16 +277,9 @@ public partial class ParliamentDocumentRedactionService : IParliamentDocumentRed
         return ComputeSha256(Encoding.UTF8.GetBytes(value));
     }
 
-    private static string NormalizeWhitespace(string value)
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
-        return WhitespaceRegex().Replace(value, " ").Trim();
-    }
-
-    [GeneratedRegex("<[^>]+>")]
-    private static partial Regex TagRegex();
-
-    [GeneratedRegex(@"\s+")]
-    private static partial Regex WhitespaceRegex();
-
-    private record ExtractedDocument(string PlainText, string ExtractorKind);
+        WriteIndented = false,
+        Converters = { new JsonStringEnumConverter() }
+    };
 }

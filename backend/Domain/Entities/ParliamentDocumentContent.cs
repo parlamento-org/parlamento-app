@@ -30,6 +30,8 @@ public class ParliamentDocumentContent
 
     public string? RedactedContentHash { get; set; }
 
+    public string? RedactedDocumentModelJson { get; set; }
+
     public string? RedactedContentText { get; set; }
 
     public string? RedactedContentHtml { get; set; }
@@ -41,6 +43,12 @@ public class ParliamentDocumentContent
     public string RedactionStatus { get; set; } = "NotStarted";
 
     public string? ExtractorKind { get; set; }
+
+    public string? ExtractorVersion { get; set; }
+
+    public string? RendererVersion { get; set; }
+
+    public string? DocumentModelSchemaVersion { get; set; }
 
     public string? RedactionPolicyVersion { get; set; }
 

@@ -90,23 +90,47 @@ The redaction pipeline uses Parliament base-information JSON files to load deput
 - deputies in `ParliamentDeputies`
 - compact redaction terms in `ParliamentRedactionTerms`
 
-Redaction terms include deputy full names, deputy parliamentary names, party acronyms, party names, and initiative author names/acronyms. The document processor then fetches initiative text documents, extracts text where supported, redacts those terms, and stores only redacted output plus hashes/status in `ParliamentDocumentContents`.
+Redaction terms include deputy full names, deputy parliamentary names, party acronyms, party names, and initiative author names/acronyms. The document processor then fetches only the initiative text document referenced by `ProjectLaw.FullProposalTextLink`, extracts it into an internal structured document model, redacts that model, and stores only redacted output plus hashes/status in `ParliamentDocumentContents`.
 
 The database does not store the original extracted document text. It stores:
 
 - source content hash and size
-- redacted text
-- redacted HTML generated from the redacted text
+- redacted structured document model JSON
+- redacted text for search, indexing, AI summarisation, and future NLP
+- redacted HTML rendered from the structured model for frontend presentation
 - extraction/redaction status and error message
-- extractor kind and redaction policy version
+- extractor kind/version, renderer version, document model schema version, and redaction policy version
+
+The document pipeline is intentionally independent from the Open Data initiative importer:
+
+```text
+PDF/DOCX/HTML/TXT
+  -> DocumentModel
+  -> model-aware redaction
+  -> structured HTML
+  -> Flutter presentation
+
+DocumentModel
+  -> plain text
+  -> search, indexing, AI summaries
+```
+
+Redactions are represented as semantic model runs and rendered as inline HTML spans, for example:
+
+```html
+<span class="redacted" data-length="18" style="--redaction-width:9.4em"></span>
+```
+
+The frontend should render `.redacted` as a solid black inline block using `--redaction-width`, so surrounding text does not collapse.
 
 Current extractors:
 
+- `.pdf` via open-source `PdfPig` for selectable-text PDFs
 - `.txt`
 - `.html` / `.htm`
 - `.docx`
 
-PDF extraction is intentionally marked failed for now instead of doing unreliable best-effort parsing. Add a dedicated PDF extractor library or external tool before processing PDF-only initiative texts in production.
+PDF extraction is heuristic and layout-aware, not pixel-perfect. It preserves pages, line order, paragraphs, rough heading hierarchy, indentation, line breaks, and selectable text. Scanned-image PDFs still fail cleanly because they require a future OCR pipeline.
 
 ### Import configuration
 
@@ -150,6 +174,16 @@ dotnet run --project backend/src -- parliament-import --legislatures XVII XVI XV
 ```
 
 If no legislature is supplied, command mode falls back to `ParliamentOpenData:LatestLegislature`.
+
+Redact/process initiative text documents:
+
+```powershell
+dotnet run --project backend/src -- parliament-documents redact --legislature XVII --max-documents 25
+dotnet run --project backend/src -- parliament-documents redact --legislatures XVII,XVI,XV --max-documents 25
+dotnet run --project backend/src -- parliament-documents redact --project-law-id 123
+```
+
+The document command only processes imported `InitiativeText` documents whose URL matches `ProjectLaw.FullProposalTextLink`. It does not redact events, votes, interventions, publications, or other `ProjectLaw` metadata.
 
 ### HTTP import endpoints
 
@@ -220,7 +254,7 @@ Important remaining work from `docs/SCRAPER_MIGRATION_SPEC.md`:
 - add reliable PDF extraction with formatting preservation where possible
 - expose redacted document content through frontend-facing API DTOs/views
 - decide whether to replace legacy `ProjectLaw.ProposalTextHTML` with `ParliamentDocumentContents.RedactedContentHtml`
-- add document processing command mode, if HTTP-triggered redaction is not enough for operations
+- add OCR support for scanned-image PDFs
 - add the AI summary pipeline later, generated from redacted text only
 - add summary audit tables/jobs with prompt version, model, input hash, status, and retries
 - add summary invalidation when source document hash or redaction policy changes

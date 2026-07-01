@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Parlamento.Application.Abstractions;
 using Parlamento.Infrastructure.Persistence;
 using Parlamento.Infrastructure.Services;
+using Parlamento.Infrastructure.Services.Documents;
 using Parlamento.Infrastructure.Services.ParliamentOpenData;
 
 namespace Parlamento.Infrastructure;
@@ -74,10 +75,19 @@ public static class DependencyInjection
                 new HttpClient(),
                 provider.GetRequiredService<IConfiguration>(),
                 provider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ParliamentBaseInfoImportService>>()));
+        services.AddScoped<IDocumentExtractor, PdfDocumentExtractor>();
+        services.AddScoped<IDocumentExtractor, DocxDocumentExtractor>();
+        services.AddScoped<IDocumentExtractor, HtmlDocumentExtractor>();
+        services.AddScoped<IDocumentExtractor, TextDocumentExtractor>();
+        services.AddScoped<IDocumentModelRedactor, DocumentModelRedactor>();
+        services.AddScoped<IDocumentModelRenderer, DocumentModelRenderer>();
         services.AddScoped<IParliamentDocumentRedactionService>(provider =>
             new ParliamentDocumentRedactionService(
                 provider.GetRequiredService<DatabaseContext>(),
                 new HttpClient(),
+                provider.GetServices<IDocumentExtractor>(),
+                provider.GetRequiredService<IDocumentModelRedactor>(),
+                provider.GetRequiredService<IDocumentModelRenderer>(),
                 provider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ParliamentDocumentRedactionService>>()));
         services.AddHostedService<DailyParliamentImportHostedService>();
 

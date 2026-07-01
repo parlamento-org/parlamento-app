@@ -48,6 +48,11 @@ if (await ParliamentImportCommand.TryRunAsync(app, args))
     return;
 }
 
+if (await ParliamentDocumentCommand.TryRunAsync(app, args))
+{
+    return;
+}
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

@@ -9,9 +9,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 
+using Parlamento.Application.Abstractions;
 using Parlamento.Domain.Enums;
 using Parlamento.Domain.Entities;
 using Parlamento.Infrastructure.Persistence;
+using Parlamento.Infrastructure.Services.Documents;
 using Parlamento.Infrastructure.Services.ParliamentOpenData;
 
 using Xunit;
@@ -144,6 +146,12 @@ public class ParliamentOpenDataImportServiceTests
         var redactionService = new ParliamentDocumentRedactionService(
             context,
             new HttpClient(),
+            new IDocumentExtractor[]
+            {
+                new TextDocumentExtractor()
+            },
+            new DocumentModelRedactor(),
+            new DocumentModelRenderer(),
             NullLogger<ParliamentDocumentRedactionService>.Instance);
 
         var result = await redactionService.ProcessInitiativeTextDocumentsAsync("XVII", projectLaw.Id, 1);
@@ -151,8 +159,12 @@ public class ParliamentOpenDataImportServiceTests
         Assert.Equal(1, result.DocumentsProcessed);
         var content = await context.ParliamentDocumentContents.SingleAsync();
         Assert.Contains("[redigido]", content.RedactedContentText);
+        Assert.Contains("class=\"redacted\"", content.RedactedContentHtml);
+        Assert.Contains("Redacted", content.RedactedDocumentModelJson);
         Assert.DoesNotContain("Francisco Lima", content.RedactedContentText);
         Assert.DoesNotContain("CH", content.RedactedContentText);
+        Assert.DoesNotContain("Francisco Lima", content.RedactedContentHtml);
+        Assert.DoesNotContain("CH", content.RedactedContentHtml);
     }
 
     private static ParliamentOpenDataImportService CreateService(DatabaseContext context)
