@@ -9,4 +9,5 @@ public enum VotingOrientation
     Against,
     Abstaining,
     NotInterested,
+    Absent,
 }

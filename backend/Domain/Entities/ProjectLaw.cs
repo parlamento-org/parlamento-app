@@ -19,8 +19,38 @@ public class ProjectLaw
     [Required]
     public int SourceId { get; set; }
 
+    public string? SourceIdText { get; set; }
+
+    public string? SourceHash { get; set; }
+
+    public DateTime? ImportedAtUtc { get; set; }
+
+    public int? LastImportRunId { get; set; }
+
+    public ParliamentImportRun? LastImportRun { get; set; }
+
     [Required]
     public string? Legislatura { get; set; }
+
+    public string? InitiativeNumber { get; set; }
+
+    public string? InitiativeTypeCode { get; set; }
+
+    public string? InitiativeTypeDescription { get; set; }
+
+    public string? InitiativeSelection { get; set; }
+
+    public string? LegislatureStartDate { get; set; }
+
+    public string? LegislatureEndDate { get; set; }
+
+    public string? InitiativeObservations { get; set; }
+
+    public string? InitiativeTextSubstitution { get; set; }
+
+    public string? InitiativeTextSubstitutionField { get; set; }
+
+    public string? RawJson { get; set; }
 
     [Required]
     public int Score { get; set; }
@@ -51,4 +81,16 @@ public class ProjectLaw
     public VotingResult? VotingResultGenerality { get; set; }
 
     public VotingResult? VotingResultSpeciality { get; set; }
+
+    public List<ParliamentInitiativeAuthor> ImportedAuthors { get; set; } = [];
+
+    public List<ParliamentInitiativeEvent> ImportedEvents { get; set; } = [];
+
+    public List<ParliamentInitiativeVote> ImportedVotes { get; set; } = [];
+
+    public List<ParliamentInitiativeDocument> ImportedDocuments { get; set; } = [];
+
+    public List<ParliamentInitiativePublication> ImportedPublications { get; set; } = [];
+
+    public List<ParliamentInitiativeIntervention> ImportedInterventions { get; set; } = [];
 }

@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Parlamento.Application.Abstractions;
 using Parlamento.Infrastructure.Persistence;
 using Parlamento.Infrastructure.Services;
+using Parlamento.Infrastructure.Services.ParliamentOpenData;
 
 namespace Parlamento.Infrastructure;
 
@@ -40,6 +41,11 @@ public static class DependencyInjection
         services.AddScoped<IProposalService, ProposalService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IVotingService, VotingService>();
+        services.AddScoped<IParliamentOpenDataImportService>(provider =>
+            new ParliamentOpenDataImportService(
+                provider.GetRequiredService<DatabaseContext>(),
+                new HttpClient(),
+                provider.GetRequiredService<IConfiguration>()));
 
         return services;
     }

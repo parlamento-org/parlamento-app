@@ -1,0 +1,1934 @@
+{
+  "DataFimleg": null,
+  "DataInicioleg": "2025-06-03",
+  "IniAnexos": [
+    {
+      "anexoFich": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c305276593356745a57353062334e4a626d6c6a6157463061585a684c7a41324d5449334d7a597a4c5468684e4755744e474e6a4d7930344e4449774c57566c5a545931595749324d7a45345a4335775a47593d&fich=06127363-8a4e-4cc3-8420-eee65ab6318d.pdf&Inline=true",
+      "anexoNome": "A.I.G."
+    }
+  ],
+  "IniAutorDeputados": null,
+  "IniAutorGruposParlamentares": null,
+  "IniAutorOutros": {
+    "iniAutorComissao": null,
+    "nome": "Governo",
+    "sigla": "V"
+  },
+  "IniciativasEuropeias": null,
+  "IniciativasOrigem": null,
+  "IniciativasOriginadas": null,
+  "IniDescTipo": "Proposta de Lei",
+  "IniEpigrafe": null,
+  "IniEventos": [
+    {
+      "ActId": null,
+      "ActividadesConjuntas": null,
+      "AnexosFase": null,
+      "CodigoFase": "10",
+      "Comissao": null,
+      "DataFase": "2026-03-04",
+      "EvtId": "1",
+      "Fase": "Entrada",
+      "IniciativasConjuntas": null,
+      "Intervencoesdebates": null,
+      "Links": null,
+      "ObsFase": null,
+      "OevId": "1705506",
+      "OevTextId": null,
+      "PcpublicasConjuntas": null,
+      "PeticoesConjuntas": null,
+      "PublicacaoFase": null,
+      "RecursoDeputados": null,
+      "RecursoGP": null,
+      "TextosAprovados": null,
+      "Votacao": null
+    },
+    {
+      "ActId": null,
+      "ActividadesConjuntas": null,
+      "AnexosFase": null,
+      "CodigoFase": "21",
+      "Comissao": null,
+      "DataFase": "2026-03-05",
+      "EvtId": "3",
+      "Fase": "Anúncio",
+      "IniciativasConjuntas": null,
+      "Intervencoesdebates": null,
+      "Links": null,
+      "ObsFase": null,
+      "OevId": "1705627",
+      "OevTextId": null,
+      "PcpublicasConjuntas": null,
+      "PeticoesConjuntas": null,
+      "PublicacaoFase": null,
+      "RecursoDeputados": null,
+      "RecursoGP": null,
+      "TextosAprovados": null,
+      "Votacao": null
+    },
+    {
+      "ActId": null,
+      "ActividadesConjuntas": null,
+      "AnexosFase": [
+        {
+          "anexoFich": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c305276593356745a57353062334e4a626d6c6a6157463061585a684c7a55314d6a6b314f5441324c546c6b5a4749744e4445324d6931694d6d45794c574d354e7a4d7a595755345a474a6d4d79356b62324e34&fich=55295906-9ddb-4162-b2a2-c9733ae8dbf3.docx&Inline=true",
+          "anexoNome": "Nota de admissibilidade"
+        }
+      ],
+      "CodigoFase": "20",
+      "Comissao": null,
+      "DataFase": "2026-03-09",
+      "EvtId": "2",
+      "Fase": "Admissão",
+      "IniciativasConjuntas": null,
+      "Intervencoesdebates": null,
+      "Links": null,
+      "ObsFase": "Despacho do PAR: Proceder à audição dos órgãos de governo próprio das RRAA.",
+      "OevId": "1705639",
+      "OevTextId": null,
+      "PcpublicasConjuntas": null,
+      "PeticoesConjuntas": null,
+      "PublicacaoFase": null,
+      "RecursoDeputados": null,
+      "RecursoGP": null,
+      "TextosAprovados": null,
+      "Votacao": null
+    },
+    {
+      "ActId": null,
+      "ActividadesConjuntas": null,
+      "AnexosFase": [
+        {
+          "anexoFich": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c305276593356745a57353062334e4a626d6c6a6157463061585a684c7a426b595459324d574e694c5456685a5451744e4451334e6931685a6d4a6c4c5463795a544a6c4d4456684f4759314e4335775a47593d&fich=0da661cb-5ae4-4476-afbe-72e2e05a8f54.pdf&Inline=true",
+          "anexoNome": "Of. PAR Pedido conexão"
+        }
+      ],
+      "CodigoFase": "180",
+      "Comissao": [
+        {
+          "AccId": "98487",
+          "AguardaAgendamentoPlenario": null,
+          "Audicoes": null,
+          "Audiencias": null,
+          "Competente": "S",
+          "DataAgendamentoDiscussao": null,
+          "DataAgendamentoPlenario": "0001-01-01T00:00:00",
+          "DataDistribuicao": "2026-03-09",
+          "DataDistruibuicaoSubcomissao": null,
+          "DataEntrada": null,
+          "DatafimApreciacaoPublica": null,
+          "DatainicioApreciacaoPublica": null,
+          "DataMotivoNaoParecer": null,
+          "DataRelatorio": null,
+          "DataRemessa": null,
+          "DataReqAgendamentoPlenario": null,
+          "DistribuicaoSubcomissao": null,
+          "Documentos": [
+            {
+              "DataDocumento": "2026-03-09",
+              "TipoDocumento": "Link",
+              "TituloDocumento": "Recolha de contributos - Consulta pública",
+              "URL": "https://www.parlamento.pt/Cidadania/Paginas/08_ContributosIniciativasII.aspx?ID_Ini=722"
+            },
+            {
+              "DataDocumento": "2026-04-08",
+              "TipoDocumento": "Relatório",
+              "TituloDocumento": "Relatório CACDLG",
+              "URL": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c304e505453387851304644524578484c305276593356745a57353062334e4a626d6c6a6157463061585a685132397461584e7a595738764e32566c4e5449304d44677459546b354e533030595459304c54686d5a4749744e3255355a546c694d5745334d7a466b4c6e426b5a673d3d&fich=7ee52408-a995-4a64-8fdb-7e9e9b1a731d.pdf&Inline=true"
+            },
+            {
+              "DataDocumento": "2026-04-08",
+              "TipoDocumento": "Nota técnica",
+              "TituloDocumento": "Nota Técnica",
+              "URL": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c304e505453387851304644524578484c305276593356745a57353062334e4a626d6c6a6157463061585a685132397461584e7a595738764f54526d4f545a6b4d546b744d575977596930305a6d46684c546b344d444574597a41794e7a557a4e4446684d5455354c6e426b5a673d3d&fich=94f96d19-1f0b-4faa-9801-c0275341a159.pdf&Inline=true"
+            },
+            {
+              "DataDocumento": "2026-03-23",
+              "TipoDocumento": "Parecer AP",
+              "TituloDocumento": "Parecer - ANAFRE",
+              "URL": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c304e505453387851304644524578484c305276593356745a57353062334e4a626d6c6a6157463061585a685132397461584e7a59573876597a51325a6a49334d5449744e6a426a595330304e5467774c546b774e6d51744d546379595441784f546779596a4e684c6e426b5a673d3d&fich=c46f2712-60ca-4580-906d-172a01982b3a.pdf&Inline=true"
+            },
+            {
+              "DataDocumento": "2026-03-26",
+              "TipoDocumento": "Parecer AP",
+              "TituloDocumento": "Parecer - ERC",
+              "URL": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c304e505453387851304644524578484c305276593356745a57353062334e4a626d6c6a6157463061585a685132397461584e7a595738764f5467314d546b774d3259744f474e6c4d793030596d5a6c4c5745325a4449744e6d5533597a466b596d566b4e54646d4c6e426b5a673d3d&fich=9851903f-8ce3-4bfe-a6d2-6e7c1dbed57f.pdf&Inline=true"
+            },
+            {
+              "DataDocumento": "2026-03-24",
+              "TipoDocumento": "Parecer AP",
+              "TituloDocumento": "Parecer ANMP - Associação Nacional dos Municípios Portugueses",
+              "URL": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c304e505453387851304644524578484c305276593356745a57353062334e4a626d6c6a6157463061585a685132397461584e7a59573876595455324d574d795a4451745a47566d5a5330305a5455334c5749314f5759744e5745314f5751325a5459325a6d55314c6e426b5a673d3d&fich=a561c2d4-defe-4e57-b59f-5a59d6e66fe5.pdf&Inline=true"
+            },
+            {
+              "DataDocumento": "2026-03-26",
+              "TipoDocumento": "Parecer AP",
+              "TituloDocumento": "Parecer - Conselho Superior da Magistratura",
+              "URL": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c304e505453387851304644524578484c305276593356745a57353062334e4a626d6c6a6157463061585a685132397461584e7a5957387659324e6c5a6a41344d6d4d74596a497a5a6930304f4441794c5746694d475574595755344d7a4d79596d566b4f4452694c6e426b5a673d3d&fich=ccef082c-b23f-4802-ab0e-ae8332bed84b.pdf&Inline=true"
+            },
+            {
+              "DataDocumento": "2026-03-31",
+              "TipoDocumento": "Parecer AP",
+              "TituloDocumento": "Parecer ANAM",
+              "URL": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c304e505453387851304644524578484c305276593356745a57353062334e4a626d6c6a6157463061585a685132397461584e7a595738764f546b344d7a51304e3251744e544930595330304f4745334c546b30595441744d474a694d4759314d7a566c4e544e684c6e426b5a673d3d&fich=9983447d-524a-48a7-94a0-0bb0f535e53a.pdf&Inline=true"
+            },
+            {
+              "DataDocumento": "2026-04-13",
+              "TipoDocumento": "Parecer AP",
+              "TituloDocumento": "Parecer - Comissão Nacional de Eleições",
+              "URL": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c304e505453387851304644524578484c305276593356745a57353062334e4a626d6c6a6157463061585a685132397461584e7a595738765a446b344f474d334f445174597a46684d6930304f4441774c57457a595455745954637a5a6a6330595449794e7a566c4c6e426b5a673d3d&fich=d988c784-c1a2-4800-a3a5-a73f74a2275e.pdf&Inline=true"
+            },
+            {
+              "DataDocumento": "2026-04-14",
+              "TipoDocumento": "Parecer AP",
+              "TituloDocumento": "Parecer - Conselho Superior do Ministério Público",
+              "URL": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c304e505453387851304644524578484c305276593356745a57353062334e4a626d6c6a6157463061585a685132397461584e7a595738765a6a59774e6a45344d4459744d44686b4f4330304f5449774c5745314e7a49745a575a6c4d574530596a59314e4759794c6e426b5a673d3d&fich=f6061806-08d8-4920-a572-efe1a4b654f2.pdf&Inline=true"
+            },
+            {
+              "DataDocumento": "2026-04-17",
+              "TipoDocumento": "Parecer AP",
+              "TituloDocumento": "Parecer Administração Eleitoral da Secretaria-Geral do Ministério da Administração Interna",
+              "URL": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c304e505453387851304644524578484c305276593356745a57353062334e4a626d6c6a6157463061585a685132397461584e7a595738764d6d5a6a4e544e6c4e5459744d3259304d4330304d6d59314c54686c4e3245744d575531596d517a4e7a59785a4759794c6e426b5a673d3d&fich=2fc53e56-3f40-42f5-8e7a-1e5bd3761df2.pdf&Inline=true"
+            }
+          ],
+          "GpAgendamentoPlenario": null,
+          "IdComissao": "8447",
+          "Legislatura": null,
+          "MotivoNaoParecer": null,
+          "Nome": "Comissão de Assuntos Constitucionais, Direitos, Liberdades e Garantias ",
+          "Numero": "8447",
+          "Observacao": null,
+          "PareceresRecebidos": [
+            {
+              "link": "",
+              "nome": "ANMP - Associação Nacional de Municípios Portugueses. em 2026-03-24"
+            },
+            {
+              "link": "",
+              "nome": "ANAFRE - Associação Nacional de Freguesias em 2026-03-23"
+            },
+            {
+              "link": "",
+              "nome": "Associação Nacional das Assembleias Municipais (ANAM) em 2026-03-31"
+            },
+            {
+              "link": "",
+              "nome": "Comissão Nacional de Eleições em 2026-04-13"
+            },
+            {
+              "link": "",
+              "nome": "Conselho Regulador da ERC - Entidade Reguladora para a Comunicação Social em 2026-03-26"
+            },
+            {
+              "link": "",
+              "nome": "Conselho Superior da Magistratura em 2026-03-26"
+            },
+            {
+              "link": "",
+              "nome": "Conselho Superior do Ministério Público em 2026-04-14"
+            },
+            {
+              "link": "",
+              "nome": "Administração Eleitoral da Secretaria-geral do Ministério da Administração Interna em 2026-04-17"
+            }
+          ],
+          "PedidosParecer": [
+            {
+              "link": "",
+              "nome": "ANMP - Associação Nacional de Municípios Portugueses. em 2026-03-12"
+            },
+            {
+              "link": "",
+              "nome": "ANAFRE - Associação Nacional de Freguesias em 2026-03-12"
+            },
+            {
+              "link": "",
+              "nome": "Associação Nacional das Assembleias Municipais (ANAM) em 2026-03-12"
+            },
+            {
+              "link": "",
+              "nome": "Comissão Nacional de Eleições em 2026-03-12"
+            },
+            {
+              "link": "",
+              "nome": "Conselho Regulador da ERC - Entidade Reguladora para a Comunicação Social em 2026-03-12"
+            },
+            {
+              "link": "",
+              "nome": "Conselho Superior da Magistratura em 2026-03-12"
+            },
+            {
+              "link": "",
+              "nome": "Conselho Superior do Ministério Público em 2026-03-12"
+            },
+            {
+              "link": "",
+              "nome": "Ordem dos Advogados em 2026-03-12"
+            },
+            {
+              "link": "",
+              "nome": "Administração Eleitoral da Secretaria-geral do Ministério da Administração Interna em 2026-03-12"
+            }
+          ],
+          "Prorrogado": null,
+          "Publicacao": null,
+          "PublicacaoRelatorio": null,
+          "Relatores": [
+            {
+              "dataCessacao": null,
+              "dataNomeacao": null,
+              "gp": "IL",
+              "id": "7331",
+              "motivoCessacao": null,
+              "nome": "Rui Rocha"
+            }
+          ],
+          "RemessaRedaccaoFinal": null,
+          "Remessas": [
+            {
+              "dataDocumento": "2026-04-08",
+              "dataRemessa": "2026-04-08",
+              "numeroOficio": null,
+              "observacoes": null,
+              "tipoRemessa": "Relatório/Parecer"
+            }
+          ],
+          "Sessao": null,
+          "Sigla": null,
+          "Votacao": [
+            {
+              "ausencias": ["L", "PCP", "CDS-PP", "BE", "PAN", "JPP"],
+              "data": "2026-04-08",
+              "descricao": null,
+              "detalhe": "A Favor: \u003CI\u003EPSD\u003C/I\u003E, \u003CI\u003E CH\u003C/I\u003E, \u003CI\u003E PS\u003C/I\u003E, \u003CI\u003E IL\u003C/I\u003E\u003CBR\u003EAusência: \u003CI\u003EL\u003C/I\u003E, \u003CI\u003E PCP\u003C/I\u003E, \u003CI\u003E CDS-PP\u003C/I\u003E, \u003CI\u003E BE\u003C/I\u003E, \u003CI\u003E PAN\u003C/I\u003E, \u003CI\u003E JPP\u003C/I\u003E",
+              "id": "171340",
+              "publicacao": null,
+              "resultado": "Aprovado",
+              "reuniao": "52",
+              "tipoReuniao": null,
+              "unanime": "unanime"
+            }
+          ]
+        }
+      ],
+      "DataFase": "2026-03-09",
+      "EvtId": "9",
+      "Fase": "Baixa comissão distribuição inicial generalidade",
+      "IniciativasConjuntas": null,
+      "Intervencoesdebates": null,
+      "Links": null,
+      "ObsFase": "Com conexão à 12.ª Comissão.",
+      "OevId": "1705628",
+      "OevTextId": null,
+      "PcpublicasConjuntas": null,
+      "PeticoesConjuntas": null,
+      "PublicacaoFase": null,
+      "RecursoDeputados": null,
+      "RecursoGP": null,
+      "TextosAprovados": null,
+      "Votacao": null
+    },
+    {
+      "ActId": null,
+      "ActividadesConjuntas": null,
+      "AnexosFase": null,
+      "CodigoFase": "23",
+      "Comissao": null,
+      "DataFase": "2026-03-10",
+      "EvtId": "145",
+      "Fase": "Audição promovida pelo PAR para a ALRAM",
+      "IniciativasConjuntas": null,
+      "Intervencoesdebates": null,
+      "Links": null,
+      "ObsFase": null,
+      "OevId": "1705775",
+      "OevTextId": null,
+      "PcpublicasConjuntas": null,
+      "PeticoesConjuntas": null,
+      "PublicacaoFase": null,
+      "RecursoDeputados": null,
+      "RecursoGP": null,
+      "TextosAprovados": null,
+      "Votacao": null
+    },
+    {
+      "ActId": null,
+      "ActividadesConjuntas": null,
+      "AnexosFase": null,
+      "CodigoFase": "22",
+      "Comissao": null,
+      "DataFase": "2026-03-10",
+      "EvtId": "144",
+      "Fase": "Audição promovida pelo PAR para a ALRAA",
+      "IniciativasConjuntas": null,
+      "Intervencoesdebates": null,
+      "Links": null,
+      "ObsFase": null,
+      "OevId": "1705776",
+      "OevTextId": null,
+      "PcpublicasConjuntas": null,
+      "PeticoesConjuntas": null,
+      "PublicacaoFase": null,
+      "RecursoDeputados": null,
+      "RecursoGP": null,
+      "TextosAprovados": null,
+      "Votacao": null
+    },
+    {
+      "ActId": null,
+      "ActividadesConjuntas": null,
+      "AnexosFase": null,
+      "CodigoFase": "25",
+      "Comissao": null,
+      "DataFase": "2026-03-10",
+      "EvtId": "147",
+      "Fase": "Audição promovida pelo PAR para o Governo da RAM",
+      "IniciativasConjuntas": null,
+      "Intervencoesdebates": null,
+      "Links": null,
+      "ObsFase": null,
+      "OevId": "1705777",
+      "OevTextId": null,
+      "PcpublicasConjuntas": null,
+      "PeticoesConjuntas": null,
+      "PublicacaoFase": null,
+      "RecursoDeputados": null,
+      "RecursoGP": null,
+      "TextosAprovados": null,
+      "Votacao": null
+    },
+    {
+      "ActId": null,
+      "ActividadesConjuntas": null,
+      "AnexosFase": null,
+      "CodigoFase": "24",
+      "Comissao": null,
+      "DataFase": "2026-03-10",
+      "EvtId": "146",
+      "Fase": "Audição promovida pelo PAR para o Governo da RAA",
+      "IniciativasConjuntas": null,
+      "Intervencoesdebates": null,
+      "Links": null,
+      "ObsFase": null,
+      "OevId": "1705778",
+      "OevTextId": null,
+      "PcpublicasConjuntas": null,
+      "PeticoesConjuntas": null,
+      "PublicacaoFase": null,
+      "RecursoDeputados": null,
+      "RecursoGP": null,
+      "TextosAprovados": null,
+      "Votacao": null
+    },
+    {
+      "ActId": null,
+      "ActividadesConjuntas": null,
+      "AnexosFase": [
+        {
+          "anexoFich": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c305276593356745a57353062334e4a626d6c6a6157463061585a684c7a4d774d6a566d4d54426c4c574a6a59544d744e4445355a4331695a4449324c54597a5a5751324e7a557a4d574d784f5335775a47593d&fich=3025f10e-bca3-419d-bd26-63ed67531c19.pdf&Inline=true",
+          "anexoNome": "Parecer da SRF"
+        },
+        {
+          "anexoFich": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c305276593356745a57353062334e4a626d6c6a6157463061585a684c7a63325a54686b4e7a45324c57526a4e4445744e4749314e6931695932526d4c574d784d6d4d78595463784d6d466c4d6935775a47593d&fich=76e8d716-dc41-4b56-bcdf-c12c1a712ae2.pdf&Inline=true",
+          "anexoNome": "Parecer da SRTAC"
+        }
+      ],
+      "CodigoFase": "175",
+      "Comissao": null,
+      "DataFase": "2026-03-20",
+      "EvtId": "151",
+      "Fase": "Parecer do Governo da RAM",
+      "IniciativasConjuntas": null,
+      "Intervencoesdebates": null,
+      "Links": null,
+      "ObsFase": null,
+      "OevId": "1716375",
+      "OevTextId": null,
+      "PcpublicasConjuntas": null,
+      "PeticoesConjuntas": null,
+      "PublicacaoFase": null,
+      "RecursoDeputados": null,
+      "RecursoGP": null,
+      "TextosAprovados": null,
+      "Votacao": null
+    },
+    {
+      "ActId": null,
+      "ActividadesConjuntas": null,
+      "AnexosFase": [
+        {
+          "anexoFich": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c305276593356745a57353062334e4a626d6c6a6157463061585a684c7a4a6b597a51344e544d314c5467795a5455744e475a6d4e4330345a44466d4c54646d4e7a637759575a6a4d3255794d6935775a47593d&fich=2dc48535-82e5-4ff4-8d1f-7f770afc3e22.pdf&Inline=true",
+          "anexoNome": "Parecer "
+        }
+      ],
+      "CodigoFase": "173",
+      "Comissao": null,
+      "DataFase": "2026-03-24",
+      "EvtId": "149",
+      "Fase": "Parecer da ALRAM",
+      "IniciativasConjuntas": null,
+      "Intervencoesdebates": null,
+      "Links": null,
+      "ObsFase": null,
+      "OevId": "1716572",
+      "OevTextId": null,
+      "PcpublicasConjuntas": null,
+      "PeticoesConjuntas": null,
+      "PublicacaoFase": null,
+      "RecursoDeputados": null,
+      "RecursoGP": null,
+      "TextosAprovados": null,
+      "Votacao": null
+    },
+    {
+      "ActId": null,
+      "ActividadesConjuntas": null,
+      "AnexosFase": [
+        {
+          "anexoFich": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c305276593356745a57353062334e4a626d6c6a6157463061585a684c7a6b334e445a6d4d575a694c54646859324d744e475179595331685957466d4c54686a4e7a6b774e6d4a684d325132596935775a47593d&fich=9746f1fb-7acc-4d2a-aaaf-8c7906ba3d6b.pdf&Inline=true",
+          "anexoNome": "Parecer"
+        }
+      ],
+      "CodigoFase": "174",
+      "Comissao": null,
+      "DataFase": "2026-03-25",
+      "EvtId": "150",
+      "Fase": "Parecer do Governo da RAA",
+      "IniciativasConjuntas": null,
+      "Intervencoesdebates": null,
+      "Links": null,
+      "ObsFase": null,
+      "OevId": "1716603",
+      "OevTextId": null,
+      "PcpublicasConjuntas": null,
+      "PeticoesConjuntas": null,
+      "PublicacaoFase": null,
+      "RecursoDeputados": null,
+      "RecursoGP": null,
+      "TextosAprovados": null,
+      "Votacao": null
+    },
+    {
+      "ActId": null,
+      "ActividadesConjuntas": null,
+      "AnexosFase": [
+        {
+          "anexoFich": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c305276593356745a57353062334e4a626d6c6a6157463061585a684c7a4577596d557a4e544e694c57526d4e546b744e4449775a5330354f574a6d4c574d304e7a6b304e7a6c685a4449344f4335775a47593d&fich=10be353b-df59-420e-99bf-c479479ad288.pdf&Inline=true",
+          "anexoNome": "Parecer "
+        }
+      ],
+      "CodigoFase": "172",
+      "Comissao": null,
+      "DataFase": "2026-03-27",
+      "EvtId": "148",
+      "Fase": "Parecer da ALRAA",
+      "IniciativasConjuntas": null,
+      "Intervencoesdebates": null,
+      "Links": null,
+      "ObsFase": null,
+      "OevId": "1716710",
+      "OevTextId": null,
+      "PcpublicasConjuntas": null,
+      "PeticoesConjuntas": null,
+      "PublicacaoFase": null,
+      "RecursoDeputados": null,
+      "RecursoGP": null,
+      "TextosAprovados": null,
+      "Votacao": null
+    },
+    {
+      "ActId": "72105",
+      "ActividadesConjuntas": null,
+      "AnexosFase": null,
+      "CodigoFase": "190",
+      "Comissao": null,
+      "DataFase": "2026-04-16",
+      "EvtId": "10",
+      "Fase": "Discussão generalidade",
+      "IniciativasConjuntas": [
+        {
+          "autor": "PAN",
+          "dataEntrada": null,
+          "descTipo": "Projeto de Lei",
+          "id": "356475",
+          "leg": "XVII",
+          "nr": "545",
+          "publicacao": [
+            {
+              "debateDtReu": null,
+              "idAct": null,
+              "idDeb": null,
+              "idInt": null,
+              "idPag": "56860",
+              "obs": null,
+              "pag": ["12-22"],
+              "pagFinalDiarioSupl": null,
+              "pubdt": "2026-04-17",
+              "pubLeg": "XVII",
+              "pubNr": "79",
+              "pubSL": "1",
+              "pubTipo": "DAR I série",
+              "pubTp": "D",
+              "supl": null,
+              "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/079/2026-04-17/12?pgs=12-22&org=PLC"
+            },
+            {
+              "debateDtReu": null,
+              "idAct": null,
+              "idDeb": null,
+              "idInt": null,
+              "idPag": "56860",
+              "obs": null,
+              "pag": ["12-22"],
+              "pagFinalDiarioSupl": null,
+              "pubdt": "2026-04-17",
+              "pubLeg": "XVII",
+              "pubNr": "79",
+              "pubSL": "1",
+              "pubTipo": "DAR I série",
+              "pubTp": "D",
+              "supl": null,
+              "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/079/2026-04-17/12?pgs=12-22&org=PLC"
+            },
+            {
+              "debateDtReu": null,
+              "idAct": null,
+              "idDeb": null,
+              "idInt": null,
+              "idPag": "56860",
+              "obs": null,
+              "pag": ["12-22"],
+              "pagFinalDiarioSupl": null,
+              "pubdt": "2026-04-17",
+              "pubLeg": "XVII",
+              "pubNr": "79",
+              "pubSL": "1",
+              "pubTipo": "DAR I série",
+              "pubTp": "D",
+              "supl": null,
+              "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/079/2026-04-17/12?pgs=12-22&org=PLC"
+            }
+          ],
+          "sel": "1",
+          "tipo": "J",
+          "titulo": "Altera diversos diplomas, procedendo ao alargamento da emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como ao alargamento do direito de voto antecipado e ao estabelecimento da obrigação de disponibilização de matriz em braille dos boletins de voto no âmbito das eleições para os órgãos das autarquias locais "
+        },
+        {
+          "autor": "L",
+          "dataEntrada": null,
+          "descTipo": "Projeto de Lei",
+          "id": "356495",
+          "leg": "XVII",
+          "nr": "552",
+          "publicacao": [
+            {
+              "debateDtReu": null,
+              "idAct": null,
+              "idDeb": null,
+              "idInt": null,
+              "idPag": "56860",
+              "obs": null,
+              "pag": ["12-22"],
+              "pagFinalDiarioSupl": null,
+              "pubdt": "2026-04-17",
+              "pubLeg": "XVII",
+              "pubNr": "79",
+              "pubSL": "1",
+              "pubTipo": "DAR I série",
+              "pubTp": "D",
+              "supl": null,
+              "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/079/2026-04-17/12?pgs=12-22&org=PLC"
+            },
+            {
+              "debateDtReu": null,
+              "idAct": null,
+              "idDeb": null,
+              "idInt": null,
+              "idPag": "56860",
+              "obs": null,
+              "pag": ["12-22"],
+              "pagFinalDiarioSupl": null,
+              "pubdt": "2026-04-17",
+              "pubLeg": "XVII",
+              "pubNr": "79",
+              "pubSL": "1",
+              "pubTipo": "DAR I série",
+              "pubTp": "D",
+              "supl": null,
+              "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/079/2026-04-17/12?pgs=12-22&org=PLC"
+            },
+            {
+              "debateDtReu": null,
+              "idAct": null,
+              "idDeb": null,
+              "idInt": null,
+              "idPag": "56860",
+              "obs": null,
+              "pag": ["12-22"],
+              "pagFinalDiarioSupl": null,
+              "pubdt": "2026-04-17",
+              "pubLeg": "XVII",
+              "pubNr": "79",
+              "pubSL": "1",
+              "pubTipo": "DAR I série",
+              "pubTp": "D",
+              "supl": null,
+              "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/079/2026-04-17/12?pgs=12-22&org=PLC"
+            }
+          ],
+          "sel": "1",
+          "tipo": "J",
+          "titulo": "Introduz regras sobre o uso de inteligência artificial no âmbito de campanhas eleitorais"
+        },
+        {
+          "autor": "CH",
+          "dataEntrada": null,
+          "descTipo": "Projeto de Resolução",
+          "id": "356330",
+          "leg": "XVII",
+          "nr": "689",
+          "publicacao": [
+            {
+              "debateDtReu": null,
+              "idAct": null,
+              "idDeb": null,
+              "idInt": null,
+              "idPag": "56860",
+              "obs": null,
+              "pag": ["12-22"],
+              "pagFinalDiarioSupl": null,
+              "pubdt": "2026-04-17",
+              "pubLeg": "XVII",
+              "pubNr": "79",
+              "pubSL": "1",
+              "pubTipo": "DAR I série",
+              "pubTp": "D",
+              "supl": null,
+              "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/079/2026-04-17/12?pgs=12-22&org=PLC"
+            },
+            {
+              "debateDtReu": null,
+              "idAct": null,
+              "idDeb": null,
+              "idInt": null,
+              "idPag": "56860",
+              "obs": null,
+              "pag": ["12-22"],
+              "pagFinalDiarioSupl": null,
+              "pubdt": "2026-04-17",
+              "pubLeg": "XVII",
+              "pubNr": "79",
+              "pubSL": "1",
+              "pubTipo": "DAR I série",
+              "pubTp": "D",
+              "supl": null,
+              "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/079/2026-04-17/12?pgs=12-22&org=PLC"
+            },
+            {
+              "debateDtReu": null,
+              "idAct": null,
+              "idDeb": null,
+              "idInt": null,
+              "idPag": "56860",
+              "obs": null,
+              "pag": ["12-22"],
+              "pagFinalDiarioSupl": null,
+              "pubdt": "2026-04-17",
+              "pubLeg": "XVII",
+              "pubNr": "79",
+              "pubSL": "1",
+              "pubTipo": "DAR I série",
+              "pubTp": "D",
+              "supl": null,
+              "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/079/2026-04-17/12?pgs=12-22&org=PLC"
+            }
+          ],
+          "sel": "1",
+          "tipo": "R",
+          "titulo": "Recomenda ao Governo que concretize, com urgência, o alargamento do regime de direito de antena às rádios locais em todos os atos eleitorais"
+        }
+      ],
+      "Intervencoesdebates": [
+        {
+          "dataReuniaoPlenaria": "2026-04-16",
+          "oradores": [
+            {
+              "convidados": {
+                "cargo": null,
+                "honra": null,
+                "nome": null,
+                "pais": null
+              },
+              "deputadosOradores": null,
+              "faseDebate": null,
+              "faseSessao": "P",
+              "horaInicio": "15:03",
+              "horaTermo": "19:11",
+              "linkVideo": [
+                {
+                  "link": "https://av.parlamento.pt/videos/Plenary/17/1/79/21"
+                }
+              ],
+              "membrosGoverno": {
+                "cargo": "Ministro da Presidência",
+                "governo": "XXV GOVERNO CONSTITUCIONAL",
+                "nome": "António Leitão Amaro"
+              },
+              "publicacao": [
+                {
+                  "debateDtReu": null,
+                  "idAct": null,
+                  "idDeb": null,
+                  "idInt": "482745",
+                  "idPag": null,
+                  "obs": null,
+                  "pag": ["12-13"],
+                  "pagFinalDiarioSupl": null,
+                  "pubdt": "2026-04-17",
+                  "pubLeg": "XVII",
+                  "pubNr": "79",
+                  "pubSL": "1",
+                  "pubTipo": "DAR I série",
+                  "pubTp": "D",
+                  "supl": null,
+                  "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/079/2026-04-17/12?pgs=12-13&org=PLC"
+                }
+              ],
+              "sumario": "Altera a Lei Eleitoral do Presidente da República e a Lei Eleitoral para a Assembleia da República, no sentido de alargar a emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como o Regime Jurídico das Autarquias Locais, em matéria de publicidade das deliberações; Altera diversos diplomas, procedendo ao alargamento da emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como ao alargamento do direito de voto antecipado e ao estabelecimento da obrigação de disponibilização de matriz em braille dos boletins de voto no âmbito das eleições para os órgãos das autarquias locais; Introduz regras sobre o uso de inteligência artificial no âmbito de campanhas eleitorais; Recomenda ao Governo que concretize, com urgência, o alargamento do regime de direito de antena às rádios locais em todos os atos eleitorais",
+              "teor": null
+            },
+            {
+              "convidados": {
+                "cargo": null,
+                "honra": null,
+                "nome": null,
+                "pais": null
+              },
+              "deputadosOradores": [
+                {
+                  "GP": "CH",
+                  "idCadastro": "7355",
+                  "nome": "Patrícia Carvalho"
+                }
+              ],
+              "faseDebate": null,
+              "faseSessao": "P",
+              "horaInicio": "15:03",
+              "horaTermo": "19:11",
+              "linkVideo": [
+                {
+                  "link": "https://av.parlamento.pt/videos/Plenary/17/1/79/23"
+                }
+              ],
+              "membrosGoverno": {
+                "cargo": null,
+                "governo": null,
+                "nome": null
+              },
+              "publicacao": [
+                {
+                  "debateDtReu": null,
+                  "idAct": null,
+                  "idDeb": null,
+                  "idInt": "482754",
+                  "idPag": null,
+                  "obs": null,
+                  "pag": ["13-15"],
+                  "pagFinalDiarioSupl": null,
+                  "pubdt": "2026-04-17",
+                  "pubLeg": "XVII",
+                  "pubNr": "79",
+                  "pubSL": "1",
+                  "pubTipo": "DAR I série",
+                  "pubTp": "D",
+                  "supl": null,
+                  "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/079/2026-04-17/13?pgs=13-15&org=PLC"
+                }
+              ],
+              "sumario": "Altera a Lei Eleitoral do Presidente da República e a Lei Eleitoral para a Assembleia da República, no sentido de alargar a emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como o Regime Jurídico das Autarquias Locais, em matéria de publicidade das deliberações; Altera diversos diplomas, procedendo ao alargamento da emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como ao alargamento do direito de voto antecipado e ao estabelecimento da obrigação de disponibilização de matriz em braille dos boletins de voto no âmbito das eleições para os órgãos das autarquias locais; Introduz regras sobre o uso de inteligência artificial no âmbito de campanhas eleitorais; Recomenda ao Governo que concretize, com urgência, o alargamento do regime de direito de antena às rádios locais em todos os atos eleitorais",
+              "teor": null
+            },
+            {
+              "convidados": {
+                "cargo": null,
+                "honra": null,
+                "nome": null,
+                "pais": null
+              },
+              "deputadosOradores": [
+                {
+                  "GP": "PCP",
+                  "idCadastro": "4197",
+                  "nome": "Paula Santos"
+                }
+              ],
+              "faseDebate": null,
+              "faseSessao": "P",
+              "horaInicio": "15:03",
+              "horaTermo": "19:11",
+              "linkVideo": [
+                {
+                  "link": "https://av.parlamento.pt/videos/Plenary/17/1/79/24"
+                }
+              ],
+              "membrosGoverno": {
+                "cargo": null,
+                "governo": null,
+                "nome": null
+              },
+              "publicacao": [
+                {
+                  "debateDtReu": null,
+                  "idAct": null,
+                  "idDeb": null,
+                  "idInt": "482755",
+                  "idPag": null,
+                  "obs": null,
+                  "pag": ["14-14"],
+                  "pagFinalDiarioSupl": null,
+                  "pubdt": "2026-04-17",
+                  "pubLeg": "XVII",
+                  "pubNr": "79",
+                  "pubSL": "1",
+                  "pubTipo": "DAR I série",
+                  "pubTp": "D",
+                  "supl": null,
+                  "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/079/2026-04-17/14?pgs=14&org=PLC"
+                }
+              ],
+              "sumario": "Altera a Lei Eleitoral do Presidente da República e a Lei Eleitoral para a Assembleia da República, no sentido de alargar a emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como o Regime Jurídico das Autarquias Locais, em matéria de publicidade das deliberações; Altera diversos diplomas, procedendo ao alargamento da emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como ao alargamento do direito de voto antecipado e ao estabelecimento da obrigação de disponibilização de matriz em braille dos boletins de voto no âmbito das eleições para os órgãos das autarquias locais; Introduz regras sobre o uso de inteligência artificial no âmbito de campanhas eleitorais; Recomenda ao Governo que concretize, com urgência, o alargamento do regime de direito de antena às rádios locais em todos os atos eleitorais\n",
+              "teor": null
+            },
+            {
+              "convidados": {
+                "cargo": null,
+                "honra": null,
+                "nome": null,
+                "pais": null
+              },
+              "deputadosOradores": null,
+              "faseDebate": null,
+              "faseSessao": "P",
+              "horaInicio": "15:03",
+              "horaTermo": "19:11",
+              "linkVideo": [
+                {
+                  "link": "https://av.parlamento.pt/videos/Plenary/17/1/79/25"
+                }
+              ],
+              "membrosGoverno": {
+                "cargo": "Ministro da Presidência",
+                "governo": "XXV GOVERNO CONSTITUCIONAL",
+                "nome": "António Leitão Amaro"
+              },
+              "publicacao": [
+                {
+                  "debateDtReu": null,
+                  "idAct": null,
+                  "idDeb": null,
+                  "idInt": "482756",
+                  "idPag": null,
+                  "obs": null,
+                  "pag": ["14-15"],
+                  "pagFinalDiarioSupl": null,
+                  "pubdt": "2026-04-17",
+                  "pubLeg": "XVII",
+                  "pubNr": "79",
+                  "pubSL": "1",
+                  "pubTipo": "DAR I série",
+                  "pubTp": "D",
+                  "supl": null,
+                  "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/079/2026-04-17/14?pgs=14-15&org=PLC"
+                }
+              ],
+              "sumario": "Altera a Lei Eleitoral do Presidente da República e a Lei Eleitoral para a Assembleia da República, no sentido de alargar a emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como o Regime Jurídico das Autarquias Locais, em matéria de publicidade das deliberações; Altera diversos diplomas, procedendo ao alargamento da emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como ao alargamento do direito de voto antecipado e ao estabelecimento da obrigação de disponibilização de matriz em braille dos boletins de voto no âmbito das eleições para os órgãos das autarquias locais; Introduz regras sobre o uso de inteligência artificial no âmbito de campanhas eleitorais; Recomenda ao Governo que concretize, com urgência, o alargamento do regime de direito de antena às rádios locais em todos os atos eleitorais\n",
+              "teor": null
+            },
+            {
+              "convidados": {
+                "cargo": null,
+                "honra": null,
+                "nome": null,
+                "pais": null
+              },
+              "deputadosOradores": [
+                {
+                  "GP": "L",
+                  "idCadastro": "6932",
+                  "nome": "Paulo Muacho"
+                }
+              ],
+              "faseDebate": null,
+              "faseSessao": "P",
+              "horaInicio": "15:03",
+              "horaTermo": "19:11",
+              "linkVideo": [
+                {
+                  "link": "https://av.parlamento.pt/videos/Plenary/17/1/79/26"
+                }
+              ],
+              "membrosGoverno": {
+                "cargo": null,
+                "governo": null,
+                "nome": null
+              },
+              "publicacao": [
+                {
+                  "debateDtReu": null,
+                  "idAct": null,
+                  "idDeb": null,
+                  "idInt": "482757",
+                  "idPag": null,
+                  "obs": null,
+                  "pag": ["15-15"],
+                  "pagFinalDiarioSupl": null,
+                  "pubdt": "2026-04-17",
+                  "pubLeg": "XVII",
+                  "pubNr": "79",
+                  "pubSL": "1",
+                  "pubTipo": "DAR I série",
+                  "pubTp": "D",
+                  "supl": null,
+                  "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/079/2026-04-17/15?pgs=15&org=PLC"
+                }
+              ],
+              "sumario": "Altera a Lei Eleitoral do Presidente da República e a Lei Eleitoral para a Assembleia da República, no sentido de alargar a emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como o Regime Jurídico das Autarquias Locais, em matéria de publicidade das deliberações; Altera diversos diplomas, procedendo ao alargamento da emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como ao alargamento do direito de voto antecipado e ao estabelecimento da obrigação de disponibilização de matriz em braille dos boletins de voto no âmbito das eleições para os órgãos das autarquias locais; Introduz regras sobre o uso de inteligência artificial no âmbito de campanhas eleitorais; Recomenda ao Governo que concretize, com urgência, o alargamento do regime de direito de antena às rádios locais em todos os atos eleitorais\n",
+              "teor": null
+            },
+            {
+              "convidados": {
+                "cargo": null,
+                "honra": null,
+                "nome": null,
+                "pais": null
+              },
+              "deputadosOradores": [
+                {
+                  "GP": "CH",
+                  "idCadastro": "7330",
+                  "nome": "Jorge Galveias"
+                }
+              ],
+              "faseDebate": null,
+              "faseSessao": "P",
+              "horaInicio": "15:03",
+              "horaTermo": "19:11",
+              "linkVideo": [
+                {
+                  "link": "https://av.parlamento.pt/videos/Plenary/17/1/79/27"
+                }
+              ],
+              "membrosGoverno": {
+                "cargo": null,
+                "governo": null,
+                "nome": null
+              },
+              "publicacao": [
+                {
+                  "debateDtReu": null,
+                  "idAct": null,
+                  "idDeb": null,
+                  "idInt": "482758",
+                  "idPag": null,
+                  "obs": null,
+                  "pag": ["15-16"],
+                  "pagFinalDiarioSupl": null,
+                  "pubdt": "2026-04-17",
+                  "pubLeg": "XVII",
+                  "pubNr": "79",
+                  "pubSL": "1",
+                  "pubTipo": "DAR I série",
+                  "pubTp": "D",
+                  "supl": null,
+                  "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/079/2026-04-17/15?pgs=15-16&org=PLC"
+                }
+              ],
+              "sumario": "Altera a Lei Eleitoral do Presidente da República e a Lei Eleitoral para a Assembleia da República, no sentido de alargar a emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como o Regime Jurídico das Autarquias Locais, em matéria de publicidade das deliberações; Altera diversos diplomas, procedendo ao alargamento da emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como ao alargamento do direito de voto antecipado e ao estabelecimento da obrigação de disponibilização de matriz em braille dos boletins de voto no âmbito das eleições para os órgãos das autarquias locais; Introduz regras sobre o uso de inteligência artificial no âmbito de campanhas eleitorais; Recomenda ao Governo que concretize, com urgência, o alargamento do regime de direito de antena às rádios locais em todos os atos eleitorais",
+              "teor": null
+            },
+            {
+              "convidados": {
+                "cargo": null,
+                "honra": null,
+                "nome": null,
+                "pais": null
+              },
+              "deputadosOradores": [
+                {
+                  "GP": "JPP",
+                  "idCadastro": "9378",
+                  "nome": "Filipe Sousa"
+                }
+              ],
+              "faseDebate": null,
+              "faseSessao": "P",
+              "horaInicio": "15:03",
+              "horaTermo": "19:11",
+              "linkVideo": [
+                {
+                  "link": "https://av.parlamento.pt/videos/Plenary/17/1/79/28"
+                }
+              ],
+              "membrosGoverno": {
+                "cargo": null,
+                "governo": null,
+                "nome": null
+              },
+              "publicacao": [
+                {
+                  "debateDtReu": null,
+                  "idAct": null,
+                  "idDeb": null,
+                  "idInt": "482759",
+                  "idPag": null,
+                  "obs": null,
+                  "pag": ["16-17"],
+                  "pagFinalDiarioSupl": null,
+                  "pubdt": "2026-04-17",
+                  "pubLeg": "XVII",
+                  "pubNr": "79",
+                  "pubSL": "1",
+                  "pubTipo": "DAR I série",
+                  "pubTp": "D",
+                  "supl": null,
+                  "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/079/2026-04-17/16?pgs=16-17&org=PLC"
+                }
+              ],
+              "sumario": "Altera a Lei Eleitoral do Presidente da República e a Lei Eleitoral para a Assembleia da República, no sentido de alargar a emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como o Regime Jurídico das Autarquias Locais, em matéria de publicidade das deliberações; Altera diversos diplomas, procedendo ao alargamento da emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como ao alargamento do direito de voto antecipado e ao estabelecimento da obrigação de disponibilização de matriz em braille dos boletins de voto no âmbito das eleições para os órgãos das autarquias locais; Introduz regras sobre o uso de inteligência artificial no âmbito de campanhas eleitorais; Recomenda ao Governo que concretize, com urgência, o alargamento do regime de direito de antena às rádios locais em todos os atos eleitorais\n",
+              "teor": null
+            },
+            {
+              "convidados": {
+                "cargo": null,
+                "honra": null,
+                "nome": null,
+                "pais": null
+              },
+              "deputadosOradores": [
+                {
+                  "GP": "PS",
+                  "idCadastro": "5852",
+                  "nome": "Davide Amado"
+                }
+              ],
+              "faseDebate": null,
+              "faseSessao": "P",
+              "horaInicio": "15:03",
+              "horaTermo": "19:11",
+              "linkVideo": [
+                {
+                  "link": "https://av.parlamento.pt/videos/Plenary/17/1/79/29"
+                }
+              ],
+              "membrosGoverno": {
+                "cargo": null,
+                "governo": null,
+                "nome": null
+              },
+              "publicacao": [
+                {
+                  "debateDtReu": null,
+                  "idAct": null,
+                  "idDeb": null,
+                  "idInt": "482760",
+                  "idPag": null,
+                  "obs": null,
+                  "pag": ["17-18"],
+                  "pagFinalDiarioSupl": null,
+                  "pubdt": "2026-04-17",
+                  "pubLeg": "XVII",
+                  "pubNr": "79",
+                  "pubSL": "1",
+                  "pubTipo": "DAR I série",
+                  "pubTp": "D",
+                  "supl": null,
+                  "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/079/2026-04-17/17?pgs=17-18&org=PLC"
+                }
+              ],
+              "sumario": "Altera a Lei Eleitoral do Presidente da República e a Lei Eleitoral para a Assembleia da República, no sentido de alargar a emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como o Regime Jurídico das Autarquias Locais, em matéria de publicidade das deliberações; Altera diversos diplomas, procedendo ao alargamento da emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como ao alargamento do direito de voto antecipado e ao estabelecimento da obrigação de disponibilização de matriz em braille dos boletins de voto no âmbito das eleições para os órgãos das autarquias locais; Introduz regras sobre o uso de inteligência artificial no âmbito de campanhas eleitorais; Recomenda ao Governo que concretize, com urgência, o alargamento do regime de direito de antena às rádios locais em todos os atos eleitorais\n",
+              "teor": null
+            },
+            {
+              "convidados": {
+                "cargo": null,
+                "honra": null,
+                "nome": null,
+                "pais": null
+              },
+              "deputadosOradores": [
+                {
+                  "GP": "IL",
+                  "idCadastro": "6945",
+                  "nome": "Rodrigo Saraiva"
+                }
+              ],
+              "faseDebate": null,
+              "faseSessao": "P",
+              "horaInicio": "15:03",
+              "horaTermo": "19:11",
+              "linkVideo": [
+                {
+                  "link": "https://av.parlamento.pt/videos/Plenary/17/1/79/30"
+                }
+              ],
+              "membrosGoverno": {
+                "cargo": null,
+                "governo": null,
+                "nome": null
+              },
+              "publicacao": [
+                {
+                  "debateDtReu": null,
+                  "idAct": null,
+                  "idDeb": null,
+                  "idInt": "482761",
+                  "idPag": null,
+                  "obs": null,
+                  "pag": ["18-18"],
+                  "pagFinalDiarioSupl": null,
+                  "pubdt": "2026-04-17",
+                  "pubLeg": "XVII",
+                  "pubNr": "79",
+                  "pubSL": "1",
+                  "pubTipo": "DAR I série",
+                  "pubTp": "D",
+                  "supl": null,
+                  "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/079/2026-04-17/18?pgs=18&org=PLC"
+                }
+              ],
+              "sumario": "Altera a Lei Eleitoral do Presidente da República e a Lei Eleitoral para a Assembleia da República, no sentido de alargar a emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como o Regime Jurídico das Autarquias Locais, em matéria de publicidade das deliberações; Altera diversos diplomas, procedendo ao alargamento da emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como ao alargamento do direito de voto antecipado e ao estabelecimento da obrigação de disponibilização de matriz em braille dos boletins de voto no âmbito das eleições para os órgãos das autarquias locais; Introduz regras sobre o uso de inteligência artificial no âmbito de campanhas eleitorais; Recomenda ao Governo que concretize, com urgência, o alargamento do regime de direito de antena às rádios locais em todos os atos eleitorais\n",
+              "teor": null
+            },
+            {
+              "convidados": {
+                "cargo": null,
+                "honra": null,
+                "nome": null,
+                "pais": null
+              },
+              "deputadosOradores": [
+                {
+                  "GP": "PCP",
+                  "idCadastro": "4197",
+                  "nome": "Paula Santos"
+                }
+              ],
+              "faseDebate": null,
+              "faseSessao": "P",
+              "horaInicio": "15:03",
+              "horaTermo": "19:11",
+              "linkVideo": [
+                {
+                  "link": "https://av.parlamento.pt/videos/Plenary/17/1/79/31"
+                }
+              ],
+              "membrosGoverno": {
+                "cargo": null,
+                "governo": null,
+                "nome": null
+              },
+              "publicacao": [
+                {
+                  "debateDtReu": null,
+                  "idAct": null,
+                  "idDeb": null,
+                  "idInt": "482762",
+                  "idPag": null,
+                  "obs": null,
+                  "pag": ["19-19"],
+                  "pagFinalDiarioSupl": null,
+                  "pubdt": "2026-04-17",
+                  "pubLeg": "XVII",
+                  "pubNr": "79",
+                  "pubSL": "1",
+                  "pubTipo": "DAR I série",
+                  "pubTp": "D",
+                  "supl": null,
+                  "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/079/2026-04-17/19?pgs=19&org=PLC"
+                }
+              ],
+              "sumario": "Altera a Lei Eleitoral do Presidente da República e a Lei Eleitoral para a Assembleia da República, no sentido de alargar a emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como o Regime Jurídico das Autarquias Locais, em matéria de publicidade das deliberações; Altera diversos diplomas, procedendo ao alargamento da emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como ao alargamento do direito de voto antecipado e ao estabelecimento da obrigação de disponibilização de matriz em braille dos boletins de voto no âmbito das eleições para os órgãos das autarquias locais; Introduz regras sobre o uso de inteligência artificial no âmbito de campanhas eleitorais; Recomenda ao Governo que concretize, com urgência, o alargamento do regime de direito de antena às rádios locais em todos os atos eleitorais",
+              "teor": null
+            },
+            {
+              "convidados": {
+                "cargo": null,
+                "honra": null,
+                "nome": null,
+                "pais": null
+              },
+              "deputadosOradores": [
+                {
+                  "GP": "L",
+                  "idCadastro": "6932",
+                  "nome": "Paulo Muacho"
+                }
+              ],
+              "faseDebate": null,
+              "faseSessao": "P",
+              "horaInicio": "15:03",
+              "horaTermo": "19:11",
+              "linkVideo": [
+                {
+                  "link": "https://av.parlamento.pt/videos/Plenary/17/1/79/32"
+                }
+              ],
+              "membrosGoverno": {
+                "cargo": null,
+                "governo": null,
+                "nome": null
+              },
+              "publicacao": [
+                {
+                  "debateDtReu": null,
+                  "idAct": null,
+                  "idDeb": null,
+                  "idInt": "482763",
+                  "idPag": null,
+                  "obs": null,
+                  "pag": ["19-20"],
+                  "pagFinalDiarioSupl": null,
+                  "pubdt": "2026-04-17",
+                  "pubLeg": "XVII",
+                  "pubNr": "79",
+                  "pubSL": "1",
+                  "pubTipo": "DAR I série",
+                  "pubTp": "D",
+                  "supl": null,
+                  "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/079/2026-04-17/19?pgs=19-20&org=PLC"
+                }
+              ],
+              "sumario": "Altera a Lei Eleitoral do Presidente da República e a Lei Eleitoral para a Assembleia da República, no sentido de alargar a emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como o Regime Jurídico das Autarquias Locais, em matéria de publicidade das deliberações; Altera diversos diplomas, procedendo ao alargamento da emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como ao alargamento do direito de voto antecipado e ao estabelecimento da obrigação de disponibilização de matriz em braille dos boletins de voto no âmbito das eleições para os órgãos das autarquias locais; Introduz regras sobre o uso de inteligência artificial no âmbito de campanhas eleitorais; Recomenda ao Governo que concretize, com urgência, o alargamento do regime de direito de antena às rádios locais em todos os atos eleitorais",
+              "teor": null
+            },
+            {
+              "convidados": {
+                "cargo": null,
+                "honra": null,
+                "nome": null,
+                "pais": null
+              },
+              "deputadosOradores": [
+                {
+                  "GP": "CDS-PP",
+                  "idCadastro": "1657",
+                  "nome": "João Pinho de Almeida"
+                }
+              ],
+              "faseDebate": null,
+              "faseSessao": "P",
+              "horaInicio": "15:03",
+              "horaTermo": "19:11",
+              "linkVideo": [
+                {
+                  "link": "https://av.parlamento.pt/videos/Plenary/17/1/79/34"
+                }
+              ],
+              "membrosGoverno": {
+                "cargo": null,
+                "governo": null,
+                "nome": null
+              },
+              "publicacao": [
+                {
+                  "debateDtReu": null,
+                  "idAct": null,
+                  "idDeb": null,
+                  "idInt": "482764",
+                  "idPag": null,
+                  "obs": null,
+                  "pag": ["20-20"],
+                  "pagFinalDiarioSupl": null,
+                  "pubdt": "2026-04-17",
+                  "pubLeg": "XVII",
+                  "pubNr": "79",
+                  "pubSL": "1",
+                  "pubTipo": "DAR I série",
+                  "pubTp": "D",
+                  "supl": null,
+                  "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/079/2026-04-17/20?pgs=20&org=PLC"
+                }
+              ],
+              "sumario": "Altera a Lei Eleitoral do Presidente da República e a Lei Eleitoral para a Assembleia da República, no sentido de alargar a emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como o Regime Jurídico das Autarquias Locais, em matéria de publicidade das deliberações; Altera diversos diplomas, procedendo ao alargamento da emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como ao alargamento do direito de voto antecipado e ao estabelecimento da obrigação de disponibilização de matriz em braille dos boletins de voto no âmbito das eleições para os órgãos das autarquias locais; Introduz regras sobre o uso de inteligência artificial no âmbito de campanhas eleitorais; Recomenda ao Governo que concretize, com urgência, o alargamento do regime de direito de antena às rádios locais em todos os atos eleitorais\n",
+              "teor": null
+            },
+            {
+              "convidados": {
+                "cargo": null,
+                "honra": null,
+                "nome": null,
+                "pais": null
+              },
+              "deputadosOradores": [
+                {
+                  "GP": "PSD",
+                  "idCadastro": "1132",
+                  "nome": "António Rodrigues"
+                }
+              ],
+              "faseDebate": null,
+              "faseSessao": "P",
+              "horaInicio": "15:03",
+              "horaTermo": "19:11",
+              "linkVideo": [
+                {
+                  "link": "https://av.parlamento.pt/videos/Plenary/17/1/79/35"
+                }
+              ],
+              "membrosGoverno": {
+                "cargo": null,
+                "governo": null,
+                "nome": null
+              },
+              "publicacao": [
+                {
+                  "debateDtReu": null,
+                  "idAct": null,
+                  "idDeb": null,
+                  "idInt": "482765",
+                  "idPag": null,
+                  "obs": null,
+                  "pag": ["20-21"],
+                  "pagFinalDiarioSupl": null,
+                  "pubdt": "2026-04-17",
+                  "pubLeg": "XVII",
+                  "pubNr": "79",
+                  "pubSL": "1",
+                  "pubTipo": "DAR I série",
+                  "pubTp": "D",
+                  "supl": null,
+                  "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/079/2026-04-17/20?pgs=20-21&org=PLC"
+                }
+              ],
+              "sumario": "Altera a Lei Eleitoral do Presidente da República e a Lei Eleitoral para a Assembleia da República, no sentido de alargar a emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como o Regime Jurídico das Autarquias Locais, em matéria de publicidade das deliberações; Altera diversos diplomas, procedendo ao alargamento da emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como ao alargamento do direito de voto antecipado e ao estabelecimento da obrigação de disponibilização de matriz em braille dos boletins de voto no âmbito das eleições para os órgãos das autarquias locais; Introduz regras sobre o uso de inteligência artificial no âmbito de campanhas eleitorais; Recomenda ao Governo que concretize, com urgência, o alargamento do regime de direito de antena às rádios locais em todos os atos eleitorais\n",
+              "teor": null
+            },
+            {
+              "convidados": {
+                "cargo": null,
+                "honra": null,
+                "nome": null,
+                "pais": null
+              },
+              "deputadosOradores": [
+                {
+                  "GP": "L",
+                  "idCadastro": "6932",
+                  "nome": "Paulo Muacho"
+                }
+              ],
+              "faseDebate": null,
+              "faseSessao": "P",
+              "horaInicio": "15:03",
+              "horaTermo": "19:11",
+              "linkVideo": [
+                {
+                  "link": "https://av.parlamento.pt/videos/Plenary/17/1/79/36"
+                }
+              ],
+              "membrosGoverno": {
+                "cargo": null,
+                "governo": null,
+                "nome": null
+              },
+              "publicacao": [
+                {
+                  "debateDtReu": null,
+                  "idAct": null,
+                  "idDeb": null,
+                  "idInt": "482766",
+                  "idPag": null,
+                  "obs": null,
+                  "pag": ["22-22"],
+                  "pagFinalDiarioSupl": null,
+                  "pubdt": "2026-04-17",
+                  "pubLeg": "XVII",
+                  "pubNr": "79",
+                  "pubSL": "1",
+                  "pubTipo": "DAR I série",
+                  "pubTp": "D",
+                  "supl": null,
+                  "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/079/2026-04-17/22?pgs=22&org=PLC"
+                }
+              ],
+              "sumario": "Altera a Lei Eleitoral do Presidente da República e a Lei Eleitoral para a Assembleia da República, no sentido de alargar a emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como o Regime Jurídico das Autarquias Locais, em matéria de publicidade das deliberações; Altera diversos diplomas, procedendo ao alargamento da emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como ao alargamento do direito de voto antecipado e ao estabelecimento da obrigação de disponibilização de matriz em braille dos boletins de voto no âmbito das eleições para os órgãos das autarquias locais; Introduz regras sobre o uso de inteligência artificial no âmbito de campanhas eleitorais; Recomenda ao Governo que concretize, com urgência, o alargamento do regime de direito de antena às rádios locais em todos os atos eleitorais",
+              "teor": null
+            },
+            {
+              "convidados": {
+                "cargo": null,
+                "honra": null,
+                "nome": null,
+                "pais": null
+              },
+              "deputadosOradores": null,
+              "faseDebate": null,
+              "faseSessao": "P",
+              "horaInicio": "15:03",
+              "horaTermo": "19:11",
+              "linkVideo": [
+                {
+                  "link": "https://av.parlamento.pt/videos/Plenary/17/1/79/37"
+                }
+              ],
+              "membrosGoverno": {
+                "cargo": "Ministro da Presidência",
+                "governo": "XXV GOVERNO CONSTITUCIONAL",
+                "nome": "António Leitão Amaro"
+              },
+              "publicacao": [
+                {
+                  "debateDtReu": null,
+                  "idAct": null,
+                  "idDeb": null,
+                  "idInt": "482767",
+                  "idPag": null,
+                  "obs": null,
+                  "pag": ["22-22"],
+                  "pagFinalDiarioSupl": null,
+                  "pubdt": "2026-04-17",
+                  "pubLeg": "XVII",
+                  "pubNr": "79",
+                  "pubSL": "1",
+                  "pubTipo": "DAR I série",
+                  "pubTp": "D",
+                  "supl": null,
+                  "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/079/2026-04-17/22?pgs=22&org=PLC"
+                }
+              ],
+              "sumario": "Altera a Lei Eleitoral do Presidente da República e a Lei Eleitoral para a Assembleia da República, no sentido de alargar a emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como o Regime Jurídico das Autarquias Locais, em matéria de publicidade das deliberações; Altera diversos diplomas, procedendo ao alargamento da emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como ao alargamento do direito de voto antecipado e ao estabelecimento da obrigação de disponibilização de matriz em braille dos boletins de voto no âmbito das eleições para os órgãos das autarquias locais; Introduz regras sobre o uso de inteligência artificial no âmbito de campanhas eleitorais; Recomenda ao Governo que concretize, com urgência, o alargamento do regime de direito de antena às rádios locais em todos os atos eleitorais\n",
+              "teor": null
+            }
+          ]
+        }
+      ],
+      "Links": null,
+      "ObsFase": null,
+      "OevId": "1717177",
+      "OevTextId": null,
+      "PcpublicasConjuntas": null,
+      "PeticoesConjuntas": null,
+      "PublicacaoFase": [
+        {
+          "debateDtReu": null,
+          "idAct": null,
+          "idDeb": null,
+          "idInt": null,
+          "idPag": "1024960",
+          "obs": null,
+          "pag": ["12-22"],
+          "pagFinalDiarioSupl": null,
+          "pubdt": "2026-04-17",
+          "pubLeg": "XVII",
+          "pubNr": "79",
+          "pubSL": "1",
+          "pubTipo": "DAR I série",
+          "pubTp": "D",
+          "supl": null,
+          "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/079/2026-04-17/12?pgs=12-22&org=PLC"
+        }
+      ],
+      "RecursoDeputados": null,
+      "RecursoGP": null,
+      "TextosAprovados": null,
+      "Votacao": null
+    },
+    {
+      "ActId": null,
+      "ActividadesConjuntas": null,
+      "AnexosFase": null,
+      "CodigoFase": "250",
+      "Comissao": null,
+      "DataFase": "2026-04-17",
+      "EvtId": "13",
+      "Fase": "Votação na generalidade",
+      "IniciativasConjuntas": null,
+      "Intervencoesdebates": null,
+      "Links": null,
+      "ObsFase": null,
+      "OevId": "1717610",
+      "OevTextId": null,
+      "PcpublicasConjuntas": null,
+      "PeticoesConjuntas": null,
+      "PublicacaoFase": [
+        {
+          "debateDtReu": null,
+          "idAct": null,
+          "idDeb": null,
+          "idInt": null,
+          "idPag": "1024729",
+          "obs": null,
+          "pag": ["57-57"],
+          "pagFinalDiarioSupl": null,
+          "pubdt": "2026-04-18",
+          "pubLeg": "XVII",
+          "pubNr": "80",
+          "pubSL": "1",
+          "pubTipo": "DAR I série",
+          "pubTp": "D",
+          "supl": null,
+          "URLDiario": "https://debates.parlamento.pt/catalogo/r3/dar/01/17/01/080/2026-04-18/57?pgs=57&org=PLC"
+        }
+      ],
+      "RecursoDeputados": null,
+      "RecursoGP": null,
+      "TextosAprovados": null,
+      "Votacao": [
+        {
+          "ausencias": null,
+          "data": "2026-04-17",
+          "descricao": null,
+          "detalhe": "A Favor: \u003CI\u003EPSD\u003C/I\u003E, \u003CI\u003E CH\u003C/I\u003E, \u003CI\u003E L\u003C/I\u003E, \u003CI\u003E PCP\u003C/I\u003E, \u003CI\u003E CDS-PP\u003C/I\u003E, \u003CI\u003E BE\u003C/I\u003E, \u003CI\u003E PAN\u003C/I\u003E, \u003CI\u003E JPP\u003C/I\u003E\u003CBR\u003EAbstenção:\u003CI\u003EPS\u003C/I\u003E, \u003CI\u003E IL\u003C/I\u003E",
+          "id": "171449",
+          "publicacao": null,
+          "resultado": "Aprovado",
+          "reuniao": "78",
+          "tipoReuniao": "RP",
+          "unanime": null
+        }
+      ]
+    },
+    {
+      "ActId": null,
+      "ActividadesConjuntas": null,
+      "AnexosFase": null,
+      "CodigoFase": "270",
+      "Comissao": [
+        {
+          "AccId": "108812",
+          "AguardaAgendamentoPlenario": null,
+          "Audicoes": null,
+          "Audiencias": null,
+          "Competente": "N",
+          "DataAgendamentoDiscussao": null,
+          "DataAgendamentoPlenario": "0001-01-01T00:00:00",
+          "DataDistribuicao": "2026-04-17",
+          "DataDistruibuicaoSubcomissao": null,
+          "DataEntrada": null,
+          "DatafimApreciacaoPublica": null,
+          "DatainicioApreciacaoPublica": null,
+          "DataMotivoNaoParecer": null,
+          "DataRelatorio": null,
+          "DataRemessa": null,
+          "DataReqAgendamentoPlenario": null,
+          "DistribuicaoSubcomissao": null,
+          "Documentos": [
+            {
+              "DataDocumento": "2026-05-27",
+              "TipoDocumento": "Texto de Substituição",
+              "TituloDocumento": "Proposta de substituição 1 - GP PSD",
+              "URL": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c304e505453387851304644524578484c305276593356745a57353062334e4a626d6c6a6157463061585a685132397461584e7a595738764f4445785a6d4669593251745a574931596930304e6d4e694c546b7a5a6a63744e7a51355a6a49784e5751325a6d59324c6e426b5a673d3d&fich=811fabcd-eb5b-46cb-93f7-749f215d6ff6.pdf&Inline=true"
+            },
+            {
+              "DataDocumento": "2026-05-27",
+              "TipoDocumento": "Texto de Substituição",
+              "TituloDocumento": "Proposta de substituição 2 - GP PSD",
+              "URL": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c304e505453387851304644524578484c305276593356745a57353062334e4a626d6c6a6157463061585a685132397461584e7a595738764d6d526a4d444e6c4d6d4d7459546b794e7930304d7a426b4c574a684e7a4d744d6d51794f575a6c4e44686d5a4745774c6e426b5a673d3d&fich=2dc03e2c-a927-430d-ba73-2d29fe48fda0.pdf&Inline=true"
+            },
+            {
+              "DataDocumento": "2026-06-09",
+              "TipoDocumento": "Texto final",
+              "TituloDocumento": "Projeto de Texto Final e relatório da discussão e votação indiciárias na especialidade CACDLG",
+              "URL": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c304e505453387851304644524578484c305276593356745a57353062334e4a626d6c6a6157463061585a685132397461584e7a595738764e4467774d446b344e4759744d544a6b5a6930304d54686d4c574935596a45745a574932596a41354e4759784e7a52684c6e426b5a673d3d&fich=4800984f-12df-418f-b9b1-eb6b094f174a.pdf&Inline=true"
+            }
+          ],
+          "GpAgendamentoPlenario": null,
+          "IdComissao": "8447",
+          "Legislatura": null,
+          "MotivoNaoParecer": null,
+          "Nome": "Comissão de Assuntos Constitucionais, Direitos, Liberdades e Garantias ",
+          "Numero": "8447",
+          "Observacao": null,
+          "PareceresRecebidos": null,
+          "PedidosParecer": null,
+          "Prorrogado": null,
+          "Publicacao": null,
+          "PublicacaoRelatorio": null,
+          "Relatores": null,
+          "RemessaRedaccaoFinal": null,
+          "Remessas": null,
+          "Sessao": null,
+          "Sigla": null,
+          "Votacao": null
+        }
+      ],
+      "DataFase": "2026-04-17",
+      "EvtId": "14",
+      "Fase": "Baixa comissão especialidade",
+      "IniciativasConjuntas": null,
+      "Intervencoesdebates": null,
+      "Links": null,
+      "ObsFase": null,
+      "OevId": "1717611",
+      "OevTextId": null,
+      "PcpublicasConjuntas": null,
+      "PeticoesConjuntas": null,
+      "PublicacaoFase": null,
+      "RecursoDeputados": null,
+      "RecursoGP": null,
+      "TextosAprovados": null,
+      "Votacao": null
+    },
+    {
+      "ActId": null,
+      "ActividadesConjuntas": null,
+      "AnexosFase": [
+        {
+          "anexoFich": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c305276593356745a57353062334e4a626d6c6a6157463061585a684c7a4d344d444e684d5449334c5751344e5441744e4467794e5330345a5455774c546b774d6a63354d54686a597a466a4e7935775a47593d&fich=3803a127-d850-4825-8e50-9027918cc1c7.pdf&Inline=true",
+          "anexoNome": "Ofício de Redistribuição"
+        }
+      ],
+      "CodigoFase": "270",
+      "Comissao": [
+        {
+          "AccId": "109294",
+          "AguardaAgendamentoPlenario": null,
+          "Audicoes": null,
+          "Audiencias": null,
+          "Competente": "S",
+          "DataAgendamentoDiscussao": null,
+          "DataAgendamentoPlenario": "0001-01-01T00:00:00",
+          "DataDistribuicao": "2026-06-15",
+          "DataDistruibuicaoSubcomissao": null,
+          "DataEntrada": null,
+          "DatafimApreciacaoPublica": null,
+          "DatainicioApreciacaoPublica": null,
+          "DataMotivoNaoParecer": null,
+          "DataRelatorio": null,
+          "DataRemessa": null,
+          "DataReqAgendamentoPlenario": null,
+          "DistribuicaoSubcomissao": null,
+          "Documentos": null,
+          "GpAgendamentoPlenario": null,
+          "IdComissao": "8459",
+          "Legislatura": null,
+          "MotivoNaoParecer": null,
+          "Nome": "Comissão da Reforma do Estado e Poder Local",
+          "Numero": "8459",
+          "Observacao": null,
+          "PareceresRecebidos": null,
+          "PedidosParecer": null,
+          "Prorrogado": null,
+          "Publicacao": null,
+          "PublicacaoRelatorio": null,
+          "Relatores": null,
+          "RemessaRedaccaoFinal": null,
+          "Remessas": null,
+          "Sessao": null,
+          "Sigla": null,
+          "Votacao": null
+        }
+      ],
+      "DataFase": "2026-06-11",
+      "EvtId": "14",
+      "Fase": "Baixa comissão especialidade",
+      "IniciativasConjuntas": null,
+      "Intervencoesdebates": null,
+      "Links": null,
+      "ObsFase": "Redistribuição da matéria remanescente da iniciativa, relativa às alterações ao regime jurídico das autarquias locais, à 13.ª Comissão, com despacho de 11-06-2026.\n",
+      "OevId": "1730333",
+      "OevTextId": null,
+      "PcpublicasConjuntas": null,
+      "PeticoesConjuntas": null,
+      "PublicacaoFase": null,
+      "RecursoDeputados": null,
+      "RecursoGP": null,
+      "TextosAprovados": null,
+      "Votacao": null
+    },
+    {
+      "ActId": null,
+      "ActividadesConjuntas": null,
+      "AnexosFase": null,
+      "CodigoFase": "310",
+      "Comissao": null,
+      "DataFase": "2026-06-12",
+      "EvtId": "34",
+      "Fase": "Votação na especialidade",
+      "IniciativasConjuntas": null,
+      "Intervencoesdebates": null,
+      "Links": null,
+      "ObsFase": null,
+      "OevId": "1730425",
+      "OevTextId": null,
+      "PcpublicasConjuntas": null,
+      "PeticoesConjuntas": null,
+      "PublicacaoFase": null,
+      "RecursoDeputados": null,
+      "RecursoGP": null,
+      "TextosAprovados": null,
+      "Votacao": [
+        {
+          "ausencias": null,
+          "data": "2026-06-12",
+          "descricao": "Votação da assunção pelo Plenário das votações indiciárias realizadas na especialidade em sede de Comissão",
+          "detalhe": null,
+          "id": "172170",
+          "publicacao": null,
+          "resultado": "Aprovado",
+          "reuniao": "100",
+          "tipoReuniao": "RP",
+          "unanime": "unanime"
+        }
+      ]
+    },
+    {
+      "ActId": null,
+      "ActividadesConjuntas": null,
+      "AnexosFase": null,
+      "CodigoFase": "320",
+      "Comissao": null,
+      "DataFase": "2026-06-12",
+      "EvtId": "18",
+      "Fase": "Votação final global",
+      "IniciativasConjuntas": null,
+      "Intervencoesdebates": null,
+      "Links": null,
+      "ObsFase": null,
+      "OevId": "1730426",
+      "OevTextId": null,
+      "PcpublicasConjuntas": null,
+      "PeticoesConjuntas": null,
+      "PublicacaoFase": null,
+      "RecursoDeputados": null,
+      "RecursoGP": null,
+      "TextosAprovados": null,
+      "Votacao": [
+        {
+          "ausencias": null,
+          "data": "2026-06-12",
+          "descricao": "Texto final, apresentado pela Comissão de Assuntos Constitucionais, Direitos, Liberdades e Garantias, relativo à Proposta de Lei n.º 62/XVII/1.ª (GOV)",
+          "detalhe": "A Favor: \u003CI\u003E77-PSD\u003C/I\u003E, \u003CI\u003E 58-CH\u003C/I\u003E, \u003CI\u003E 56-PS\u003C/I\u003E, \u003CI\u003E 9-IL\u003C/I\u003E, \u003CI\u003E 6-L\u003C/I\u003E, \u003CI\u003E 3-PCP\u003C/I\u003E, \u003CI\u003E 1-CDS-PP\u003C/I\u003E, \u003CI\u003E 1-BE\u003C/I\u003E, \u003CI\u003E 1-PAN\u003C/I\u003E, \u003CI\u003E 1-JPP\u003C/I\u003E",
+          "id": "172171",
+          "publicacao": null,
+          "resultado": "Aprovado",
+          "reuniao": "100",
+          "tipoReuniao": "RP",
+          "unanime": null
+        }
+      ]
+    },
+    {
+      "ActId": null,
+      "ActividadesConjuntas": null,
+      "AnexosFase": [
+        {
+          "anexoFich": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c305276593356745a57353062334e4a626d6c6a6157463061585a684c7a51784e5749344d7a4d774c54426d5a4749744e444934595330354d6d4e694c5755774e5467354f57497a4e6d566d4e43356b62324e34&fich=415b8330-0fdb-428a-92cb-e05899b36ef4.docx&Inline=true",
+          "anexoNome": "Projeto de Decreto"
+        },
+        {
+          "anexoFich": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c305276593356745a57353062334e4a626d6c6a6157463061585a684c7a56694e6d5a6b4d54466d4c54426c597a67744e4455324d7931684d4749324c5442694f4445344d4451325a474e6d4d53356b62324e34&fich=5b6fd11f-0ec8-4563-a0b6-0b818046dcf1.docx&Inline=true",
+          "anexoNome": "Informação de redação final"
+        }
+      ],
+      "CodigoFase": "348",
+      "Comissao": [
+        {
+          "AccId": "109350",
+          "AguardaAgendamentoPlenario": null,
+          "Audicoes": null,
+          "Audiencias": null,
+          "Competente": "S",
+          "DataAgendamentoDiscussao": null,
+          "DataAgendamentoPlenario": "0001-01-01T00:00:00",
+          "DataDistribuicao": "2026-06-22",
+          "DataDistruibuicaoSubcomissao": null,
+          "DataEntrada": null,
+          "DatafimApreciacaoPublica": null,
+          "DatainicioApreciacaoPublica": null,
+          "DataMotivoNaoParecer": null,
+          "DataRelatorio": null,
+          "DataRemessa": null,
+          "DataReqAgendamentoPlenario": null,
+          "DistribuicaoSubcomissao": null,
+          "Documentos": [
+            {
+              "DataDocumento": "2026-06-24",
+              "TipoDocumento": "Redação final",
+              "TituloDocumento": "Redação final",
+              "URL": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c304e505453387851304644524578484c305276593356745a57353062334e4a626d6c6a6157463061585a685132397461584e7a595738764d4467324d57457a4f5751745a546b324d5330305a445a694c546b794d7a5174596d4e694f5745324f444177593245334c6e426b5a673d3d&fich=0861a39d-e961-4d6b-9234-bcb9a6800ca7.pdf&Inline=true"
+            }
+          ],
+          "GpAgendamentoPlenario": null,
+          "IdComissao": "8447",
+          "Legislatura": null,
+          "MotivoNaoParecer": null,
+          "Nome": "Comissão de Assuntos Constitucionais, Direitos, Liberdades e Garantias ",
+          "Numero": "8447",
+          "Observacao": null,
+          "PareceresRecebidos": null,
+          "PedidosParecer": null,
+          "Prorrogado": null,
+          "Publicacao": null,
+          "PublicacaoRelatorio": null,
+          "Relatores": null,
+          "RemessaRedaccaoFinal": null,
+          "Remessas": [
+            {
+              "dataDocumento": "2026-06-24",
+              "dataRemessa": "2026-06-24",
+              "numeroOficio": null,
+              "observacoes": null,
+              "tipoRemessa": "Redação Final"
+            }
+          ],
+          "Sessao": null,
+          "Sigla": null,
+          "Votacao": null
+        }
+      ],
+      "DataFase": "2026-06-22",
+      "EvtId": "133",
+      "Fase": "Envio à Comissão para fixação da Redação final",
+      "IniciativasConjuntas": null,
+      "Intervencoesdebates": null,
+      "Links": null,
+      "ObsFase": null,
+      "OevId": "1730667",
+      "OevTextId": null,
+      "PcpublicasConjuntas": null,
+      "PeticoesConjuntas": null,
+      "PublicacaoFase": null,
+      "RecursoDeputados": null,
+      "RecursoGP": null,
+      "TextosAprovados": null,
+      "Votacao": null
+    },
+    {
+      "ActId": null,
+      "ActividadesConjuntas": null,
+      "AnexosFase": null,
+      "CodigoFase": "350",
+      "Comissao": null,
+      "DataFase": "2026-06-25",
+      "EvtId": "31",
+      "Fase": "Decreto (Publicação)",
+      "IniciativasConjuntas": null,
+      "Intervencoesdebates": null,
+      "Links": null,
+      "ObsFase": null,
+      "OevId": "1730823",
+      "OevTextId": "135721",
+      "PcpublicasConjuntas": null,
+      "PeticoesConjuntas": null,
+      "PublicacaoFase": null,
+      "RecursoDeputados": null,
+      "RecursoGP": null,
+      "TextosAprovados": "135721",
+      "Votacao": null
+    }
+  ],
+  "IniId": "356278",
+  "IniLeg": "XVII",
+  "IniLinkTexto": "http://app.parlamento.pt/webutils/docs/doc.pdf?path=6148523063484d364c793968636d356c6443397a6158526c63793959566b6c4a5447566e4c305276593356745a57353062334e4a626d6c6a6157463061585a684c7a526a5a57466c5a5441354c5451794e4451744e4451774f5330344f544d304c5755304e7a4d355a474d7a4d5445354d53356b62324e34&fich=4ceaee09-4244-4409-8934-e4739dc31191.docx&Inline=true",
+  "IniNr": "62",
+  "IniObs": null,
+  "IniSel": "1",
+  "IniTextoSubst": "NAO",
+  "IniTextoSubstCampo": null,
+  "IniTipo": "P",
+  "IniTitulo": "Altera a Lei Eleitoral do Presidente da República e a Lei Eleitoral para a Assembleia da República, no sentido de alargar a emissão do direito de antena nas rádios locais a todos os processos eleitorais, bem como o Regime Jurídico das Autarquias Locais, em matéria de publicidade das deliberações",
+  "Links": null,
+  "Peticoes": null,
+  "PropostasAlteracao": null
+}
