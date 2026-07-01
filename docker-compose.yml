@@ -48,6 +48,13 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: Host=postgres-parlamento;Port=5432;Database=${PARLAMENTO_DB_NAME:-parlamento};Username=${PARLAMENTO_DB_USER:-parlamento};Password=${PARLAMENTO_DB_PASSWORD:-parlamento}
+      ParliamentOpenData__LatestLegislature: ${PARLIAMENT_OPEN_DATA_LATEST_LEGISLATURE:-XVII}
+      ParliamentOpenData__DailyImport__Enabled: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_ENABLED:-false}
+      ParliamentOpenData__DailyImport__TimeZoneId: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_TIME_ZONE_ID:-Europe/Lisbon}
+      ParliamentOpenData__DailyImport__RunAt: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_AT:-00:00:00}
+      ParliamentOpenData__Legislatures__XV__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XV_INITIATIVES_URL}
+      ParliamentOpenData__Legislatures__XVI__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVI_INITIATIVES_URL}
+      ParliamentOpenData__Legislatures__XVII__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVII_INITIATIVES_URL}
     volumes:
       - ./backend/src:/usr/src/app/src
       - ./backend/Domain:/usr/src/app/Domain
@@ -68,6 +75,13 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: Host=postgres-parlamento;Port=5432;Database=${PARLAMENTO_DB_NAME:-parlamento};Username=${PARLAMENTO_DB_USER:-parlamento};Password=${PARLAMENTO_DB_PASSWORD:-parlamento}
+      ParliamentOpenData__LatestLegislature: ${PARLIAMENT_OPEN_DATA_LATEST_LEGISLATURE:-XVII}
+      ParliamentOpenData__DailyImport__Enabled: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_ENABLED:-false}
+      ParliamentOpenData__DailyImport__TimeZoneId: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_TIME_ZONE_ID:-Europe/Lisbon}
+      ParliamentOpenData__DailyImport__RunAt: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_AT:-00:00:00}
+      ParliamentOpenData__Legislatures__XV__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XV_INITIATIVES_URL}
+      ParliamentOpenData__Legislatures__XVI__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVI_INITIATIVES_URL}
+      ParliamentOpenData__Legislatures__XVII__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVII_INITIATIVES_URL}
     depends_on:
       postgres-parlamento:
         condition: service_healthy
@@ -80,6 +94,13 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Test
       ConnectionStrings__DefaultConnection: Host=postgres-parlamento;Port=5432;Database=${PARLAMENTO_DB_NAME:-parlamento};Username=${PARLAMENTO_DB_USER:-parlamento};Password=${PARLAMENTO_DB_PASSWORD:-parlamento}
+      ParliamentOpenData__LatestLegislature: ${PARLIAMENT_OPEN_DATA_LATEST_LEGISLATURE:-XVII}
+      ParliamentOpenData__DailyImport__Enabled: false
+      ParliamentOpenData__DailyImport__TimeZoneId: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_TIME_ZONE_ID:-Europe/Lisbon}
+      ParliamentOpenData__DailyImport__RunAt: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_AT:-00:00:00}
+      ParliamentOpenData__Legislatures__XV__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XV_INITIATIVES_URL}
+      ParliamentOpenData__Legislatures__XVI__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVI_INITIATIVES_URL}
+      ParliamentOpenData__Legislatures__XVII__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVII_INITIATIVES_URL}
     volumes:
       - ./backend/src:/usr/src/app/src
       - ./backend/test:/usr/src/app/test
@@ -99,6 +120,13 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: Host=postgres-parlamento;Port=5432;Database=${PARLAMENTO_DB_NAME:-parlamento};Username=${PARLAMENTO_DB_USER:-parlamento};Password=${PARLAMENTO_DB_PASSWORD:-parlamento}
+      ParliamentOpenData__LatestLegislature: ${PARLIAMENT_OPEN_DATA_LATEST_LEGISLATURE:-XVII}
+      ParliamentOpenData__DailyImport__Enabled: false
+      ParliamentOpenData__DailyImport__TimeZoneId: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_TIME_ZONE_ID:-Europe/Lisbon}
+      ParliamentOpenData__DailyImport__RunAt: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_AT:-00:00:00}
+      ParliamentOpenData__Legislatures__XV__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XV_INITIATIVES_URL}
+      ParliamentOpenData__Legislatures__XVI__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVI_INITIATIVES_URL}
+      ParliamentOpenData__Legislatures__XVII__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVII_INITIATIVES_URL}
     depends_on:
       postgres-parlamento:
         condition: service_healthy

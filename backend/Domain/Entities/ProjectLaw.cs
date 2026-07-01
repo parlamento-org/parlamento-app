@@ -40,17 +40,11 @@ public class ProjectLaw
 
     public string? InitiativeSelection { get; set; }
 
-    public string? LegislatureStartDate { get; set; }
-
-    public string? LegislatureEndDate { get; set; }
-
     public string? InitiativeObservations { get; set; }
 
     public string? InitiativeTextSubstitution { get; set; }
 
     public string? InitiativeTextSubstitutionField { get; set; }
-
-    public string? RawJson { get; set; }
 
     [Required]
     public int Score { get; set; }

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Parlamento.Domain.Entities;
 
@@ -11,6 +12,7 @@ public class ParliamentInitiativeAuthor
 
     public int ProjectLawId { get; set; }
 
+    [JsonIgnore]
     public ProjectLaw? ProjectLaw { get; set; }
 
     [Required]
@@ -21,6 +23,4 @@ public class ParliamentInitiativeAuthor
     public string? Acronym { get; set; }
 
     public string? DeputySourceId { get; set; }
-
-    public string? RawJson { get; set; }
 }

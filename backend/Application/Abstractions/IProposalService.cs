@@ -9,6 +9,8 @@ public interface IProposalService
 
     Task<ServiceResult<ProjectLaw>> GetBySourceIdAsync(int sourceId, CancellationToken cancellationToken = default);
 
+    Task<ServiceResult<ProjectLaw>> GetBySourceIdTextAsync(string sourceId, CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<ProjectLaw>> SearchAsync(string? searchString, CancellationToken cancellationToken = default);
 
     Task<ServiceResult<ProjectLaw>> CreateAsync(CreateProposalRequest request, CancellationToken cancellationToken = default);

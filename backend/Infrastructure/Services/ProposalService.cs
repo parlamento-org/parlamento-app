@@ -36,6 +36,16 @@ public class ProposalService : IProposalService
             : ServiceResult<ProjectLaw>.Success(projectLaw);
     }
 
+    public async Task<ServiceResult<ProjectLaw>> GetBySourceIdTextAsync(string sourceId, CancellationToken cancellationToken = default)
+    {
+        var projectLaw = await ProposalsWithDetails()
+            .FirstOrDefaultAsync(x => x.SourceIdText == sourceId, cancellationToken);
+
+        return projectLaw == null
+            ? ServiceResult<ProjectLaw>.Failure(404, "No ProjectLaw found with the given sourceId.")
+            : ServiceResult<ProjectLaw>.Success(projectLaw);
+    }
+
     public async Task<IReadOnlyList<ProjectLaw>> SearchAsync(string? searchString, CancellationToken cancellationToken = default)
     {
         var query = ProposalsWithDetails();
@@ -45,7 +55,10 @@ public class ProposalService : IProposalService
             var loweredSearch = searchString.ToLowerInvariant();
             query = query.Where(proposal =>
                 proposal.ProposalTitle != null && proposal.ProposalTitle.ToLower().Contains(loweredSearch) ||
-                proposal.SourceId.ToString().Contains(loweredSearch));
+                proposal.SourceId.ToString().Contains(loweredSearch) ||
+                proposal.SourceIdText != null && proposal.SourceIdText.ToLower().Contains(loweredSearch) ||
+                proposal.InitiativeNumber != null && proposal.InitiativeNumber.ToLower().Contains(loweredSearch) ||
+                proposal.InitiativeTypeDescription != null && proposal.InitiativeTypeDescription.ToLower().Contains(loweredSearch));
         }
 
         return await query.ToListAsync(cancellationToken);
@@ -86,7 +99,15 @@ public class ProposalService : IProposalService
             VotingResultSpeciality = request.VotingResultSpeciality,
             ProposalTextHTML = request.ProposalTextHtml,
             Legislatura = request.Legislatura,
-            SourceId = request.SourceId.Value
+            SourceId = request.SourceId.Value,
+            SourceIdText = request.SourceIdText ?? request.SourceId.Value.ToString(),
+            InitiativeNumber = request.InitiativeNumber,
+            InitiativeTypeCode = request.InitiativeTypeCode,
+            InitiativeTypeDescription = request.InitiativeTypeDescription,
+            InitiativeSelection = request.InitiativeSelection,
+            InitiativeObservations = request.InitiativeObservations,
+            InitiativeTextSubstitution = request.InitiativeTextSubstitution,
+            InitiativeTextSubstitutionField = request.InitiativeTextSubstitutionField
         };
 
         _context.ProjectLaws.Add(newProjectLaw);
@@ -164,6 +185,47 @@ public class ProposalService : IProposalService
         if (request.SourceId.HasValue)
         {
             projectLaw.SourceId = request.SourceId.Value;
+            projectLaw.SourceIdText ??= request.SourceId.Value.ToString();
+        }
+
+        if (request.SourceIdText != null)
+        {
+            projectLaw.SourceIdText = request.SourceIdText;
+        }
+
+        if (request.InitiativeNumber != null)
+        {
+            projectLaw.InitiativeNumber = request.InitiativeNumber;
+        }
+
+        if (request.InitiativeTypeCode != null)
+        {
+            projectLaw.InitiativeTypeCode = request.InitiativeTypeCode;
+        }
+
+        if (request.InitiativeTypeDescription != null)
+        {
+            projectLaw.InitiativeTypeDescription = request.InitiativeTypeDescription;
+        }
+
+        if (request.InitiativeSelection != null)
+        {
+            projectLaw.InitiativeSelection = request.InitiativeSelection;
+        }
+
+        if (request.InitiativeObservations != null)
+        {
+            projectLaw.InitiativeObservations = request.InitiativeObservations;
+        }
+
+        if (request.InitiativeTextSubstitution != null)
+        {
+            projectLaw.InitiativeTextSubstitution = request.InitiativeTextSubstitution;
+        }
+
+        if (request.InitiativeTextSubstitutionField != null)
+        {
+            projectLaw.InitiativeTextSubstitutionField = request.InitiativeTextSubstitutionField;
         }
 
         await _context.SaveChangesAsync(cancellationToken);
@@ -196,9 +258,18 @@ public class ProposalService : IProposalService
     private IQueryable<ProjectLaw> ProposalsWithDetails()
     {
         return _context.ProjectLaws
+            .AsSplitQuery()
             .Include(proposal => proposal.VotingResultGenerality!.votingBlocks)
             .Include(proposal => proposal.VotingResultSpeciality!.votingBlocks)
-            .Include(proposal => proposal.ProposingParty);
+            .Include(proposal => proposal.ProposingParty)
+            .Include(proposal => proposal.LastImportRun)
+            .Include(proposal => proposal.ImportedAuthors)
+            .Include(proposal => proposal.ImportedEvents)
+            .Include(proposal => proposal.ImportedVotes)
+                .ThenInclude(vote => vote.Blocks)
+            .Include(proposal => proposal.ImportedDocuments)
+            .Include(proposal => proposal.ImportedPublications)
+            .Include(proposal => proposal.ImportedInterventions);
     }
 
     private async Task<PoliticalParty?> FindPartyAsync(string? partyAcronym, CancellationToken cancellationToken)

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Parlamento.Domain.Entities;
 
@@ -11,10 +12,12 @@ public class ParliamentInitiativePublication
 
     public int ProjectLawId { get; set; }
 
+    [JsonIgnore]
     public ProjectLaw? ProjectLaw { get; set; }
 
     public int? ParliamentInitiativeEventId { get; set; }
 
+    [JsonIgnore]
     public ParliamentInitiativeEvent? ParliamentInitiativeEvent { get; set; }
 
     [Required]
@@ -32,9 +35,5 @@ public class ParliamentInitiativePublication
 
     public string? TypeCode { get; set; }
 
-    public string? PagesJson { get; set; }
-
     public string? DiaryUrl { get; set; }
-
-    public string? RawJson { get; set; }
 }

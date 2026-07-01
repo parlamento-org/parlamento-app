@@ -43,6 +43,11 @@ var app = builder.Build();
 // log environment
 app.Logger.LogInformation($"Environment: {app.Environment.EnvironmentName}");
 
+if (await ParliamentImportCommand.TryRunAsync(app, args))
+{
+    return;
+}
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

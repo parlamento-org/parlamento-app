@@ -41,11 +41,33 @@ public static class DependencyInjection
         services.AddScoped<IProposalService, ProposalService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IVotingService, VotingService>();
+        services.Configure<ParliamentOpenDataOptions>(options =>
+        {
+            var section = configuration.GetSection(ParliamentOpenDataOptions.SectionName);
+            options.LatestLegislature = section["LatestLegislature"];
+            options.DailyImport.Enabled = bool.TryParse(section["DailyImport:Enabled"], out var enabled) && enabled;
+            options.DailyImport.TimeZoneId = section["DailyImport:TimeZoneId"] ?? "Europe/Lisbon";
+            options.DailyImport.RunAt = TimeSpan.TryParse(section["DailyImport:RunAt"], out var runAt)
+                ? runAt
+                : TimeSpan.Zero;
+
+            options.Legislatures = section
+                .GetSection("Legislatures")
+                .GetChildren()
+                .ToDictionary(
+                    child => child.Key,
+                    child => new ParliamentLegislatureSourceOptions
+                    {
+                        InitiativesUrl = child["InitiativesUrl"]
+                    });
+        });
         services.AddScoped<IParliamentOpenDataImportService>(provider =>
             new ParliamentOpenDataImportService(
                 provider.GetRequiredService<DatabaseContext>(),
                 new HttpClient(),
-                provider.GetRequiredService<IConfiguration>()));
+                provider.GetRequiredService<IConfiguration>(),
+                provider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ParliamentOpenDataImportService>>()));
+        services.AddHostedService<DailyParliamentImportHostedService>();
 
         return services;
     }

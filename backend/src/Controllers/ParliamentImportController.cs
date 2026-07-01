@@ -25,6 +25,25 @@ public class ParliamentImportController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPost("legislatures")]
+    public async Task<ActionResult<IReadOnlyList<ParliamentImportRunResult>>> ImportLegislatures(
+        ImportLegislaturesRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (request.Legislatures.Count == 0)
+        {
+            return BadRequest("At least one legislature is required.");
+        }
+
+        var results = new List<ParliamentImportRunResult>();
+        foreach (var legislature in request.Legislatures.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct())
+        {
+            results.Add(await _importService.ImportLegislatureAsync(legislature, cancellationToken));
+        }
+
+        return Ok(results);
+    }
+
     [HttpPost("local-file")]
     public async Task<ActionResult<ParliamentImportRunResult>> ImportLocalFile(
         ImportLocalFileRequest request,

@@ -4,6 +4,7 @@ using System.Text.Json;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 using Parlamento.Application.Abstractions;
 using Parlamento.Application.Imports;
@@ -23,15 +24,18 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
     private readonly DatabaseContext _context;
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<ParliamentOpenDataImportService> _logger;
 
     public ParliamentOpenDataImportService(
         DatabaseContext context,
         HttpClient httpClient,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ILogger<ParliamentOpenDataImportService> logger)
     {
         _context = context;
         _httpClient = httpClient;
         _configuration = configuration;
+        _logger = logger;
     }
 
     public async Task<ParliamentImportRunResult> ImportLegislatureAsync(
@@ -44,6 +48,10 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
             throw new InvalidOperationException(
                 $"No initiative URL is configured for legislature '{legislature}'.");
         }
+
+        _logger.LogInformation(
+            "Downloading parliament initiatives for legislature {Legislature} from configured source.",
+            legislature);
 
         using var response = await _httpClient.GetAsync(
             sourceUrl,
@@ -99,18 +107,54 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
         _context.ParliamentImportRuns.Add(run);
         await _context.SaveChangesAsync(cancellationToken);
 
+        _logger.LogInformation(
+            "Started parliament import run {RunId}. SourceKind={SourceKind} Legislature={Legislature} SourceReference={SourceReference}",
+            run.Id,
+            sourceKind,
+            legislature,
+            sourceReference);
+
         try
         {
             await foreach (var initiative in ReadInitiativesAsync(sourceStream, cancellationToken))
             {
                 run.RecordsRead++;
-                await ImportInitiativeAsync(run, initiative, cancellationToken);
+                try
+                {
+                    await ImportInitiativeAsync(run, initiative, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    var sourceId = initiative.GetStringOrNull("IniId");
+                    run.RecordsFailed++;
+                    _context.ParliamentImportErrors.Add(new ParliamentImportError
+                    {
+                        ParliamentImportRun = run,
+                        SourceId = sourceId,
+                        ErrorType = ex.GetType().Name,
+                        Message = ex.Message
+                    });
+                    _logger.LogError(
+                        ex,
+                        "Failed to import parliament initiative {SourceId}. RunId={RunId}",
+                        sourceId,
+                        run.Id);
+                }
+
                 await _context.SaveChangesAsync(cancellationToken);
             }
 
             run.Status = "Succeeded";
             run.FinishedAtUtc = DateTime.UtcNow;
             await _context.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation(
+                "Finished parliament import run {RunId}. Read={Read} Inserted={Inserted} Updated={Updated} Skipped={Skipped} Failed={Failed}",
+                run.Id,
+                run.RecordsRead,
+                run.RecordsInserted,
+                run.RecordsUpdated,
+                run.RecordsSkipped,
+                run.RecordsFailed);
             return ToResult(run);
         }
         catch (Exception ex)
@@ -119,6 +163,7 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
             run.FinishedAtUtc = DateTime.UtcNow;
             run.ErrorMessage = ex.Message;
             await _context.SaveChangesAsync(cancellationToken);
+            _logger.LogError(ex, "Parliament import run {RunId} failed.", run.Id);
             throw;
         }
     }
@@ -144,6 +189,12 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
                 Reason = "MissingSourceId",
                 Message = "IniId is required and must be numeric for compatibility with ProjectLaw.SourceId."
             });
+            _logger.LogWarning(
+                "Skipped parliament initiative without usable source id. RunId={RunId} SourceId={SourceId} Type={TypeCode}/{TypeDescription}",
+                run.Id,
+                sourceIdText,
+                initiativeTypeCode,
+                initiativeTypeDescription);
             return;
         }
 
@@ -160,6 +211,12 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
                 Reason = "MissingGeneralityVote",
                 Message = "Initiative has no phase 250 event with a usable Votacao array."
             });
+            _logger.LogInformation(
+                "Skipped parliament initiative {SourceId}: no usable generality vote. RunId={RunId} Type={TypeCode}/{TypeDescription}",
+                sourceIdText,
+                run.Id,
+                initiativeTypeCode,
+                initiativeTypeDescription);
             return;
         }
 
@@ -170,6 +227,10 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
         if (existing is not null && existing.SourceHash == sourceHash)
         {
             run.RecordsSkipped++;
+            _logger.LogDebug(
+                "Skipped unchanged parliament initiative {SourceId}. RunId={RunId}",
+                sourceIdText,
+                run.Id);
             return;
         }
 
@@ -191,7 +252,7 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
             ClearImportedGraph(projectLaw);
         }
 
-        await MapProjectLawAsync(projectLaw, initiative, generalityVote.Value, rawJson, sourceHash, run, cancellationToken);
+        await MapProjectLawAsync(projectLaw, initiative, generalityVote.Value, sourceHash, run, cancellationToken);
 
         if (_context.Database.IsRelational())
         {
@@ -207,10 +268,26 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
         if (inserted)
         {
             run.RecordsInserted++;
+            _logger.LogInformation(
+                "Inserted parliament initiative {SourceId} into ProjectLaw {ProjectLawId}. RunId={RunId} Legislature={Legislature} Type={TypeCode}/{TypeDescription}",
+                sourceIdText,
+                projectLaw.Id,
+                run.Id,
+                projectLaw.Legislatura,
+                projectLaw.InitiativeTypeCode,
+                projectLaw.InitiativeTypeDescription);
         }
         else
         {
             run.RecordsUpdated++;
+            _logger.LogInformation(
+                "Updated parliament initiative {SourceId} in ProjectLaw {ProjectLawId}. RunId={RunId} Legislature={Legislature} Type={TypeCode}/{TypeDescription}",
+                sourceIdText,
+                projectLaw.Id,
+                run.Id,
+                projectLaw.Legislatura,
+                projectLaw.InitiativeTypeCode,
+                projectLaw.InitiativeTypeDescription);
         }
     }
 
@@ -239,7 +316,6 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
         ProjectLaw projectLaw,
         JsonElement initiative,
         JsonElement generalityVote,
-        string rawJson,
         string sourceHash,
         ParliamentImportRun run,
         CancellationToken cancellationToken)
@@ -256,12 +332,9 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
         projectLaw.InitiativeTypeCode = initiative.GetStringOrNull("IniTipo");
         projectLaw.InitiativeTypeDescription = initiative.GetStringOrNull("IniDescTipo");
         projectLaw.InitiativeSelection = initiative.GetStringOrNull("IniSel");
-        projectLaw.LegislatureStartDate = initiative.GetStringOrNull("DataInicioleg");
-        projectLaw.LegislatureEndDate = initiative.GetStringOrNull("DataFimleg");
         projectLaw.InitiativeObservations = initiative.GetStringOrNull("IniObs");
         projectLaw.InitiativeTextSubstitution = initiative.GetStringOrNull("IniTextoSubst");
         projectLaw.InitiativeTextSubstitutionField = initiative.GetStringOrNull("IniTextoSubstCampo");
-        projectLaw.RawJson = rawJson;
         projectLaw.ProposalTitle = initiative.GetStringOrNull("IniTitulo") ?? string.Empty;
         projectLaw.FullProposalTextLink = initiative.GetStringOrNull("IniLinkTexto") ?? string.Empty;
         projectLaw.ProposingParty = proposingParty;
@@ -374,8 +447,7 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
             {
                 ProjectLaw = projectLaw,
                 AuthorKind = "ParliamentaryGroup",
-                Acronym = group.GetStringOrNull("GP"),
-                RawJson = group.GetRawText()
+                Acronym = group.GetStringOrNull("GP")
             });
         }
 
@@ -387,8 +459,7 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
                 AuthorKind = "Deputy",
                 Acronym = deputy.GetStringOrNull("GP"),
                 DeputySourceId = deputy.GetStringOrNull("idCadastro"),
-                Name = deputy.GetStringOrNull("nome"),
-                RawJson = deputy.GetRawText()
+                Name = deputy.GetStringOrNull("nome")
             });
         }
 
@@ -400,8 +471,7 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
                 ProjectLaw = projectLaw,
                 AuthorKind = "Other",
                 Acronym = other.Value.GetStringOrNull("sigla"),
-                Name = other.Value.GetStringOrNull("nome"),
-                RawJson = other.Value.GetRawText()
+                Name = other.Value.GetStringOrNull("nome")
             });
         }
     }
@@ -437,8 +507,7 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
                 ParliamentInitiativeEvent = parliamentEvent,
                 Scope = scope,
                 Name = attachment.GetStringOrNull("anexoNome"),
-                Url = attachment.GetStringOrNull("anexoFich"),
-                RawJson = attachment.GetRawText()
+                Url = attachment.GetStringOrNull("anexoFich")
             });
         }
     }
@@ -456,8 +525,7 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
             PhaseName = eventElement.GetStringOrNull("Fase"),
             PhaseDate = eventElement.GetStringOrNull("DataFase"),
             Observation = eventElement.GetStringOrNull("ObsFase"),
-            ApprovedTextId = eventElement.GetStringOrNull("TextosAprovados"),
-            RawJson = eventElement.GetRawText()
+            ApprovedTextId = eventElement.GetStringOrNull("TextosAprovados")
         };
 
         projectLaw.ImportedEvents.Add(parliamentEvent);
@@ -488,15 +556,15 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
                 Description = voteElement.GetStringOrNull("descricao"),
                 Result = voteElement.GetStringOrNull("resultado"),
                 Unanimous = voteElement.GetStringOrNull("unanime"),
-                AbsencesJson = voteElement.GetRawPropertyOrNull("ausencias"),
                 Detail = voteElement.GetStringOrNull("detalhe"),
                 Meeting = voteElement.GetStringOrNull("reuniao"),
-                MeetingType = voteElement.GetStringOrNull("tipoReuniao"),
-                PublicationJson = voteElement.GetRawPropertyOrNull("publicacao"),
-                RawJson = voteElement.GetRawText()
+                MeetingType = voteElement.GetStringOrNull("tipoReuniao")
             };
 
-            foreach (var block in VoteDetailParser.Parse(vote.Detail, vote.Unanimous, vote.AbsencesJson))
+            foreach (var block in VoteDetailParser.Parse(
+                         vote.Detail,
+                         vote.Unanimous,
+                         voteElement.GetRawPropertyOrNull("ausencias")))
             {
                 vote.Blocks.Add(new ParliamentInitiativeVoteBlock
                 {
@@ -534,9 +602,7 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
                 Series = publication.GetStringOrNull("pubSL"),
                 Type = publication.GetStringOrNull("pubTipo"),
                 TypeCode = publication.GetStringOrNull("pubTp"),
-                PagesJson = publication.GetRawPropertyOrNull("pag"),
-                DiaryUrl = publication.GetStringOrNull("URLDiario"),
-                RawJson = publication.GetRawText()
+                DiaryUrl = publication.GetStringOrNull("URLDiario")
             });
         }
     }
@@ -557,8 +623,7 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
                     DocumentDate = document.GetStringOrNull("DataDocumento"),
                     Url = document.GetStringOrNull("URL"),
                     CommitteeId = commission.GetStringOrNull("IdComissao"),
-                    CommitteeName = commission.GetStringOrNull("Nome"),
-                    RawJson = document.GetRawText()
+                    CommitteeName = commission.GetStringOrNull("Nome")
                 });
             }
 
@@ -595,13 +660,15 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
                         : null,
                     StartTime = speaker.GetStringOrNull("horaInicio"),
                     EndTime = speaker.GetStringOrNull("horaTermo"),
-                    Summary = speaker.GetStringOrNull("sumario"),
-                    VideoLinksJson = speaker.GetRawPropertyOrNull("linkVideo"),
-                    PublicationsJson = speaker.GetRawPropertyOrNull("publicacao"),
-                    RawJson = speaker.GetRawText()
+                    VideoUrl = speaker
+                        .EnumerateArrayOrEmpty("linkVideo")
+                        .Select(x => x.GetStringOrNull("link"))
+                        .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x)),
+                    PublicationDiaryUrl = speaker
+                        .EnumerateArrayOrEmpty("publicacao")
+                        .Select(x => x.GetStringOrNull("URLDiario"))
+                        .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x))
                 });
-
-                MapPublications(projectLaw, parliamentEvent, speaker.EnumerateArrayOrEmpty("publicacao"), "InterventionPublication");
             }
         }
     }

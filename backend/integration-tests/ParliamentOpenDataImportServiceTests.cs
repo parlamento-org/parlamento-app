@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
 
 using Parlamento.Domain.Enums;
 using Parlamento.Infrastructure.Persistence;
@@ -80,7 +81,11 @@ public class ParliamentOpenDataImportServiceTests
             .AddInMemoryCollection(new Dictionary<string, string?>())
             .Build();
 
-        return new ParliamentOpenDataImportService(context, new HttpClient(), configuration);
+        return new ParliamentOpenDataImportService(
+            context,
+            new HttpClient(),
+            configuration,
+            NullLogger<ParliamentOpenDataImportService>.Instance);
     }
 
     private static DatabaseContext CreateContext()

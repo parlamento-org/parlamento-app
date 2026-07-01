@@ -33,6 +33,13 @@ public class ProjetoLeiController : ControllerBase
         return this.ToActionResult(result);
     }
 
+    [HttpGet("source-text/{sourceId}", Name = "GetProposalBySourceIdText")]
+    public async Task<IActionResult> GetBySourceIdText(string sourceId, CancellationToken cancellationToken)
+    {
+        var result = await _proposalService.GetBySourceIdTextAsync(sourceId, cancellationToken);
+        return this.ToActionResult(result);
+    }
+
     [HttpGet(Name = "GetProposals")]
     public async Task<Dictionary<string, List<ProjectLaw>>> Get(string? searchString, CancellationToken cancellationToken)
     {

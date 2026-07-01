@@ -13,6 +13,30 @@ public class CreateProposalRequest
     [JsonPropertyName("sourceId")]
     public int? SourceId { get; set; }
 
+    [JsonPropertyName("sourceIdText")]
+    public string? SourceIdText { get; set; }
+
+    [JsonPropertyName("initiativeNumber")]
+    public string? InitiativeNumber { get; set; }
+
+    [JsonPropertyName("initiativeTypeCode")]
+    public string? InitiativeTypeCode { get; set; }
+
+    [JsonPropertyName("initiativeTypeDescription")]
+    public string? InitiativeTypeDescription { get; set; }
+
+    [JsonPropertyName("initiativeSelection")]
+    public string? InitiativeSelection { get; set; }
+
+    [JsonPropertyName("initiativeObservations")]
+    public string? InitiativeObservations { get; set; }
+
+    [JsonPropertyName("initiativeTextSubstitution")]
+    public string? InitiativeTextSubstitution { get; set; }
+
+    [JsonPropertyName("initiativeTextSubstitutionField")]
+    public string? InitiativeTextSubstitutionField { get; set; }
+
     [JsonPropertyName("score")]
     public int? Score { get; set; }
 

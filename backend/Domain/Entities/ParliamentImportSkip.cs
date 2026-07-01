@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Parlamento.Domain.Entities;
 
@@ -11,6 +12,7 @@ public class ParliamentImportSkip
 
     public int ParliamentImportRunId { get; set; }
 
+    [JsonIgnore]
     public ParliamentImportRun? ParliamentImportRun { get; set; }
 
     public string? SourceId { get; set; }

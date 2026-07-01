@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 using Parlamento.Domain.Enums;
 
@@ -13,6 +14,7 @@ public class ParliamentInitiativeVoteBlock
 
     public int ParliamentInitiativeVoteId { get; set; }
 
+    [JsonIgnore]
     public ParliamentInitiativeVote? ParliamentInitiativeVote { get; set; }
 
     public string? PartyAcronym { get; set; }
