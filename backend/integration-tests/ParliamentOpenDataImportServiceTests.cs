@@ -224,6 +224,166 @@ public class ParliamentOpenDataImportServiceTests
     }
 
     [Fact]
+    public void PdfGlyphReconstruction_PreservesNarrowWordGaps()
+    {
+        var lines = PdfDocumentExtractor.ReconstructTextLinesForTests(
+            BuildGlyphLine("Projeto Governo Portugal", intraCharacterGap: 0.15, wordGap: 1.6));
+
+        Assert.Single(lines);
+        Assert.Equal("Projeto Governo Portugal", lines[0]);
+        Assert.DoesNotContain("ProjetoGoverno", lines[0]);
+        Assert.DoesNotContain("GovernoPortugal", lines[0]);
+    }
+
+    [Fact]
+    public void PdfGlyphReconstruction_JoinsCharacterSpacedUppercaseTerms()
+    {
+        var lines = PdfDocumentExtractor.ReconstructTextLinesForTests(
+            BuildGlyphLine("CHEGA PORTUGAL", intraCharacterGap: 2.5, wordGap: 10));
+
+        Assert.Single(lines);
+        Assert.Equal("CHEGA PORTUGAL", lines[0]);
+        Assert.DoesNotContain("C H E G A", lines[0]);
+        Assert.DoesNotContain("P O R T U G A L", lines[0]);
+    }
+
+    [Fact]
+    public void PdfGlyphReconstruction_PreservesExplicitPdfSpaceGlyphs()
+    {
+        var lines = PdfDocumentExtractor.ReconstructTextLinesForTests(
+            BuildGlyphLine(
+                "Parlamentar do CHEGA recomenda ao Governo",
+                intraCharacterGap: 0.1,
+                wordGap: 0.2,
+                includeSpaceGlyphs: true));
+
+        Assert.Single(lines);
+        Assert.Equal("Parlamentar do CHEGA recomenda ao Governo", lines[0]);
+        Assert.DoesNotContain("ParlamentardoCHEGA", lines[0]);
+        Assert.DoesNotContain("recomendamaoGoverno", lines[0]);
+    }
+
+    [Fact]
+    public void PdfGlyphReconstruction_NormalizesCharacterSpacedWordsFromPdfSpaces()
+    {
+        var lines = PdfDocumentExtractor.ReconstructTextLinesForTests(
+            BuildGlyphLine(
+                "n e c e s s á r i o",
+                intraCharacterGap: 0.1,
+                wordGap: 0.1,
+                includeSpaceGlyphs: true));
+
+        Assert.Single(lines);
+        Assert.Equal("necessário", lines[0]);
+    }
+
+    [Fact]
+    public void PdfGlyphReconstruction_KeepsHyphenGlyphOnTextLine()
+    {
+        var glyphs = new List<PdfDocumentExtractor.PdfGlyph>();
+        var left = 0d;
+        foreach (var character in "encontra")
+        {
+            glyphs.Add(new PdfDocumentExtractor.PdfGlyph(character.ToString(), left, 100, left + 4.5, 110));
+            left += 4.7;
+        }
+
+        glyphs.Add(new PdfDocumentExtractor.PdfGlyph("-", left, 104, left + 3, 106));
+        left += 3.2;
+
+        foreach (var character in "se")
+        {
+            glyphs.Add(new PdfDocumentExtractor.PdfGlyph(character.ToString(), left, 100, left + 4.5, 110));
+            left += 4.7;
+        }
+
+        var lines = PdfDocumentExtractor.ReconstructTextLinesForTests(glyphs);
+
+        Assert.Single(lines);
+        Assert.Equal("encontra-se", lines[0]);
+    }
+
+    [Fact]
+    public void PdfGlyphReconstruction_UsesTextSequenceBoundariesForGluedWords()
+    {
+        var lines = PdfDocumentExtractor.ReconstructTextLinesForTests(
+            BuildGluedGlyphChunks(["Os", "Deputados", "do", "Grupo", "Parlamentar", "do", "CHEGA"]));
+
+        Assert.Single(lines);
+        Assert.Equal("Os Deputados do Grupo Parlamentar do CHEGA", lines[0]);
+        Assert.DoesNotContain("OsDeputados", lines[0]);
+        Assert.DoesNotContain("ParlamentardoCHEGA", lines[0]);
+    }
+
+    [Fact]
+    public void PdfGlyphReconstruction_DoesNotSplitItalicWordFragments()
+    {
+        var lines = PdfDocumentExtractor.ReconstructTextLinesForTests(
+            BuildGluedGlyphChunks(["Ps", "ycholog", "is", "ts"]));
+
+        Assert.Single(lines);
+        Assert.Equal("Psychologists", lines[0]);
+        Assert.DoesNotContain("Ps ycholog", lines[0]);
+    }
+
+    [Fact]
+    public void PdfGlyphReconstruction_UsesPortugueseConnectorsForGluedPhraseBoundaries()
+    {
+        var lines = PdfDocumentExtractor.ReconstructTextLinesForTests(
+            BuildGluedGlyphChunks(["que", "recomendam", "um", "profissional", "para", "cada"]));
+
+        Assert.Single(lines);
+        Assert.Equal("que recomendam um profissional para cada", lines[0]);
+        Assert.DoesNotContain("querecomendam", lines[0]);
+        Assert.DoesNotContain("umprofissional", lines[0]);
+    }
+
+    [Fact]
+    public void PdfGlyphReconstruction_NormalizesCharacterSpacedNumbers()
+    {
+        var lines = PdfDocumentExtractor.ReconstructTextLinesForTests(
+            BuildGlyphLine(
+                "5 0 0 a 7 0 0",
+                intraCharacterGap: 0.1,
+                wordGap: 0.1,
+                includeSpaceGlyphs: true));
+
+        Assert.Single(lines);
+        Assert.Equal("500 a 700", lines[0]);
+    }
+
+    [Fact]
+    public void ITextPdfExtraction_NormalizesStandaloneNumericLines()
+    {
+        var lines = ITextPdfDocumentExtractor.NormalizeTextLinesForTests(
+            """
+            O valor mínimo era de
+            1
+            processo por escola.
+            Foi noticiado que o rácio era de 1
+            1
+            psicólogo escolar para 744 alunos,
+            1
+            revelando-se insuficiente.
+            diferentes níveis
+            2
+            de educação e ensino.
+            """);
+
+        Assert.Equal(
+            [
+                "O valor mínimo era de 1",
+                "processo por escola.",
+                "Foi noticiado que o rácio era de 1",
+                "psicólogo escolar para 744 alunos,",
+                "revelando-se insuficiente.",
+                "diferentes níveis",
+                "de educação e ensino."
+            ],
+            lines);
+    }
+
+    [Fact]
     public void Redactor_MatchesCharacterSpacedTermsAndSkipsSingleLetterTerms()
     {
         var document = new ParliamentDocumentModel
@@ -258,6 +418,83 @@ public class ParliamentOpenDataImportServiceTests
         Assert.Contains(runs, x => x.Kind == ParliamentDocumentRunKind.Redacted);
         Assert.Contains(runs, x => x.Text?.Contains("Lisboa") == true);
         Assert.Contains(runs, x => x.Text?.Contains("Governo") == true);
+    }
+
+    [Fact]
+    public void Redactor_MatchesLongTermsInsideGluedExtractorText()
+    {
+        var document = new ParliamentDocumentModel
+        {
+            Pages =
+            [
+                new ParliamentDocumentPage
+                {
+                    PageNumber = 1,
+                    Blocks =
+                    [
+                        new ParliamentDocumentBlock
+                        {
+                            Kind = ParliamentDocumentBlockKind.Paragraph,
+                            Runs =
+                            [
+                                new ParliamentDocumentRun
+                                {
+                                    Kind = ParliamentDocumentRunKind.Text,
+                                    Text = "OsDeputadosdoGrupoParlamentardoCHEGA recomendam ao Governo."
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        var redacted = new DocumentModelRedactor().Redact(document, ["CHEGA", "L"]);
+        var runs = redacted.Pages[0].Blocks[0].Runs;
+
+        Assert.Contains(runs, x => x.Kind == ParliamentDocumentRunKind.Redacted);
+        Assert.Contains(runs, x => x.Text?.Contains("OsDeputadosdoGrupoParlamentardo") == true);
+        Assert.DoesNotContain(runs, x => x.Text?.Contains("CHEGA") == true);
+        Assert.Contains(runs, x => x.Text?.Contains("Governo") == true);
+    }
+
+    [Fact]
+    public void Redactor_MatchesPartyAcronymsOnlyWhenActuallyUppercase()
+    {
+        var document = new ParliamentDocumentModel
+        {
+            Pages =
+            [
+                new ParliamentDocumentPage
+                {
+                    PageNumber = 1,
+                    Blocks =
+                    [
+                        new ParliamentDocumentBlock
+                        {
+                            Kind = ParliamentDocumentBlockKind.Paragraph,
+                            Runs =
+                            [
+                                new ParliamentDocumentRun
+                                {
+                                    Kind = ParliamentDocumentRunKind.Text,
+                                    Text = "PS deve ser redigido, mas Ps e P s ychologists devem ficar."
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        var redacted = new DocumentModelRedactor().Redact(document, ["PS"]);
+        var runs = redacted.Pages[0].Blocks[0].Runs;
+        var visibleText = string.Concat(runs.Where(x => x.Kind == ParliamentDocumentRunKind.Text).Select(x => x.Text));
+
+        Assert.Single(runs.Where(x => x.Kind == ParliamentDocumentRunKind.Redacted));
+        Assert.Contains("Ps", visibleText);
+        Assert.Contains("P s ychologists", visibleText);
+        Assert.DoesNotContain("PS deve", visibleText);
     }
 
     [Fact]
@@ -566,7 +803,11 @@ public class ParliamentOpenDataImportServiceTests
             fileName));
     }
 
-    private static IReadOnlyList<PdfDocumentExtractor.PdfGlyph> BuildGlyphLine(string text)
+    private static IReadOnlyList<PdfDocumentExtractor.PdfGlyph> BuildGlyphLine(
+        string text,
+        double intraCharacterGap = 0.8,
+        double wordGap = 8,
+        bool includeSpaceGlyphs = false)
     {
         var glyphs = new List<PdfDocumentExtractor.PdfGlyph>();
         var left = 0d;
@@ -574,7 +815,13 @@ public class ParliamentOpenDataImportServiceTests
         {
             if (character == ' ')
             {
-                left += 8;
+                if (includeSpaceGlyphs)
+                {
+                    glyphs.Add(new PdfDocumentExtractor.PdfGlyph(" ", left, 100, left + 1, 110));
+                    left += 1;
+                }
+
+                left += wordGap;
                 continue;
             }
 
@@ -585,7 +832,30 @@ public class ParliamentOpenDataImportServiceTests
                 100,
                 left + width,
                 110));
-            left += width + 0.8;
+            left += width + intraCharacterGap;
+        }
+
+        return glyphs;
+    }
+
+    private static IReadOnlyList<PdfDocumentExtractor.PdfGlyph> BuildGluedGlyphChunks(IReadOnlyList<string> chunks)
+    {
+        var glyphs = new List<PdfDocumentExtractor.PdfGlyph>();
+        var left = 0d;
+        for (var sequence = 0; sequence < chunks.Count; sequence++)
+        {
+            foreach (var character in chunks[sequence])
+            {
+                var width = char.IsUpper(character) ? 5.5 : 4.5;
+                glyphs.Add(new PdfDocumentExtractor.PdfGlyph(
+                    character.ToString(),
+                    left,
+                    100,
+                    left + width,
+                    110,
+                    sequence + 1));
+                left += width;
+            }
         }
 
         return glyphs;

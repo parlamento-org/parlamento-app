@@ -13,7 +13,7 @@ public partial class PdfDocumentExtractor : IDocumentExtractor
 {
     public string ExtractorKind => "PdfPig";
 
-    public string ExtractorVersion => "pdfpig-letter-document-extractor-v2";
+    public string ExtractorVersion => "pdfpig-letter-document-extractor-v6-sequence-word-boundaries";
 
     public bool CanExtract(string sourceName)
     {
@@ -69,13 +69,14 @@ public partial class PdfDocumentExtractor : IDocumentExtractor
     private static List<ParliamentDocumentBlock> BuildPageBlocks(Page page)
     {
         var glyphs = page.Letters
-            .Where(x => !string.IsNullOrWhiteSpace(x.Value))
+            .Where(x => !string.IsNullOrEmpty(x.Value))
             .Select(x => new PdfGlyph(
                 x.Value,
-                Convert.ToDouble(x.GlyphRectangle.Left),
-                Convert.ToDouble(x.GlyphRectangle.Bottom),
-                Convert.ToDouble(x.GlyphRectangle.Right),
-                Convert.ToDouble(x.GlyphRectangle.Top)))
+                Convert.ToDouble(x.BoundingBox.Left),
+                Convert.ToDouble(x.BoundingBox.Bottom),
+                Convert.ToDouble(x.BoundingBox.Right),
+                Convert.ToDouble(x.BoundingBox.Top),
+                Convert.ToInt64(x.TextSequence)))
             .OrderByDescending(x => x.Top)
             .ThenBy(x => x.Left)
             .ToList();
@@ -136,7 +137,11 @@ public partial class PdfDocumentExtractor : IDocumentExtractor
         foreach (var glyph in glyphs)
         {
             var line = lines.FirstOrDefault(existing =>
-                Math.Abs(existing.Average(x => x.Baseline) - glyph.Baseline) <= Math.Max(2.5, glyph.Height * 0.45));
+            {
+                var averageHeight = existing.Average(x => x.Height);
+                var tolerance = Math.Max(3.5, Math.Max(averageHeight, glyph.Height) * 0.6);
+                return Math.Abs(existing.Average(x => x.Baseline) - glyph.Baseline) <= tolerance;
+            });
 
             if (line is null)
             {
@@ -171,31 +176,188 @@ public partial class PdfDocumentExtractor : IDocumentExtractor
 
         var builder = new System.Text.StringBuilder();
         var ordered = glyphs.OrderBy(x => x.Left).ToList();
-        var positiveGaps = ordered
-            .Zip(ordered.Skip(1), (previous, current) => current.Left - previous.Right)
-            .Where(x => x > 0)
+        var nonWhitespaceGlyphs = ordered.Where(x => !x.IsWhitespace).ToList();
+        var adjacentGaps = nonWhitespaceGlyphs
+            .Zip(nonWhitespaceGlyphs.Skip(1), (previous, current) => current.Left - previous.Right)
             .ToList();
-        var medianGap = Median(positiveGaps);
-        var medianWidth = Median(ordered.Select(x => x.Width).Where(x => x > 0).ToList());
-        var wordGapThreshold = Math.Max(medianWidth * 0.75, medianGap * 2.4);
+        var sequenceGlyphCounts = nonWhitespaceGlyphs
+            .GroupBy(x => x.TextSequence)
+            .ToDictionary(x => x.Key, x => x.Count());
+        var sequenceTexts = nonWhitespaceGlyphs
+            .GroupBy(x => x.TextSequence)
+            .ToDictionary(x => x.Key, x => string.Concat(x.OrderBy(glyph => glyph.Left).Select(glyph => glyph.Text)));
+        var medianGlyphWidth = Median(nonWhitespaceGlyphs.Select(x => x.Width).Where(x => x > 0).ToList());
+        var wordGapThreshold = DetermineWordGapThreshold(
+            adjacentGaps,
+            medianGlyphWidth);
 
         for (var i = 0; i < ordered.Count; i++)
         {
             var glyph = ordered[i];
+            if (glyph.IsWhitespace)
+            {
+                AppendSpaceIfNeeded(builder);
+                continue;
+            }
+
             if (i > 0)
             {
-                var previous = ordered[i - 1];
-                var gap = glyph.Left - previous.Right;
-                if (gap > wordGapThreshold)
+                var previous = ordered.Take(i).LastOrDefault(x => !x.IsWhitespace);
+                if (previous is not null &&
+                    ShouldInsertSpace(
+                        previous,
+                        glyph,
+                        glyph.Left - previous.Right,
+                        wordGapThreshold,
+                        medianGlyphWidth,
+                        sequenceGlyphCounts,
+                        sequenceTexts))
                 {
-                    builder.Append(' ');
+                    AppendSpaceIfNeeded(builder);
                 }
             }
 
             builder.Append(glyph.Text);
         }
 
-        return builder.ToString().Trim();
+        return NormalizeCharacterSpacedText(builder.ToString()).Trim();
+    }
+
+    private static bool ShouldInsertSpace(
+        PdfGlyph previous,
+        PdfGlyph current,
+        double gap,
+        double wordGapThreshold,
+        double medianGlyphWidth,
+        IReadOnlyDictionary<long, int> sequenceGlyphCounts,
+        IReadOnlyDictionary<long, string> sequenceTexts)
+    {
+        if (gap > wordGapThreshold)
+        {
+            return true;
+        }
+
+        if (previous.TextSequence == current.TextSequence ||
+            IsPunctuationWithoutFollowingSpace(previous.Text) ||
+            !sequenceGlyphCounts.TryGetValue(previous.TextSequence, out var previousSequenceCount) ||
+            !sequenceGlyphCounts.TryGetValue(current.TextSequence, out var currentSequenceCount) ||
+            previousSequenceCount < 2 ||
+            currentSequenceCount < 2)
+        {
+            return false;
+        }
+
+        var maximumTouchingGap = Math.Max(0.8, medianGlyphWidth * 0.2);
+        if (gap < -maximumTouchingGap || gap > maximumTouchingGap)
+        {
+            return false;
+        }
+
+        var previousSequenceText = sequenceTexts.GetValueOrDefault(previous.TextSequence) ?? string.Empty;
+        var currentSequenceText = sequenceTexts.GetValueOrDefault(current.TextSequence) ?? string.Empty;
+        return IsLikelyWordBoundary(previousSequenceText, currentSequenceText);
+    }
+
+    private static bool IsPunctuationWithoutFollowingSpace(string text)
+    {
+        return text is "-" or "–" or "—" or "/" or "(" or "«";
+    }
+
+    private static bool IsLikelyWordBoundary(string previousSequenceText, string currentSequenceText)
+    {
+        if (string.IsNullOrWhiteSpace(previousSequenceText) || string.IsNullOrWhiteSpace(currentSequenceText))
+        {
+            return false;
+        }
+
+        if (char.IsUpper(currentSequenceText[0]))
+        {
+            return true;
+        }
+
+        if (IsCommonPortugueseConnector(previousSequenceText) || IsCommonPortugueseConnector(currentSequenceText))
+        {
+            return true;
+        }
+
+        return previousSequenceText.All(char.IsUpper) || currentSequenceText.All(char.IsUpper);
+    }
+
+    private static bool IsCommonPortugueseConnector(string text)
+    {
+        return text.ToLowerInvariant() is
+            "a" or "as" or "ao" or "aos" or
+            "da" or "das" or "de" or "do" or "dos" or
+            "e" or "em" or
+            "na" or "nas" or "no" or "nos" or
+            "o" or "os" or
+            "para" or "por" or
+            "que" or
+            "um" or "uma";
+    }
+
+    private static void AppendSpaceIfNeeded(System.Text.StringBuilder builder)
+    {
+        if (builder.Length > 0 && builder[^1] != ' ')
+        {
+            builder.Append(' ');
+        }
+    }
+
+    private static string NormalizeCharacterSpacedText(string text)
+    {
+        var normalizedWords = CharacterSpacedWordRegex().Replace(
+            text,
+            match => match.Value.Replace(" ", string.Empty, StringComparison.Ordinal));
+
+        return CharacterSpacedNumberRegex().Replace(
+            normalizedWords,
+            match => match.Value.Replace(" ", string.Empty, StringComparison.Ordinal));
+    }
+
+    private static double DetermineWordGapThreshold(List<double> adjacentGaps, double medianGlyphWidth)
+    {
+        var positiveGaps = adjacentGaps
+            .Where(x => x > 0.05)
+            .Order()
+            .ToList();
+
+        if (positiveGaps.Count == 0)
+        {
+            return double.PositiveInfinity;
+        }
+
+        var overlappingOrTouchingGaps = adjacentGaps.Count(x => x <= 0.05);
+        if (overlappingOrTouchingGaps >= positiveGaps.Count * 2)
+        {
+            return positiveGaps[0] * 0.5;
+        }
+
+        var minimumMeaningfulDelta = Math.Max(0.2, medianGlyphWidth * 0.06);
+        var bestScore = 0d;
+        double? threshold = null;
+
+        for (var i = 0; i < positiveGaps.Count - 1; i++)
+        {
+            var left = positiveGaps[i];
+            var right = positiveGaps[i + 1];
+            var delta = right - left;
+            var ratio = right / Math.Max(left, 0.1);
+
+            if (delta < minimumMeaningfulDelta || ratio < 1.7)
+            {
+                continue;
+            }
+
+            var score = ratio * delta;
+            if (score > bestScore)
+            {
+                bestScore = score;
+                threshold = (left + right) / 2;
+            }
+        }
+
+        return threshold ?? positiveGaps[^1] + 0.1;
     }
 
     private static bool IsStandaloneHeading(PdfLine line, double medianHeight)
@@ -330,18 +492,27 @@ public partial class PdfDocumentExtractor : IDocumentExtractor
     [GeneratedRegex(@"^[^a-záàâãéèêíìóòôõúùç]{8,}$")]
     private static partial Regex UppercaseLetterRegex();
 
+    [GeneratedRegex(@"(?<!\p{L})(?:\p{L}\s+){2,}\p{L}(?!\p{L})")]
+    private static partial Regex CharacterSpacedWordRegex();
+
+    [GeneratedRegex(@"(?<!\p{N})(?:\p{N}\s+){1,}\p{N}(?!\p{N})")]
+    private static partial Regex CharacterSpacedNumberRegex();
+
     public record PdfGlyph(
         string Text,
         double Left,
         double Bottom,
         double Right,
-        double Top)
+        double Top,
+        long TextSequence = 0)
     {
         public double Baseline => Bottom;
 
         public double Height => Math.Max(1, Top - Bottom);
 
         public double Width => Math.Max(0.1, Right - Left);
+
+        public bool IsWhitespace => string.IsNullOrWhiteSpace(Text);
     }
 
     private record PdfLine(

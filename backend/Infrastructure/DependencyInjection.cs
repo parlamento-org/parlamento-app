@@ -88,6 +88,7 @@ public static class DependencyInjection
                 new HttpClient(),
                 provider.GetRequiredService<IConfiguration>(),
                 provider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ParliamentBaseInfoImportService>>()));
+        services.AddScoped<IDocumentExtractor, ITextPdfDocumentExtractor>();
         services.AddScoped<IDocumentExtractor, PdfDocumentExtractor>();
         services.AddScoped<IDocumentExtractor, DocxDocumentExtractor>();
         services.AddScoped<IDocumentExtractor, HtmlDocumentExtractor>();

@@ -8,7 +8,7 @@ namespace Parlamento.Infrastructure.Services.Documents;
 
 public partial class DocumentModelRedactor : IDocumentModelRedactor
 {
-    public string PolicyVersion => "party-and-deputy-names-structured-v3-letter-safe";
+    public string PolicyVersion => "party-and-deputy-names-structured-v5-case-sensitive-acronyms";
 
     public ParliamentDocumentModel Redact(
         ParliamentDocumentModel document,
@@ -161,11 +161,17 @@ public partial class DocumentModelRedactor : IDocumentModelRedactor
 
         foreach (var term in terms)
         {
-            var pattern = $@"(?<![\p{{L}}\p{{N}}]){BuildTermPattern(term)}(?![\p{{L}}\p{{N}}])";
+            var pattern = BuildMatchPattern(term);
+            var regexOptions = RegexOptions.CultureInvariant;
+            if (!IsAcronymTerm(term))
+            {
+                regexOptions |= RegexOptions.IgnoreCase;
+            }
+
             foreach (Match match in Regex.Matches(
                          text,
                          pattern,
-                         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                         regexOptions))
             {
                 if (match.Length == 0 ||
                     occupied.Skip(match.Index).Take(match.Length).Any(x => x))
@@ -183,6 +189,33 @@ public partial class DocumentModelRedactor : IDocumentModelRedactor
         }
 
         return matches.OrderBy(x => x.Start).ToList();
+    }
+
+    private static string BuildMatchPattern(string term)
+    {
+        var termPattern = BuildTermPattern(term);
+        var boundedPattern = $@"(?<![\p{{L}}\p{{N}}]){termPattern}(?![\p{{L}}\p{{N}}])";
+
+        if (!CanMatchInsideGluedText(term))
+        {
+            return boundedPattern;
+        }
+
+        var gluedPattern = $@"(?<=[\p{{L}}\p{{N}}]){termPattern}(?![\p{{Ll}}\p{{N}}])";
+        return $@"(?:{boundedPattern}|{gluedPattern})";
+    }
+
+    private static bool IsAcronymTerm(string term)
+    {
+        return term.Length >= 2 &&
+               term.All(character => char.IsUpper(character) || char.IsDigit(character) || character == '-');
+    }
+
+    private static bool CanMatchInsideGluedText(string term)
+    {
+        return term.Length >= 4 &&
+               !term.Any(char.IsWhiteSpace) &&
+               term.All(character => char.IsLetter(character) || character == '-');
     }
 
     private static string BuildTermPattern(string term)

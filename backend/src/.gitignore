@@ -77,3 +77,4 @@ _[Ss]cripts
 # App local settings #
 ######################
 appsettings.local.json
+/tmp

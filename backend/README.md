@@ -128,12 +128,13 @@ The frontend should render `.redacted` as a solid black inline block using `--re
 
 Current extractors:
 
-- `.pdf` via open-source `PdfPig` for selectable-text PDFs
+- `.pdf` via open-source `iText` for selectable-text PDFs
+- `.pdf` via open-source `PdfPig` as a retained diagnostic/fallback extractor
 - `.txt`
 - `.html` / `.htm`
 - `.docx`
 
-PDF extraction is heuristic and layout-aware, not pixel-perfect. It preserves pages, line order, paragraphs, rough heading hierarchy, indentation, line breaks, and selectable text. Scanned-image PDFs still fail cleanly because they require a future OCR pipeline.
+PDF extraction is heuristic and layout-aware, not pixel-perfect. The production PDF extractor now uses iText because comparison against Parliament samples showed it preserves normal Portuguese word spacing, quote punctuation, italic words, and party names much more reliably than the current PdfPig glyph reconstruction. PdfPig remains available for comparison and regression work. Scanned-image PDFs still fail cleanly because they require a future OCR pipeline.
 
 ### Import configuration
 
@@ -187,11 +188,22 @@ dotnet run --project backend/src -- parliament-documents redact --project-law-id
 dotnet run --project backend/src -- parliament-documents redact --project-law-id 123 --force-upsert
 ```
 
+Compare PdfPig and iText extraction for a local PDF without changing stored document content:
+
+```powershell
+dotnet run --project backend/src -- parliament-documents compare-pdf-extractors --file C:\path\proposal.pdf
+dotnet run --project backend/src -- parliament-documents compare-pdf-extractors --file C:\path\proposal.pdf --output-dir tmp/pdf-extractor-comparison
+```
+
+The comparator writes side-by-side `.pdfpig.txt` and `.itext.txt` files so extraction regressions can be checked before changing the production extractor.
+
 The document command only processes imported `InitiativeText` documents whose URL matches `ProjectLaw.FullProposalTextLink`. It does not redact events, votes, interventions, publications, or other `ProjectLaw` metadata.
 
 Before redacting a legislature, the command checks whether `ParliamentDeputies`, `ParliamentaryGroups`, and `ParliamentRedactionTerms` already contain rows for that legislature. If any of them are empty, it imports that legislature's configured base-info JSON first; this prevents weak redaction runs caused by missing deputy or parliamentary group terms.
 
 Repeated redaction commands are idempotent by default. If the source hash, extractor version, renderer version, and redaction policy version are unchanged and the previous run succeeded, the document is skipped. Use `--force-upsert` or `--force` to rewrite the stored redacted model, HTML, and plain text anyway.
+
+Changing the production PDF extractor or extractor version intentionally makes existing PDF document content stale. Re-run the redaction command for the affected initiatives or legislature to regenerate the stored redacted model, HTML, and plain text from the new extractor output.
 
 Do not run this as a second `dotnet run` inside the same live `dev-parlamento-be` container while `dotnet watch` is running. The dev container watches mounted project directories, and a second `dotnet run` can mutate `obj/` while the watcher scans it. Prefer a one-shot container command or run the compiled application directly in a shell where `dotnet watch` is not active.
 
