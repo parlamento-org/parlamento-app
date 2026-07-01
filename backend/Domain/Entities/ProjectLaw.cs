@@ -87,4 +87,6 @@ public class ProjectLaw
     public List<ParliamentInitiativePublication> ImportedPublications { get; set; } = [];
 
     public List<ParliamentInitiativeIntervention> ImportedInterventions { get; set; } = [];
+
+    public List<ParliamentSummary> Summaries { get; set; } = [];
 }

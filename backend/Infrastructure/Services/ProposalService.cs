@@ -269,7 +269,8 @@ public class ProposalService : IProposalService
                 .ThenInclude(vote => vote.Blocks)
             .Include(proposal => proposal.ImportedDocuments)
             .Include(proposal => proposal.ImportedPublications)
-            .Include(proposal => proposal.ImportedInterventions);
+            .Include(proposal => proposal.ImportedInterventions)
+            .Include(proposal => proposal.Summaries);
     }
 
     private async Task<PoliticalParty?> FindPartyAsync(string? partyAcronym, CancellationToken cancellationToken)

@@ -12,12 +12,14 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 using Parlamento.Application.Abstractions;
 using Parlamento.Application.Documents;
+using Parlamento.Application.Summaries;
 using Parlamento.Domain.Documents;
 using Parlamento.Domain.Enums;
 using Parlamento.Domain.Entities;
 using Parlamento.Infrastructure.Persistence;
 using Parlamento.Infrastructure.Services.Documents;
 using Parlamento.Infrastructure.Services.ParliamentOpenData;
+using Parlamento.Infrastructure.Services.Summaries;
 
 using Xunit;
 
@@ -62,6 +64,150 @@ public class ParliamentOpenDataImportServiceTests
         Assert.Contains(
             initiative.ImportedVotes.SelectMany(x => x.Blocks),
             x => x.PartyAcronym == "CDS-PP" && x.VotingOrientation == VotingOrientation.InFavor);
+    }
+
+    [Fact]
+    public async Task SummaryGeneration_UsesRedactedPlainTextAndIsIdempotent()
+    {
+        await using var context = CreateContext();
+        await context.Database.EnsureCreatedAsync();
+
+        var party = await context.PoliticalParties.SingleAsync(x => x.partyAcronym == "CH");
+        var projectLaw = new ProjectLaw
+        {
+            SourceId = 2000,
+            SourceIdText = "2000",
+            Legislatura = "XVII",
+            Score = 100,
+            amountOfUsersInterested = 0,
+            totalAmountOfVotesFromUsers = 0,
+            VoteDate = "2026-01-01",
+            ProposingParty = party,
+            ProposalTitle = "Teste resumo",
+            FullProposalTextLink = "summary-test.txt"
+        };
+        var initiativeDocument = new ParliamentInitiativeDocument
+        {
+            Scope = "InitiativeText",
+            Name = "Texto da iniciativa",
+            Url = "summary-test.txt"
+        };
+        projectLaw.ImportedDocuments.Add(initiativeDocument);
+        context.ProjectLaws.Add(projectLaw);
+        await context.SaveChangesAsync();
+
+        var redactedText = string.Join(
+            " ",
+            Enumerable.Repeat(
+                "Este texto redigido descreve uma iniciativa legislativa com medidas, destinatários, mecanismos de execução e disposições transitórias.",
+                8));
+        var documentContent = new ParliamentDocumentContent
+        {
+            ProjectLawId = projectLaw.Id,
+            ParliamentInitiativeDocumentId = initiativeDocument.Id,
+            SourceUrl = "summary-test.txt",
+            SourceContentHash = "source-hash",
+            RedactedContentHash = "redacted-hash",
+            RedactedContentText = redactedText,
+            RedactedContentHtml = "<article><p>HTML should not be used</p></article>",
+            ExtractionStatus = "Succeeded",
+            RedactionStatus = "Succeeded"
+        };
+        context.ParliamentDocumentContents.Add(documentContent);
+        await context.SaveChangesAsync();
+
+        var fakeClient = new FakeSummaryClient();
+        var summaryService = new ParliamentSummaryService(
+            context,
+            fakeClient,
+            NullLogger<ParliamentSummaryService>.Instance);
+
+        var first = await summaryService.GenerateSummariesAsync(new ParliamentSummaryRequest
+        {
+            ProjectLawId = projectLaw.Id
+        });
+        var second = await summaryService.GenerateSummariesAsync(new ParliamentSummaryRequest
+        {
+            ProjectLawId = projectLaw.Id
+        });
+        var forced = await summaryService.GenerateSummariesAsync(new ParliamentSummaryRequest
+        {
+            ProjectLawId = projectLaw.Id,
+            Force = true
+        });
+
+        Assert.Equal(1, first.SummariesGenerated);
+        Assert.Equal(1, second.SummariesSkipped);
+        Assert.Equal(1, forced.SummariesGenerated);
+        Assert.Equal(2, fakeClient.Calls);
+        Assert.DoesNotContain("HTML should not be used", fakeClient.LastInput);
+
+        var summary = await context.ParliamentSummaries.SingleAsync();
+        Assert.Equal("Succeeded", summary.GenerationStatus);
+        Assert.Equal("fake-model", summary.ModelName);
+        Assert.Equal("fake-prompt-v1", summary.PromptVersion);
+        Assert.Equal("redacted-hash", summary.SourceDocumentHash);
+        Assert.Contains("neutral", summary.SummaryText);
+    }
+
+    [Fact]
+    public async Task SummaryGeneration_SkipsExtremelyShortDocuments()
+    {
+        await using var context = CreateContext();
+        await context.Database.EnsureCreatedAsync();
+
+        var party = await context.PoliticalParties.SingleAsync(x => x.partyAcronym == "CH");
+        var projectLaw = new ProjectLaw
+        {
+            SourceId = 2001,
+            SourceIdText = "2001",
+            Legislatura = "XVII",
+            Score = 100,
+            amountOfUsersInterested = 0,
+            totalAmountOfVotesFromUsers = 0,
+            VoteDate = "2026-01-01",
+            ProposingParty = party,
+            ProposalTitle = "Teste resumo curto",
+            FullProposalTextLink = "short-summary-test.txt"
+        };
+        var initiativeDocument = new ParliamentInitiativeDocument
+        {
+            Scope = "InitiativeText",
+            Name = "Texto da iniciativa",
+            Url = "short-summary-test.txt"
+        };
+        projectLaw.ImportedDocuments.Add(initiativeDocument);
+        context.ProjectLaws.Add(projectLaw);
+        await context.SaveChangesAsync();
+
+        context.ParliamentDocumentContents.Add(new ParliamentDocumentContent
+        {
+            ProjectLawId = projectLaw.Id,
+            ParliamentInitiativeDocumentId = initiativeDocument.Id,
+            SourceUrl = "short-summary-test.txt",
+            SourceContentHash = "source-hash-short",
+            RedactedContentHash = "redacted-hash-short",
+            RedactedContentText = "curto",
+            ExtractionStatus = "Succeeded",
+            RedactionStatus = "Succeeded"
+        });
+        await context.SaveChangesAsync();
+
+        var fakeClient = new FakeSummaryClient();
+        var summaryService = new ParliamentSummaryService(
+            context,
+            fakeClient,
+            NullLogger<ParliamentSummaryService>.Instance);
+
+        var result = await summaryService.GenerateSummariesAsync(new ParliamentSummaryRequest
+        {
+            ProjectLawId = projectLaw.Id
+        });
+
+        Assert.Equal(1, result.SummariesSkipped);
+        Assert.Equal(0, fakeClient.Calls);
+        var summary = await context.ParliamentSummaries.SingleAsync();
+        Assert.Equal("Skipped", summary.GenerationStatus);
     }
 
     [Fact]
@@ -352,6 +498,29 @@ public class ParliamentOpenDataImportServiceTests
             CancellationToken cancellationToken = default)
         {
             throw new InvalidOperationException("DOCX extractor should not be selected for PDF bytes.");
+        }
+    }
+
+    private sealed class FakeSummaryClient : ILegislativeSummaryClient
+    {
+        public string ModelName => "fake-model";
+
+        public string PromptVersion => "fake-prompt-v1";
+
+        public int Calls { get; private set; }
+
+        public string LastInput { get; private set; } = string.Empty;
+
+        public Task<GeneratedParliamentSummary> GenerateSummaryAsync(
+            string redactedPlainText,
+            CancellationToken cancellationToken = default)
+        {
+            Calls++;
+            LastInput = redactedPlainText;
+            return Task.FromResult(new GeneratedParliamentSummary(
+                "Titulo neutro",
+                "Resumo neutral gerado a partir do texto redigido.",
+                ["Ponto factual um.", "Ponto factual dois."]));
         }
     }
 }

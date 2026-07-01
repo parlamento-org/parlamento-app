@@ -7,6 +7,7 @@ using Parlamento.Infrastructure.Persistence;
 using Parlamento.Infrastructure.Services;
 using Parlamento.Infrastructure.Services.Documents;
 using Parlamento.Infrastructure.Services.ParliamentOpenData;
+using Parlamento.Infrastructure.Services.Summaries;
 
 namespace Parlamento.Infrastructure;
 
@@ -42,6 +43,18 @@ public static class DependencyInjection
         services.AddScoped<IProposalService, ProposalService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IVotingService, VotingService>();
+        services.Configure<OpenAiSummaryOptions>(options =>
+        {
+            var section = configuration.GetSection(OpenAiSummaryOptions.SectionName);
+            options.ApiKey = configuration["OPENAI_API_KEY"] ?? section["ApiKey"];
+            options.Model = configuration["OPENAI_MODEL"] ?? section["Model"] ?? "gpt-4o-mini-2024-07-18";
+            options.Temperature = double.TryParse(section["Temperature"], out var temperature)
+                ? temperature
+                : 0.1;
+            options.MaxOutputTokens = int.TryParse(section["MaxOutputTokens"], out var maxOutputTokens)
+                ? maxOutputTokens
+                : 700;
+        });
         services.Configure<ParliamentOpenDataOptions>(options =>
         {
             var section = configuration.GetSection(ParliamentOpenDataOptions.SectionName);
@@ -89,6 +102,12 @@ public static class DependencyInjection
                 provider.GetRequiredService<IDocumentModelRedactor>(),
                 provider.GetRequiredService<IDocumentModelRenderer>(),
                 provider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ParliamentDocumentRedactionService>>()));
+        services.AddScoped<ILegislativeSummaryClient>(provider =>
+            new OpenAiLegislativeSummaryClient(
+                new HttpClient(),
+                provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<OpenAiSummaryOptions>>(),
+                provider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OpenAiLegislativeSummaryClient>>()));
+        services.AddScoped<IParliamentSummaryService, ParliamentSummaryService>();
         services.AddHostedService<DailyParliamentImportHostedService>();
 
         return services;

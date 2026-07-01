@@ -48,6 +48,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: Host=postgres-parlamento;Port=5432;Database=${PARLAMENTO_DB_NAME:-parlamento};Username=${PARLAMENTO_DB_USER:-parlamento};Password=${PARLAMENTO_DB_PASSWORD:-parlamento}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini-2024-07-18}
       ParliamentOpenData__LatestLegislature: ${PARLIAMENT_OPEN_DATA_LATEST_LEGISLATURE:-XVII}
       ParliamentOpenData__DailyImport__Enabled: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_ENABLED:-false}
       ParliamentOpenData__DailyImport__TimeZoneId: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_TIME_ZONE_ID:-Europe/Lisbon}
@@ -78,6 +80,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: Host=postgres-parlamento;Port=5432;Database=${PARLAMENTO_DB_NAME:-parlamento};Username=${PARLAMENTO_DB_USER:-parlamento};Password=${PARLAMENTO_DB_PASSWORD:-parlamento}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini-2024-07-18}
       ParliamentOpenData__LatestLegislature: ${PARLIAMENT_OPEN_DATA_LATEST_LEGISLATURE:-XVII}
       ParliamentOpenData__DailyImport__Enabled: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_ENABLED:-false}
       ParliamentOpenData__DailyImport__TimeZoneId: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_TIME_ZONE_ID:-Europe/Lisbon}
@@ -100,6 +104,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Test
       ConnectionStrings__DefaultConnection: Host=postgres-parlamento;Port=5432;Database=${PARLAMENTO_DB_NAME:-parlamento};Username=${PARLAMENTO_DB_USER:-parlamento};Password=${PARLAMENTO_DB_PASSWORD:-parlamento}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini-2024-07-18}
       ParliamentOpenData__LatestLegislature: ${PARLIAMENT_OPEN_DATA_LATEST_LEGISLATURE:-XVII}
       ParliamentOpenData__DailyImport__Enabled: false
       ParliamentOpenData__DailyImport__TimeZoneId: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_TIME_ZONE_ID:-Europe/Lisbon}
@@ -129,6 +135,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: Host=postgres-parlamento;Port=5432;Database=${PARLAMENTO_DB_NAME:-parlamento};Username=${PARLAMENTO_DB_USER:-parlamento};Password=${PARLAMENTO_DB_PASSWORD:-parlamento}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini-2024-07-18}
       ParliamentOpenData__LatestLegislature: ${PARLIAMENT_OPEN_DATA_LATEST_LEGISLATURE:-XVII}
       ParliamentOpenData__DailyImport__Enabled: false
       ParliamentOpenData__DailyImport__TimeZoneId: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_TIME_ZONE_ID:-Europe/Lisbon}

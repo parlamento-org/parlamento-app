@@ -165,6 +165,21 @@ public class DatabaseContext : DbContext
             .HasIndex(x => x.ParliamentInitiativeDocumentId)
             .IsUnique();
 
+        modelBuilder.Entity<ParliamentSummary>()
+            .HasOne(x => x.ProjectLaw)
+            .WithMany(x => x.Summaries)
+            .HasForeignKey(x => x.ProjectLawId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ParliamentSummary>()
+            .HasOne(x => x.ParliamentDocumentContent)
+            .WithMany()
+            .HasForeignKey(x => x.ParliamentDocumentContentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ParliamentSummary>()
+            .HasIndex(x => new { x.ProjectLawId, x.SourceDocumentHash, x.ModelName, x.PromptVersion });
+
         modelBuilder.Entity<ParliamentDeputy>()
             .HasIndex(x => new { x.Legislature, x.SourceDeputyId });
 
@@ -217,6 +232,7 @@ public class DatabaseContext : DbContext
     public DbSet<ParliamentInitiativePublication> ParliamentInitiativePublications { get; set; } = default!;
     public DbSet<ParliamentInitiativeIntervention> ParliamentInitiativeInterventions { get; set; } = default!;
     public DbSet<ParliamentDocumentContent> ParliamentDocumentContents { get; set; } = default!;
+    public DbSet<ParliamentSummary> ParliamentSummaries { get; set; } = default!;
     public DbSet<ParliamentDeputy> ParliamentDeputies { get; set; } = default!;
     public DbSet<ParliamentaryGroup> ParliamentaryGroups { get; set; } = default!;
     public DbSet<ParliamentRedactionTerm> ParliamentRedactionTerms { get; set; } = default!;

@@ -195,6 +195,43 @@ Repeated redaction commands are idempotent by default. If the source hash, extra
 
 Do not run this as a second `dotnet run` inside the same live `dev-parlamento-be` container while `dotnet watch` is running. The dev container watches mounted project directories, and a second `dotnet run` can mutate `obj/` while the watcher scans it. Prefer a one-shot container command or run the compiled application directly in a shell where `dotnet watch` is not active.
 
+### AI summary pipeline
+
+The AI summary pipeline is independent from both Open Data import and document redaction. It never reads PDFs and never summarizes HTML. It only summarizes `ParliamentDocumentContents.RedactedContentText` after the document redaction pipeline has succeeded.
+
+Configure OpenAI with environment variables:
+
+```text
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-4o-mini-2024-07-18
+```
+
+`OPENAI_API_KEY` is required for real summary generation and must not be committed with a value. `OPENAI_MODEL` defaults to `gpt-4o-mini-2024-07-18` and can be changed later without code changes. The configured temperature is `0.1`, chosen for low-variance factual summaries while still allowing natural phrasing.
+
+Run summaries manually:
+
+```powershell
+dotnet run --project backend/src -- parliament-summary --initiative-id 123
+dotnet run --project backend/src -- parliament-summary --all-unprocessed
+dotnet run --project backend/src -- parliament-summary --legislature XVII
+dotnet run --project backend/src -- parliament-summary --force
+dotnet run --project backend/src -- parliament-summary --legislature XVII --max-documents 25
+```
+
+The summary command is idempotent. It skips already succeeded summaries when the source document hash, model name, and prompt version match. Use `--force` to regenerate matching summaries. Failed generations are logged and stored with status/error details, but they do not stop the batch. Empty and extremely short redacted texts are skipped.
+
+Summaries are stored in `ParliamentSummaries` with:
+
+- short title, paragraph summary, and bullet points JSON
+- generation timestamp
+- model name
+- prompt version
+- source document hash
+- generation status
+- error message/details
+
+Changing the prompt version, model, or redacted source hash makes old summaries identifiable as stale so they can be regenerated selectively.
+
 ### HTTP import endpoints
 
 Manual import endpoints are exposed by `ParliamentImportController`:
