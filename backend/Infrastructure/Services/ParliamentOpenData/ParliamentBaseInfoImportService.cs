@@ -176,6 +176,11 @@ public class ParliamentBaseInfoImportService : IParliamentBaseInfoImportService
 
         foreach (var party in _context.PoliticalParties)
         {
+            if (IsGovernmentTerm(party.partyAcronym) || IsGovernmentTerm(party.fullName))
+            {
+                continue;
+            }
+
             Add(values, party.partyAcronym, "PartyAcronym");
             Add(values, party.fullName, "PartyName");
         }
@@ -199,6 +204,11 @@ public class ParliamentBaseInfoImportService : IParliamentBaseInfoImportService
         }
 
         var trimmed = term.Trim();
+        if (IsGovernmentTerm(trimmed))
+        {
+            return;
+        }
+
         values.Add((trimmed, kind));
 
         var withoutDiacritics = RemoveDiacritics(trimmed);
@@ -222,5 +232,10 @@ public class ParliamentBaseInfoImportService : IParliamentBaseInfoImportService
         }
 
         return builder.ToString().Normalize(NormalizationForm.FormC);
+    }
+
+    private static bool IsGovernmentTerm(string? value)
+    {
+        return string.Equals(value?.Trim(), "Governo", StringComparison.OrdinalIgnoreCase);
     }
 }

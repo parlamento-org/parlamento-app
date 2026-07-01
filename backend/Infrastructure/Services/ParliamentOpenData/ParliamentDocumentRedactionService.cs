@@ -228,10 +228,15 @@ public partial class ParliamentDocumentRedactionService : IParliamentDocumentRed
 
     private static void AddTerm(List<string> terms, string? term)
     {
-        if (!string.IsNullOrWhiteSpace(term))
+        if (!string.IsNullOrWhiteSpace(term) && !IsGovernmentTerm(term))
         {
             terms.Add(term.Trim());
         }
+    }
+
+    private static bool IsGovernmentTerm(string value)
+    {
+        return string.Equals(value.Trim(), "Governo", StringComparison.OrdinalIgnoreCase);
     }
 
     private async Task<byte[]> ReadDocumentBytesAsync(string url, CancellationToken cancellationToken)

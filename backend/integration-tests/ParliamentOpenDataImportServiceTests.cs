@@ -390,6 +390,91 @@ public class ParliamentOpenDataImportServiceTests
         Assert.DoesNotContain("PARTIDO COMUNISTA PORTUGUES", content.RedactedContentHtml);
     }
 
+    [Fact]
+    public async Task DocumentRedaction_DoesNotRedactGovernmentInstitutionReference()
+    {
+        await using var context = CreateContext();
+        await context.Database.EnsureCreatedAsync();
+
+        var baseInfoPath = Path.GetTempFileName();
+        var documentPath = Path.GetTempFileName();
+        await File.WriteAllTextAsync(
+            baseInfoPath,
+            """
+            {
+              "Deputados": [],
+              "GruposParlamentares": [
+                {
+                  "nome": "Partido Comunista Português",
+                  "sigla": "PCP"
+                }
+              ]
+            }
+            """);
+        await File.WriteAllTextAsync(
+            documentPath,
+            "Recomenda ao Governo que avalie a medida proposta pelo Partido Comunista Português.");
+
+        var baseInfoService = new ParliamentBaseInfoImportService(
+            context,
+            new HttpClient(),
+            new ConfigurationBuilder().Build(),
+            NullLogger<ParliamentBaseInfoImportService>.Instance);
+        await baseInfoService.ImportFromFileAsync("XVII", baseInfoPath);
+
+        Assert.DoesNotContain(
+            await context.ParliamentRedactionTerms.Where(x => x.Legislature == "XVII").Select(x => x.Term).ToListAsync(),
+            x => string.Equals(x, "Governo", StringComparison.OrdinalIgnoreCase));
+
+        var government = await context.PoliticalParties.SingleAsync(x => x.partyAcronym == "Governo");
+        var projectLaw = new ProjectLaw
+        {
+            SourceId = 1002,
+            SourceIdText = "1002",
+            Legislatura = "XVII",
+            Score = 100,
+            amountOfUsersInterested = 0,
+            totalAmountOfVotesFromUsers = 0,
+            VoteDate = "2026-01-01",
+            ProposingParty = government,
+            ProposalTitle = "Teste Governo",
+            FullProposalTextLink = documentPath
+        };
+        projectLaw.ImportedAuthors.Add(new ParliamentInitiativeAuthor
+        {
+            AuthorKind = "Other",
+            Name = "Governo",
+            Acronym = "Governo"
+        });
+        projectLaw.ImportedDocuments.Add(new ParliamentInitiativeDocument
+        {
+            Scope = "InitiativeText",
+            Name = "Texto da iniciativa",
+            Url = documentPath
+        });
+        context.ProjectLaws.Add(projectLaw);
+        await context.SaveChangesAsync();
+
+        var redactionService = new ParliamentDocumentRedactionService(
+            context,
+            new HttpClient(),
+            new IDocumentExtractor[]
+            {
+                new TextDocumentExtractor()
+            },
+            new DocumentModelRedactor(),
+            new DocumentModelRenderer(),
+            NullLogger<ParliamentDocumentRedactionService>.Instance);
+
+        var result = await redactionService.ProcessInitiativeTextDocumentsAsync("XVII", projectLaw.Id, 1);
+
+        Assert.Equal(1, result.DocumentsProcessed);
+        var content = await context.ParliamentDocumentContents.SingleAsync();
+        Assert.Contains("Governo", content.RedactedContentText);
+        Assert.Contains("Governo", content.RedactedContentHtml);
+        Assert.DoesNotContain("Partido Comunista Português", content.RedactedContentText);
+    }
+
     private static ParliamentOpenDataImportService CreateService(DatabaseContext context)
     {
         var configuration = new ConfigurationBuilder()
