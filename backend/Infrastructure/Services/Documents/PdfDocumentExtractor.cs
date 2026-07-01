@@ -13,7 +13,7 @@ public partial class PdfDocumentExtractor : IDocumentExtractor
 {
     public string ExtractorKind => "PdfPig";
 
-    public string ExtractorVersion => "pdfpig-document-extractor-v1";
+    public string ExtractorVersion => "pdfpig-letter-document-extractor-v2";
 
     public bool CanExtract(string sourceName)
     {
@@ -68,24 +68,24 @@ public partial class PdfDocumentExtractor : IDocumentExtractor
 
     private static List<ParliamentDocumentBlock> BuildPageBlocks(Page page)
     {
-        var words = page.GetWords()
-            .Where(x => !string.IsNullOrWhiteSpace(x.Text))
-            .Select(x => new PdfWord(
-                x.Text,
-                Convert.ToDouble(x.BoundingBox.Left),
-                Convert.ToDouble(x.BoundingBox.Bottom),
-                Convert.ToDouble(x.BoundingBox.Right),
-                Convert.ToDouble(x.BoundingBox.Top)))
+        var glyphs = page.Letters
+            .Where(x => !string.IsNullOrWhiteSpace(x.Value))
+            .Select(x => new PdfGlyph(
+                x.Value,
+                Convert.ToDouble(x.GlyphRectangle.Left),
+                Convert.ToDouble(x.GlyphRectangle.Bottom),
+                Convert.ToDouble(x.GlyphRectangle.Right),
+                Convert.ToDouble(x.GlyphRectangle.Top)))
             .OrderByDescending(x => x.Top)
             .ThenBy(x => x.Left)
             .ToList();
 
-        if (words.Count == 0)
+        if (glyphs.Count == 0)
         {
             return [];
         }
 
-        var lines = GroupLines(words);
+        var lines = ReconstructLines(glyphs);
         var medianHeight = Median(lines.Select(x => x.Height).Where(x => x > 0).ToList());
         var blocks = new List<ParliamentDocumentBlock>();
         var paragraphLines = new List<PdfLine>();
@@ -125,36 +125,77 @@ public partial class PdfDocumentExtractor : IDocumentExtractor
         return blocks;
     }
 
-    private static List<PdfLine> GroupLines(List<PdfWord> words)
+    public static List<string> ReconstructTextLinesForTests(IEnumerable<PdfGlyph> glyphs)
     {
-        var lines = new List<List<PdfWord>>();
-        foreach (var word in words)
+        return ReconstructLines(glyphs.ToList()).Select(x => x.Text).ToList();
+    }
+
+    private static List<PdfLine> ReconstructLines(List<PdfGlyph> glyphs)
+    {
+        var lines = new List<List<PdfGlyph>>();
+        foreach (var glyph in glyphs)
         {
             var line = lines.FirstOrDefault(existing =>
-                Math.Abs(existing.Average(x => x.Baseline) - word.Baseline) <= Math.Max(2.5, word.Height * 0.45));
+                Math.Abs(existing.Average(x => x.Baseline) - glyph.Baseline) <= Math.Max(2.5, glyph.Height * 0.45));
 
             if (line is null)
             {
-                lines.Add([word]);
+                lines.Add([glyph]);
             }
             else
             {
-                line.Add(word);
+                line.Add(glyph);
             }
         }
 
         return lines
-            .Select(lineWords => lineWords.OrderBy(x => x.Left).ToList())
-            .Select(lineWords => new PdfLine(
-                string.Join(" ", lineWords.Select(x => x.Text)),
-                lineWords.Min(x => x.Left),
-                lineWords.Min(x => x.Bottom),
-                lineWords.Max(x => x.Right),
-                lineWords.Max(x => x.Top),
-                lineWords.Average(x => x.Height)))
+            .Select(lineGlyphs => lineGlyphs.OrderBy(x => x.Left).ToList())
+            .Select(lineGlyphs => new PdfLine(
+                ReconstructLineText(lineGlyphs),
+                lineGlyphs.Min(x => x.Left),
+                lineGlyphs.Min(x => x.Bottom),
+                lineGlyphs.Max(x => x.Right),
+                lineGlyphs.Max(x => x.Top),
+                lineGlyphs.Average(x => x.Height)))
             .OrderByDescending(x => x.Top)
             .ThenBy(x => x.Left)
             .ToList();
+    }
+
+    private static string ReconstructLineText(IReadOnlyList<PdfGlyph> glyphs)
+    {
+        if (glyphs.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var builder = new System.Text.StringBuilder();
+        var ordered = glyphs.OrderBy(x => x.Left).ToList();
+        var positiveGaps = ordered
+            .Zip(ordered.Skip(1), (previous, current) => current.Left - previous.Right)
+            .Where(x => x > 0)
+            .ToList();
+        var medianGap = Median(positiveGaps);
+        var medianWidth = Median(ordered.Select(x => x.Width).Where(x => x > 0).ToList());
+        var wordGapThreshold = Math.Max(medianWidth * 0.75, medianGap * 2.4);
+
+        for (var i = 0; i < ordered.Count; i++)
+        {
+            var glyph = ordered[i];
+            if (i > 0)
+            {
+                var previous = ordered[i - 1];
+                var gap = glyph.Left - previous.Right;
+                if (gap > wordGapThreshold)
+                {
+                    builder.Append(' ');
+                }
+            }
+
+            builder.Append(glyph.Text);
+        }
+
+        return builder.ToString().Trim();
     }
 
     private static bool IsStandaloneHeading(PdfLine line, double medianHeight)
@@ -289,7 +330,7 @@ public partial class PdfDocumentExtractor : IDocumentExtractor
     [GeneratedRegex(@"^[^a-záàâãéèêíìóòôõúùç]{8,}$")]
     private static partial Regex UppercaseLetterRegex();
 
-    private record PdfWord(
+    public record PdfGlyph(
         string Text,
         double Left,
         double Bottom,
@@ -299,6 +340,8 @@ public partial class PdfDocumentExtractor : IDocumentExtractor
         public double Baseline => Bottom;
 
         public double Height => Math.Max(1, Top - Bottom);
+
+        public double Width => Math.Max(0.1, Right - Left);
     }
 
     private record PdfLine(

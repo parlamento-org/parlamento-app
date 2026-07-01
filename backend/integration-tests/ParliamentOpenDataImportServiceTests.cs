@@ -211,6 +211,56 @@ public class ParliamentOpenDataImportServiceTests
     }
 
     [Fact]
+    public void PdfGlyphReconstruction_JoinsLettersIntoCanonicalWords()
+    {
+        var lines = PdfDocumentExtractor.ReconstructTextLinesForTests(
+            BuildGlyphLine("Projeto Governo Portugal CHEGA"));
+
+        Assert.Single(lines);
+        Assert.Equal("Projeto Governo Portugal CHEGA", lines[0]);
+        Assert.DoesNotContain("P r o j e t o", lines[0]);
+        Assert.DoesNotContain("G o v e r n o", lines[0]);
+        Assert.DoesNotContain("C H E G A", lines[0]);
+    }
+
+    [Fact]
+    public void Redactor_MatchesCharacterSpacedTermsAndSkipsSingleLetterTerms()
+    {
+        var document = new ParliamentDocumentModel
+        {
+            Pages =
+            [
+                new ParliamentDocumentPage
+                {
+                    PageNumber = 1,
+                    Blocks =
+                    [
+                        new ParliamentDocumentBlock
+                        {
+                            Kind = ParliamentDocumentBlockKind.Paragraph,
+                            Runs =
+                            [
+                                new ParliamentDocumentRun
+                                {
+                                    Kind = ParliamentDocumentRunKind.Text,
+                                    Text = "A proposta do C H E G A menciona Lisboa e o Governo."
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        var redacted = new DocumentModelRedactor().Redact(document, ["CHEGA", "L"]);
+        var runs = redacted.Pages[0].Blocks[0].Runs;
+
+        Assert.Contains(runs, x => x.Kind == ParliamentDocumentRunKind.Redacted);
+        Assert.Contains(runs, x => x.Text?.Contains("Lisboa") == true);
+        Assert.Contains(runs, x => x.Text?.Contains("Governo") == true);
+    }
+
+    [Fact]
     public async Task DocumentRedaction_SelectsExtractorFromBytesBeforeMisleadingFileName()
     {
         await using var context = CreateContext();
@@ -514,6 +564,31 @@ public class ParliamentOpenDataImportServiceTests
             AppContext.BaseDirectory,
             "../../../../../docs/samples",
             fileName));
+    }
+
+    private static IReadOnlyList<PdfDocumentExtractor.PdfGlyph> BuildGlyphLine(string text)
+    {
+        var glyphs = new List<PdfDocumentExtractor.PdfGlyph>();
+        var left = 0d;
+        foreach (var character in text)
+        {
+            if (character == ' ')
+            {
+                left += 8;
+                continue;
+            }
+
+            var width = char.IsUpper(character) ? 5.5 : 4.5;
+            glyphs.Add(new PdfDocumentExtractor.PdfGlyph(
+                character.ToString(),
+                left,
+                100,
+                left + width,
+                110));
+            left += width + 0.8;
+        }
+
+        return glyphs;
     }
 
     private sealed class FakePdfExtractor : IDocumentExtractor

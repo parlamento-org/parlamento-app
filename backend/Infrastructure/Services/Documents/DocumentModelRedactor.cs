@@ -8,7 +8,7 @@ namespace Parlamento.Infrastructure.Services.Documents;
 
 public partial class DocumentModelRedactor : IDocumentModelRedactor
 {
-    public string PolicyVersion => "party-and-deputy-names-structured-v2-no-government";
+    public string PolicyVersion => "party-and-deputy-names-structured-v3-letter-safe";
 
     public ParliamentDocumentModel Redact(
         ParliamentDocumentModel document,
@@ -17,6 +17,7 @@ public partial class DocumentModelRedactor : IDocumentModelRedactor
         var normalizedTerms = terms
             .Where(x => !string.IsNullOrWhiteSpace(x))
             .Select(x => x.Trim())
+            .Where(x => x.Length >= 2)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderByDescending(x => x.Length)
             .ToList();
@@ -160,7 +161,7 @@ public partial class DocumentModelRedactor : IDocumentModelRedactor
 
         foreach (var term in terms)
         {
-            var pattern = $@"(?<![\p{{L}}\p{{N}}]){Regex.Escape(term)}(?![\p{{L}}\p{{N}}])";
+            var pattern = $@"(?<![\p{{L}}\p{{N}}]){BuildTermPattern(term)}(?![\p{{L}}\p{{N}}])";
             foreach (Match match in Regex.Matches(
                          text,
                          pattern,
@@ -182,6 +183,28 @@ public partial class DocumentModelRedactor : IDocumentModelRedactor
         }
 
         return matches.OrderBy(x => x.Start).ToList();
+    }
+
+    private static string BuildTermPattern(string term)
+    {
+        if (term.Length < 3)
+        {
+            return Regex.Escape(term);
+        }
+
+        var builder = new StringBuilder();
+        for (var i = 0; i < term.Length; i++)
+        {
+            var character = term[i];
+            builder.Append(char.IsWhiteSpace(character) ? @"\s+" : Regex.Escape(character.ToString()));
+
+            if (i < term.Length - 1 && !char.IsWhiteSpace(character) && !char.IsWhiteSpace(term[i + 1]))
+            {
+                builder.Append(@"\s*");
+            }
+        }
+
+        return builder.ToString();
     }
 
     private static ParliamentDocumentRun CloneTextSlice(
