@@ -43,6 +43,7 @@ public partial class ParliamentDocumentRedactionService : IParliamentDocumentRed
         string? legislature,
         int? projectLawId,
         int maxDocuments,
+        bool forceUpsert = false,
         CancellationToken cancellationToken = default)
     {
         var query = _context.ParliamentInitiativeDocuments
@@ -76,7 +77,7 @@ public partial class ParliamentDocumentRedactionService : IParliamentDocumentRed
         {
             try
             {
-                if (await ProcessDocumentAsync(document, cancellationToken))
+                if (await ProcessDocumentAsync(document, forceUpsert, cancellationToken))
                 {
                     processed++;
                 }
@@ -102,6 +103,7 @@ public partial class ParliamentDocumentRedactionService : IParliamentDocumentRed
 
     private async Task<bool> ProcessDocumentAsync(
         ParliamentInitiativeDocument document,
+        bool forceUpsert,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(document.Url))
@@ -124,17 +126,29 @@ public partial class ParliamentDocumentRedactionService : IParliamentDocumentRed
         }
 
         var sourceName = TryGetFileName(document.Url);
-        var extractor = _extractors.FirstOrDefault(x => x.CanExtract(sourceName))
-                        ?? throw new NotSupportedException($"No document extractor is registered for '{sourceName}'.");
+        var extractor = ResolveExtractor(bytes, sourceName);
 
-        if (content.SourceContentHash == sourceHash &&
+        if (!forceUpsert &&
+            content.SourceContentHash == sourceHash &&
             content.ExtractorVersion == extractor.ExtractorVersion &&
             content.RedactionPolicyVersion == _redactor.PolicyVersion &&
             content.RendererVersion == _renderer.RendererVersion &&
             content.ExtractionStatus == "Succeeded" &&
             content.RedactionStatus == "Succeeded")
         {
+            _logger.LogInformation(
+                "Skipping document {DocumentId} for ProjectLaw {ProjectLawId}; redacted content is current. Use force-upsert to rewrite it.",
+                document.Id,
+                document.ProjectLawId);
             return false;
+        }
+
+        if (forceUpsert && content.Id != 0)
+        {
+            _logger.LogInformation(
+                "Force-upserting redacted document content for DocumentId={DocumentId} ProjectLawId={ProjectLawId}.",
+                document.Id,
+                document.ProjectLawId);
         }
 
         var extracted = await extractor.ExtractAsync(bytes, sourceName, cancellationToken);
@@ -164,6 +178,23 @@ public partial class ParliamentDocumentRedactionService : IParliamentDocumentRed
 
         await _context.SaveChangesAsync(cancellationToken);
         return true;
+    }
+
+    private IDocumentExtractor ResolveExtractor(byte[] bytes, string sourceName)
+    {
+        var extractor = _extractors.FirstOrDefault(x => !x.CanExtract(sourceName) && x.CanExtract(bytes, sourceName))
+                        ?? _extractors.FirstOrDefault(x => x.CanExtract(bytes, sourceName))
+                        ?? throw new NotSupportedException($"No document extractor is registered for '{sourceName}'.");
+
+        if (!extractor.CanExtract(sourceName))
+        {
+            _logger.LogInformation(
+                "Selected document extractor {ExtractorKind} for {SourceName} by byte signature instead of file name.",
+                extractor.ExtractorKind,
+                sourceName);
+        }
+
+        return extractor;
     }
 
     private async Task<IReadOnlyList<string>> LoadTermsAsync(

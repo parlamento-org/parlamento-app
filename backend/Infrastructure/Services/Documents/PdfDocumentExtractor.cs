@@ -20,6 +20,11 @@ public partial class PdfDocumentExtractor : IDocumentExtractor
         return sourceName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
     }
 
+    public bool CanExtract(byte[] bytes, string sourceName)
+    {
+        return HasPdfSignature(bytes) || CanExtract(sourceName);
+    }
+
     public Task<DocumentExtractionResult> ExtractAsync(
         byte[] bytes,
         string sourceName,
@@ -267,6 +272,15 @@ public partial class PdfDocumentExtractor : IDocumentExtractor
         return values.Count % 2 == 0
             ? (values[middle - 1] + values[middle]) / 2
             : values[middle];
+    }
+
+    private static bool HasPdfSignature(byte[] bytes)
+    {
+        return bytes.Length >= 4 &&
+               bytes[0] == '%' &&
+               bytes[1] == 'P' &&
+               bytes[2] == 'D' &&
+               bytes[3] == 'F';
     }
 
     [GeneratedRegex(@"^(\d+[\.)]|[a-zA-Z][\.)]|[-•])\s+")]

@@ -1,4 +1,7 @@
 using Parlamento.Application.Abstractions;
+using Parlamento.Infrastructure.Persistence;
+
+using Microsoft.EntityFrameworkCore;
 
 internal static class ParliamentDocumentCommand
 {
@@ -19,18 +22,34 @@ internal static class ParliamentDocumentCommand
 
         using var scope = app.Services.CreateScope();
         var redactionService = scope.ServiceProvider.GetRequiredService<IParliamentDocumentRedactionService>();
+        var baseInfoImportService = scope.ServiceProvider.GetRequiredService<IParliamentBaseInfoImportService>();
+        var context = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
         var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
 
         if (command.ProjectLawId.HasValue)
         {
+            var legislature = await context.ProjectLaws
+                .Where(x => x.Id == command.ProjectLawId.Value)
+                .Select(x => x.Legislatura)
+                .SingleOrDefaultAsync();
+
+            if (string.IsNullOrWhiteSpace(legislature))
+            {
+                throw new InvalidOperationException($"ProjectLawId={command.ProjectLawId.Value} was not found.");
+            }
+
+            await EnsureBaseInfoAsync(app, context, baseInfoImportService, legislature);
+
             app.Logger.LogInformation(
-                "Running parliament document redaction command for ProjectLawId={ProjectLawId}.",
-                command.ProjectLawId.Value);
+                "Running parliament document redaction command for ProjectLawId={ProjectLawId}. ForceUpsert={ForceUpsert}.",
+                command.ProjectLawId.Value,
+                command.ForceUpsert);
 
             var result = await redactionService.ProcessInitiativeTextDocumentsAsync(
                 null,
                 command.ProjectLawId.Value,
-                command.MaxDocuments);
+                command.MaxDocuments,
+                command.ForceUpsert);
             LogResult(app, result);
             return true;
         }
@@ -53,19 +72,54 @@ internal static class ParliamentDocumentCommand
 
         foreach (var legislature in legislatures)
         {
+            await EnsureBaseInfoAsync(app, context, baseInfoImportService, legislature);
+
             app.Logger.LogInformation(
-                "Running parliament document redaction command for Legislature={Legislature} MaxDocuments={MaxDocuments}.",
+                "Running parliament document redaction command for Legislature={Legislature} MaxDocuments={MaxDocuments} ForceUpsert={ForceUpsert}.",
                 legislature,
-                command.MaxDocuments);
+                command.MaxDocuments,
+                command.ForceUpsert);
 
             var result = await redactionService.ProcessInitiativeTextDocumentsAsync(
                 legislature,
                 null,
-                command.MaxDocuments);
+                command.MaxDocuments,
+                command.ForceUpsert);
             LogResult(app, result);
         }
 
         return true;
+    }
+
+    private static async Task EnsureBaseInfoAsync(
+        WebApplication app,
+        DatabaseContext context,
+        IParliamentBaseInfoImportService baseInfoImportService,
+        string legislature)
+    {
+        var hasDeputies = await context.ParliamentDeputies.AnyAsync(x => x.Legislature == legislature);
+        var hasGroups = await context.ParliamentaryGroups.AnyAsync(x => x.Legislature == legislature);
+        var hasTerms = await context.ParliamentRedactionTerms.AnyAsync(x => x.Legislature == legislature);
+
+        if (hasDeputies && hasGroups && hasTerms)
+        {
+            return;
+        }
+
+        app.Logger.LogInformation(
+            "Base information is incomplete for {Legislature}. DeputiesLoaded={DeputiesLoaded} GroupsLoaded={GroupsLoaded} TermsLoaded={TermsLoaded}. Importing base-info before document redaction.",
+            legislature,
+            hasDeputies,
+            hasGroups,
+            hasTerms);
+
+        var result = await baseInfoImportService.ImportLegislatureAsync(legislature);
+        app.Logger.LogInformation(
+            "Base-info preflight completed for {Legislature}. Deputies={Deputies} ParliamentaryGroups={Groups} RedactionTerms={Terms}",
+            result.Legislature,
+            result.DeputiesRead,
+            result.ParliamentaryGroupsRead,
+            result.RedactionTermsRebuilt);
     }
 
     private static ParliamentDocumentCommandOptions Parse(string[] args)
@@ -84,6 +138,13 @@ internal static class ParliamentDocumentCommand
             if (string.Equals(arg, "--max-documents", StringComparison.OrdinalIgnoreCase))
             {
                 options.MaxDocuments = Math.Max(1, int.Parse(RequireValue(args, ref i, "--max-documents")));
+                continue;
+            }
+
+            if (string.Equals(arg, "--force-upsert", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(arg, "--force", StringComparison.OrdinalIgnoreCase))
+            {
+                options.ForceUpsert = true;
                 continue;
             }
 
@@ -149,6 +210,8 @@ internal static class ParliamentDocumentCommand
         public int? ProjectLawId { get; set; }
 
         public int MaxDocuments { get; set; } = 10;
+
+        public bool ForceUpsert { get; set; }
 
         public List<string> Legislatures { get; } = [];
     }

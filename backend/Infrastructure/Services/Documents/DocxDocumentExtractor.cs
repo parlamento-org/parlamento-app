@@ -22,11 +22,22 @@ public class DocxDocumentExtractor : IDocumentExtractor
         return sourceName.EndsWith(".docx", StringComparison.OrdinalIgnoreCase);
     }
 
+    public bool CanExtract(byte[] bytes, string sourceName)
+    {
+        return CanExtract(sourceName) && HasZipSignature(bytes);
+    }
+
     public Task<DocumentExtractionResult> ExtractAsync(
         byte[] bytes,
         string sourceName,
         CancellationToken cancellationToken = default)
     {
+        if (!HasZipSignature(bytes))
+        {
+            throw new InvalidDataException(
+                $"Document '{sourceName}' is named like a DOCX, but the downloaded bytes are not an Open XML ZIP package.");
+        }
+
         using var stream = new MemoryStream(bytes);
         using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
         var documentEntry = archive.GetEntry("word/document.xml")
@@ -245,5 +256,14 @@ public class DocxDocumentExtractor : IDocumentExtractor
         return double.TryParse(left, out var twips)
             ? twips / 20
             : null;
+    }
+
+    private static bool HasZipSignature(byte[] bytes)
+    {
+        return bytes.Length >= 4 &&
+               bytes[0] == 'P' &&
+               bytes[1] == 'K' &&
+               (bytes[2] == 3 || bytes[2] == 5 || bytes[2] == 7) &&
+               (bytes[3] == 4 || bytes[3] == 6 || bytes[3] == 8);
     }
 }

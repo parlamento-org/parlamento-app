@@ -8,5 +8,6 @@ public interface IParliamentDocumentRedactionService
         string? legislature,
         int? projectLawId,
         int maxDocuments,
+        bool forceUpsert = false,
         CancellationToken cancellationToken = default);
 }

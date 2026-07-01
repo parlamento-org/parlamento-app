@@ -23,6 +23,10 @@
     <ProjectReference Include="..\Infrastructure\Parlamento.Infrastructure.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Watch Remove="..\**\bin\**\*" />
+    <Watch Remove="..\**\obj\**\*" />
+  </ItemGroup>
+  <ItemGroup>
     <Folder Include="Migrations"/>
   </ItemGroup>
 </Project>

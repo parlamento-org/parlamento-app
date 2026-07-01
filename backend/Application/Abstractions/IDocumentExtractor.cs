@@ -10,6 +10,8 @@ public interface IDocumentExtractor
 
     bool CanExtract(string sourceName);
 
+    bool CanExtract(byte[] bytes, string sourceName);
+
     Task<DocumentExtractionResult> ExtractAsync(
         byte[] bytes,
         string sourceName,

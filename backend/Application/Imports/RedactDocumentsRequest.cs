@@ -7,4 +7,6 @@ public class RedactDocumentsRequest
     public int? ProjectLawId { get; set; }
 
     public int MaxDocuments { get; set; } = 10;
+
+    public bool ForceUpsert { get; set; }
 }

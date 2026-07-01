@@ -171,6 +171,10 @@ public class DatabaseContext : DbContext
         modelBuilder.Entity<ParliamentDeputy>()
             .HasIndex(x => new { x.Legislature, x.SourceCadId });
 
+        modelBuilder.Entity<ParliamentaryGroup>()
+            .HasIndex(x => new { x.Legislature, x.Acronym })
+            .IsUnique();
+
         modelBuilder.Entity<ParliamentRedactionTerm>()
             .HasIndex(x => new { x.Legislature, x.Term });
 
@@ -214,5 +218,6 @@ public class DatabaseContext : DbContext
     public DbSet<ParliamentInitiativeIntervention> ParliamentInitiativeInterventions { get; set; } = default!;
     public DbSet<ParliamentDocumentContent> ParliamentDocumentContents { get; set; } = default!;
     public DbSet<ParliamentDeputy> ParliamentDeputies { get; set; } = default!;
+    public DbSet<ParliamentaryGroup> ParliamentaryGroups { get; set; } = default!;
     public DbSet<ParliamentRedactionTerm> ParliamentRedactionTerms { get; set; } = default!;
 }

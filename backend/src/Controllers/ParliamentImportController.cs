@@ -65,6 +65,7 @@ public class ParliamentImportController : ControllerBase
             request.Legislature,
             request.ProjectLawId,
             request.MaxDocuments,
+            request.ForceUpsert,
             cancellationToken);
 
         return Ok(result);

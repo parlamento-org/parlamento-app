@@ -1,4 +1,6 @@
 using System.Text.Json;
+using System.Globalization;
+using System.Text;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -67,7 +69,9 @@ public class ParliamentBaseInfoImportService : IParliamentBaseInfoImportService
     {
         using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
         var deputies = document.RootElement.EnumerateArrayOrEmpty("Deputados").ToList();
+        var parliamentaryGroups = document.RootElement.EnumerateArrayOrEmpty("GruposParlamentares").ToList();
         var upserted = 0;
+        var groupsUpserted = 0;
 
         foreach (var deputyElement in deputies)
         {
@@ -103,6 +107,32 @@ public class ParliamentBaseInfoImportService : IParliamentBaseInfoImportService
             upserted++;
         }
 
+        foreach (var groupElement in parliamentaryGroups)
+        {
+            var acronym = groupElement.GetStringOrNull("sigla")?.Trim();
+            if (string.IsNullOrWhiteSpace(acronym))
+            {
+                continue;
+            }
+
+            var group = await _context.ParliamentaryGroups.FirstOrDefaultAsync(
+                x => x.Legislature == legislature && x.Acronym == acronym,
+                cancellationToken);
+
+            if (group is null)
+            {
+                group = new ParliamentaryGroup
+                {
+                    Legislature = legislature,
+                    Acronym = acronym
+                };
+                _context.ParliamentaryGroups.Add(group);
+            }
+
+            group.Name = groupElement.GetStringOrNull("nome")?.Trim();
+            groupsUpserted++;
+        }
+
         await _context.SaveChangesAsync(cancellationToken);
 
         var oldTerms = _context.ParliamentRedactionTerms.Where(x => x.Legislature == legislature);
@@ -113,12 +143,19 @@ public class ParliamentBaseInfoImportService : IParliamentBaseInfoImportService
         await _context.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
-            "Imported parliament base info for {Legislature}. Deputies={Deputies} RedactionTerms={Terms}",
+            "Imported parliament base info for {Legislature}. Deputies={Deputies} ParliamentaryGroups={Groups} RedactionTerms={Terms}",
             legislature,
             deputies.Count,
+            parliamentaryGroups.Count,
             terms.Count);
 
-        return new ParliamentBaseInfoImportResult(legislature, deputies.Count, upserted, terms.Count);
+        return new ParliamentBaseInfoImportResult(
+            legislature,
+            deputies.Count,
+            upserted,
+            parliamentaryGroups.Count,
+            groupsUpserted,
+            terms.Count);
     }
 
     private List<ParliamentRedactionTerm> BuildRedactionTerms(string legislature)
@@ -129,6 +166,12 @@ public class ParliamentBaseInfoImportService : IParliamentBaseInfoImportService
         {
             Add(values, deputy.FullName, "DeputyFullName");
             Add(values, deputy.ParliamentaryName, "DeputyParliamentaryName");
+        }
+
+        foreach (var group in _context.ParliamentaryGroups.Where(x => x.Legislature == legislature))
+        {
+            Add(values, group.Acronym, "ParliamentaryGroupAcronym");
+            Add(values, group.Name, "ParliamentaryGroupName");
         }
 
         foreach (var party in _context.PoliticalParties)
@@ -155,6 +198,29 @@ public class ParliamentBaseInfoImportService : IParliamentBaseInfoImportService
             return;
         }
 
-        values.Add((term.Trim(), kind));
+        var trimmed = term.Trim();
+        values.Add((trimmed, kind));
+
+        var withoutDiacritics = RemoveDiacritics(trimmed);
+        if (!string.Equals(trimmed, withoutDiacritics, StringComparison.Ordinal))
+        {
+            values.Add((withoutDiacritics, $"{kind}Ascii"));
+        }
+    }
+
+    private static string RemoveDiacritics(string value)
+    {
+        var normalized = value.Normalize(NormalizationForm.FormD);
+        var builder = new StringBuilder(normalized.Length);
+
+        foreach (var character in normalized)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(character) != UnicodeCategory.NonSpacingMark)
+            {
+                builder.Append(character);
+            }
+        }
+
+        return builder.ToString().Normalize(NormalizationForm.FormC);
     }
 }

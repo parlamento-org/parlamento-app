@@ -88,9 +88,12 @@ The backend can import Portuguese Parliament Open Data initiatives into PostgreS
 The redaction pipeline uses Parliament base-information JSON files to load deputy names for each legislature. The base-info importer stores:
 
 - deputies in `ParliamentDeputies`
+- legislature-scoped parliamentary groups in `ParliamentaryGroups`
 - compact redaction terms in `ParliamentRedactionTerms`
 
-Redaction terms include deputy full names, deputy parliamentary names, party acronyms, party names, and initiative author names/acronyms. The document processor then fetches only the initiative text document referenced by `ProjectLaw.FullProposalTextLink`, extracts it into an internal structured document model, redacts that model, and stores only redacted output plus hashes/status in `ParliamentDocumentContents`.
+Redaction terms include deputy full names, deputy parliamentary names, parliamentary group acronyms, parliamentary group names, party acronyms, party names, initiative author names/acronyms, and accentless variants of names that contain diacritics. Matching is case-insensitive, so names like `PARTIDO COMUNISTA PORTUGUES` are redacted from terms loaded as `Partido Comunista Português`.
+
+The document processor then fetches only the initiative text document referenced by `ProjectLaw.FullProposalTextLink`, extracts it into an internal structured document model, redacts that model, and stores only redacted output plus hashes/status in `ParliamentDocumentContents`.
 
 The database does not store the original extracted document text. It stores:
 
@@ -181,9 +184,16 @@ Redact/process initiative text documents:
 dotnet run --project backend/src -- parliament-documents redact --legislature XVII --max-documents 25
 dotnet run --project backend/src -- parliament-documents redact --legislatures XVII,XVI,XV --max-documents 25
 dotnet run --project backend/src -- parliament-documents redact --project-law-id 123
+dotnet run --project backend/src -- parliament-documents redact --project-law-id 123 --force-upsert
 ```
 
 The document command only processes imported `InitiativeText` documents whose URL matches `ProjectLaw.FullProposalTextLink`. It does not redact events, votes, interventions, publications, or other `ProjectLaw` metadata.
+
+Before redacting a legislature, the command checks whether `ParliamentDeputies`, `ParliamentaryGroups`, and `ParliamentRedactionTerms` already contain rows for that legislature. If any of them are empty, it imports that legislature's configured base-info JSON first; this prevents weak redaction runs caused by missing deputy or parliamentary group terms.
+
+Repeated redaction commands are idempotent by default. If the source hash, extractor version, renderer version, and redaction policy version are unchanged and the previous run succeeded, the document is skipped. Use `--force-upsert` or `--force` to rewrite the stored redacted model, HTML, and plain text anyway.
+
+Do not run this as a second `dotnet run` inside the same live `dev-parlamento-be` container while `dotnet watch` is running. The dev container watches mounted project directories, and a second `dotnet run` can mutate `obj/` while the watcher scans it. Prefer a one-shot container command or run the compiled application directly in a shell where `dotnet watch` is not active.
 
 ### HTTP import endpoints
 

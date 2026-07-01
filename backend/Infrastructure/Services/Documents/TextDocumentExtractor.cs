@@ -18,6 +18,11 @@ public partial class TextDocumentExtractor : IDocumentExtractor
         return true;
     }
 
+    public bool CanExtract(byte[] bytes, string sourceName)
+    {
+        return true;
+    }
+
     public Task<DocumentExtractionResult> ExtractAsync(
         byte[] bytes,
         string sourceName,

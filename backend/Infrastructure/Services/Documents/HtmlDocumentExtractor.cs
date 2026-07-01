@@ -19,6 +19,19 @@ public partial class HtmlDocumentExtractor : IDocumentExtractor
                sourceName.EndsWith(".htm", StringComparison.OrdinalIgnoreCase);
     }
 
+    public bool CanExtract(byte[] bytes, string sourceName)
+    {
+        if (CanExtract(sourceName))
+        {
+            return true;
+        }
+
+        var prefix = System.Text.Encoding.UTF8.GetString(bytes.Take(Math.Min(bytes.Length, 256)).ToArray()).TrimStart();
+        return prefix.StartsWith("<!doctype", StringComparison.OrdinalIgnoreCase) ||
+               prefix.StartsWith("<html", StringComparison.OrdinalIgnoreCase) ||
+               prefix.StartsWith("<body", StringComparison.OrdinalIgnoreCase);
+    }
+
     public Task<DocumentExtractionResult> ExtractAsync(
         byte[] bytes,
         string sourceName,
