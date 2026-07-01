@@ -34,4 +34,6 @@ public class ParliamentInitiativeDocument
     public string? CommitteeId { get; set; }
 
     public string? CommitteeName { get; set; }
+
+    public ParliamentDocumentContent? Content { get; set; }
 }

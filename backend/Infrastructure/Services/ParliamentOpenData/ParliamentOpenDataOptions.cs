@@ -23,4 +23,6 @@ public class DailyParliamentImportOptions
 public class ParliamentLegislatureSourceOptions
 {
     public string? InitiativesUrl { get; set; }
+
+    public string? BaseInfoUrl { get; set; }
 }

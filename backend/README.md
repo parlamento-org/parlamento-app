@@ -83,6 +83,31 @@ The backend can import Portuguese Parliament Open Data initiatives into PostgreS
 
 `VotingResult` and `VotingBlock` are the older app-facing vote summary tables used by the current proposal/feed flow. `ParliamentInitiativeVote` and `ParliamentInitiativeVoteBlock` store all official source vote events and parsed party blocks for traceability.
 
+### Base information and redaction
+
+The redaction pipeline uses Parliament base-information JSON files to load deputy names for each legislature. The base-info importer stores:
+
+- deputies in `ParliamentDeputies`
+- compact redaction terms in `ParliamentRedactionTerms`
+
+Redaction terms include deputy full names, deputy parliamentary names, party acronyms, party names, and initiative author names/acronyms. The document processor then fetches initiative text documents, extracts text where supported, redacts those terms, and stores only redacted output plus hashes/status in `ParliamentDocumentContents`.
+
+The database does not store the original extracted document text. It stores:
+
+- source content hash and size
+- redacted text
+- redacted HTML generated from the redacted text
+- extraction/redaction status and error message
+- extractor kind and redaction policy version
+
+Current extractors:
+
+- `.txt`
+- `.html` / `.htm`
+- `.docx`
+
+PDF extraction is intentionally marked failed for now instead of doing unreliable best-effort parsing. Add a dedicated PDF extractor library or external tool before processing PDF-only initiative texts in production.
+
 ### Import configuration
 
 Open Data URLs are configured under `ParliamentOpenData`. `appsettings.json` contains defaults for legislatures `XV`, `XVI`, and `XVII`.
@@ -97,8 +122,11 @@ ParliamentOpenData__DailyImport__Enabled=false
 ParliamentOpenData__DailyImport__TimeZoneId=Europe/Lisbon
 ParliamentOpenData__DailyImport__RunAt=00:00:00
 ParliamentOpenData__Legislatures__XV__InitiativesUrl=...
+ParliamentOpenData__Legislatures__XV__BaseInfoUrl=...
 ParliamentOpenData__Legislatures__XVI__InitiativesUrl=...
+ParliamentOpenData__Legislatures__XVI__BaseInfoUrl=...
 ParliamentOpenData__Legislatures__XVII__InitiativesUrl=...
+ParliamentOpenData__Legislatures__XVII__BaseInfoUrl=...
 ```
 
 `appsettings.json` works in production if it is copied into the deployed app, but environment variables are preferred for deployments because they can vary per environment and override image-baked defaults without rebuilding the image.
@@ -131,6 +159,9 @@ Manual import endpoints are exposed by `ParliamentImportController`:
 POST /parliament-import/local-file
 POST /parliament-import/legislatures/{legislature}
 POST /parliament-import/legislatures
+POST /parliament-import/base-info/{legislature}
+POST /parliament-import/base-info/{legislature}/local-file
+POST /parliament-import/documents/redact
 ```
 
 Example local-file body:
@@ -149,6 +180,24 @@ Example multi-legislature body:
 }
 ```
 
+Example base-info local-file body:
+
+```json
+{
+  "filePath": "docs/samples/base_info_xvii.json"
+}
+```
+
+Example document redaction body:
+
+```json
+{
+  "legislature": "XVII",
+  "projectLawId": null,
+  "maxDocuments": 10
+}
+```
+
 ### Daily background job
 
 The backend registers a hosted service for scheduled imports. It is disabled by default.
@@ -163,6 +212,19 @@ $env:ParliamentOpenData__LatestLegislature="XVII"
 ```
 
 The daily job is intended for the latest legislature only. Older legislatures can be imported manually with command mode or HTTP endpoints.
+
+### Remaining migration-spec work
+
+Important remaining work from `docs/SCRAPER_MIGRATION_SPEC.md`:
+
+- add reliable PDF extraction with formatting preservation where possible
+- expose redacted document content through frontend-facing API DTOs/views
+- decide whether to replace legacy `ProjectLaw.ProposalTextHTML` with `ParliamentDocumentContents.RedactedContentHtml`
+- add document processing command mode, if HTTP-triggered redaction is not enough for operations
+- add the AI summary pipeline later, generated from redacted text only
+- add summary audit tables/jobs with prompt version, model, input hash, status, and retries
+- add summary invalidation when source document hash or redaction policy changes
+- tune redaction policy with real false-positive/false-negative examples
 
 ## Local run without Docker
 

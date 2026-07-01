@@ -58,7 +58,8 @@ public static class DependencyInjection
                     child => child.Key,
                     child => new ParliamentLegislatureSourceOptions
                     {
-                        InitiativesUrl = child["InitiativesUrl"]
+                        InitiativesUrl = child["InitiativesUrl"],
+                        BaseInfoUrl = child["BaseInfoUrl"]
                     });
         });
         services.AddScoped<IParliamentOpenDataImportService>(provider =>
@@ -67,6 +68,17 @@ public static class DependencyInjection
                 new HttpClient(),
                 provider.GetRequiredService<IConfiguration>(),
                 provider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ParliamentOpenDataImportService>>()));
+        services.AddScoped<IParliamentBaseInfoImportService>(provider =>
+            new ParliamentBaseInfoImportService(
+                provider.GetRequiredService<DatabaseContext>(),
+                new HttpClient(),
+                provider.GetRequiredService<IConfiguration>(),
+                provider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ParliamentBaseInfoImportService>>()));
+        services.AddScoped<IParliamentDocumentRedactionService>(provider =>
+            new ParliamentDocumentRedactionService(
+                provider.GetRequiredService<DatabaseContext>(),
+                new HttpClient(),
+                provider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ParliamentDocumentRedactionService>>()));
         services.AddHostedService<DailyParliamentImportHostedService>();
 
         return services;

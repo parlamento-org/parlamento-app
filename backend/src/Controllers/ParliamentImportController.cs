@@ -10,10 +10,17 @@ namespace backend.Controllers;
 public class ParliamentImportController : ControllerBase
 {
     private readonly IParliamentOpenDataImportService _importService;
+    private readonly IParliamentBaseInfoImportService _baseInfoImportService;
+    private readonly IParliamentDocumentRedactionService _documentRedactionService;
 
-    public ParliamentImportController(IParliamentOpenDataImportService importService)
+    public ParliamentImportController(
+        IParliamentOpenDataImportService importService,
+        IParliamentBaseInfoImportService baseInfoImportService,
+        IParliamentDocumentRedactionService documentRedactionService)
     {
         _importService = importService;
+        _baseInfoImportService = baseInfoImportService;
+        _documentRedactionService = documentRedactionService;
     }
 
     [HttpPost("legislatures/{legislature}")]
@@ -22,6 +29,44 @@ public class ParliamentImportController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _importService.ImportLegislatureAsync(legislature, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("base-info/{legislature}")]
+    public async Task<ActionResult<ParliamentBaseInfoImportResult>> ImportBaseInfo(
+        string legislature,
+        CancellationToken cancellationToken)
+    {
+        var result = await _baseInfoImportService.ImportLegislatureAsync(legislature, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("base-info/{legislature}/local-file")]
+    public async Task<ActionResult<ParliamentBaseInfoImportResult>> ImportBaseInfoLocalFile(
+        string legislature,
+        ImportLocalFileRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.FilePath))
+        {
+            return BadRequest("FilePath is required.");
+        }
+
+        var result = await _baseInfoImportService.ImportFromFileAsync(legislature, request.FilePath, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("documents/redact")]
+    public async Task<ActionResult<ParliamentDocumentRedactionResult>> RedactDocuments(
+        RedactDocumentsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _documentRedactionService.ProcessInitiativeTextDocumentsAsync(
+            request.Legislature,
+            request.ProjectLawId,
+            request.MaxDocuments,
+            cancellationToken);
+
         return Ok(result);
     }
 
