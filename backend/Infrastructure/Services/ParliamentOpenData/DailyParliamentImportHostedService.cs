@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 using Parlamento.Application.Abstractions;
+using Parlamento.Application.Imports;
 
 namespace Parlamento.Infrastructure.Services.ParliamentOpenData;
 
@@ -52,19 +53,37 @@ public class DailyParliamentImportHostedService : BackgroundService
             try
             {
                 using var scope = _scopeFactory.CreateScope();
-                var importService = scope.ServiceProvider.GetRequiredService<IParliamentOpenDataImportService>();
+                var seedService = scope.ServiceProvider.GetRequiredService<IParliamentDataSeedService>();
 
-                _logger.LogInformation("Starting daily parliament import for latest legislature {Legislature}.", legislature);
-                var result = await importService.ImportLegislatureAsync(legislature, stoppingToken);
                 _logger.LogInformation(
-                    "Daily parliament import finished. RunId={RunId} Status={Status} Read={Read} Inserted={Inserted} Updated={Updated} Skipped={Skipped} Failed={Failed}",
-                    result.RunId,
-                    result.Status,
-                    result.RecordsRead,
-                    result.RecordsInserted,
-                    result.RecordsUpdated,
-                    result.RecordsSkipped,
-                    result.RecordsFailed);
+                    "Starting daily parliament seed pipeline for latest legislature {Legislature}. RunSummaries={RunSummaries}.",
+                    legislature,
+                    options.DailyImport.RunSummaries);
+
+                var result = await seedService.SeedAsync(
+                    new ParliamentDataSeedRequest
+                    {
+                        IncludeSummaries = options.DailyImport.RunSummaries,
+                        Legislatures = { legislature }
+                    },
+                    stoppingToken);
+
+                _logger.LogInformation(
+                    "Daily parliament seed pipeline finished. Legislature={Legislature} ImportRead={ImportRead} ImportInserted={ImportInserted} ImportUpdated={ImportUpdated} ImportSkipped={ImportSkipped} ImportFailed={ImportFailed} DocumentsRead={DocumentsRead} DocumentsProcessed={DocumentsProcessed} DocumentsSkipped={DocumentsSkipped} DocumentsFailed={DocumentsFailed} SummaryDocumentsRead={SummaryDocumentsRead} SummariesGenerated={SummariesGenerated} SummariesSkipped={SummariesSkipped} SummariesFailed={SummariesFailed}",
+                    legislature,
+                    result.ImportRecordsRead,
+                    result.ImportRecordsInserted,
+                    result.ImportRecordsUpdated,
+                    result.ImportRecordsSkipped,
+                    result.ImportRecordsFailed,
+                    result.DocumentsRead,
+                    result.DocumentsProcessed,
+                    result.DocumentsSkipped,
+                    result.DocumentsFailed,
+                    result.SummaryDocumentsRead,
+                    result.SummariesGenerated,
+                    result.SummariesSkipped,
+                    result.SummariesFailed);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {

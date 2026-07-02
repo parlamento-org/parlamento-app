@@ -52,6 +52,7 @@ services:
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini-2024-07-18}
       ParliamentOpenData__LatestLegislature: ${PARLIAMENT_OPEN_DATA_LATEST_LEGISLATURE:-XVII}
       ParliamentOpenData__DailyImport__Enabled: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_ENABLED:-false}
+      ParliamentOpenData__DailyImport__RunSummaries: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_SUMMARIES:-true}
       ParliamentOpenData__DailyImport__TimeZoneId: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_TIME_ZONE_ID:-Europe/Lisbon}
       ParliamentOpenData__DailyImport__RunAt: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_AT:-00:00:00}
       ParliamentOpenData__Legislatures__XV__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XV_INITIATIVES_URL}
@@ -84,6 +85,7 @@ services:
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini-2024-07-18}
       ParliamentOpenData__LatestLegislature: ${PARLIAMENT_OPEN_DATA_LATEST_LEGISLATURE:-XVII}
       ParliamentOpenData__DailyImport__Enabled: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_ENABLED:-false}
+      ParliamentOpenData__DailyImport__RunSummaries: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_SUMMARIES:-true}
       ParliamentOpenData__DailyImport__TimeZoneId: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_TIME_ZONE_ID:-Europe/Lisbon}
       ParliamentOpenData__DailyImport__RunAt: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_AT:-00:00:00}
       ParliamentOpenData__Legislatures__XV__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XV_INITIATIVES_URL}
@@ -108,6 +110,7 @@ services:
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini-2024-07-18}
       ParliamentOpenData__LatestLegislature: ${PARLIAMENT_OPEN_DATA_LATEST_LEGISLATURE:-XVII}
       ParliamentOpenData__DailyImport__Enabled: false
+      ParliamentOpenData__DailyImport__RunSummaries: false
       ParliamentOpenData__DailyImport__TimeZoneId: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_TIME_ZONE_ID:-Europe/Lisbon}
       ParliamentOpenData__DailyImport__RunAt: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_AT:-00:00:00}
       ParliamentOpenData__Legislatures__XV__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XV_INITIATIVES_URL}
@@ -139,6 +142,7 @@ services:
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini-2024-07-18}
       ParliamentOpenData__LatestLegislature: ${PARLIAMENT_OPEN_DATA_LATEST_LEGISLATURE:-XVII}
       ParliamentOpenData__DailyImport__Enabled: false
+      ParliamentOpenData__DailyImport__RunSummaries: false
       ParliamentOpenData__DailyImport__TimeZoneId: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_TIME_ZONE_ID:-Europe/Lisbon}
       ParliamentOpenData__DailyImport__RunAt: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_AT:-00:00:00}
       ParliamentOpenData__Legislatures__XV__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XV_INITIATIVES_URL}

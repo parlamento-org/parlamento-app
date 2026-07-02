@@ -15,6 +15,8 @@ public class DailyParliamentImportOptions
 {
     public bool Enabled { get; set; }
 
+    public bool RunSummaries { get; set; } = true;
+
     public string TimeZoneId { get; set; } = "Europe/Lisbon";
 
     public TimeSpan RunAt { get; set; } = TimeSpan.Zero;

@@ -60,6 +60,7 @@ public static class DependencyInjection
             var section = configuration.GetSection(ParliamentOpenDataOptions.SectionName);
             options.LatestLegislature = section["LatestLegislature"];
             options.DailyImport.Enabled = bool.TryParse(section["DailyImport:Enabled"], out var enabled) && enabled;
+            options.DailyImport.RunSummaries = !bool.TryParse(section["DailyImport:RunSummaries"], out var runSummaries) || runSummaries;
             options.DailyImport.TimeZoneId = section["DailyImport:TimeZoneId"] ?? "Europe/Lisbon";
             options.DailyImport.RunAt = TimeSpan.TryParse(section["DailyImport:RunAt"], out var runAt)
                 ? runAt
@@ -109,6 +110,7 @@ public static class DependencyInjection
                 provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<OpenAiSummaryOptions>>(),
                 provider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OpenAiLegislativeSummaryClient>>()));
         services.AddScoped<IParliamentSummaryService, ParliamentSummaryService>();
+        services.AddScoped<IParliamentDataSeedService, ParliamentDataSeedService>();
         services.AddHostedService<DailyParliamentImportHostedService>();
 
         return services;

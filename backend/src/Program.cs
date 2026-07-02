@@ -43,6 +43,11 @@ var app = builder.Build();
 // log environment
 app.Logger.LogInformation($"Environment: {app.Environment.EnvironmentName}");
 
+if (await ParliamentSeedCommand.TryRunAsync(app, args))
+{
+    return;
+}
+
 if (await ParliamentImportCommand.TryRunAsync(app, args))
 {
     return;

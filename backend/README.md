@@ -147,6 +147,7 @@ Important keys:
 ```text
 ParliamentOpenData__LatestLegislature=XVII
 ParliamentOpenData__DailyImport__Enabled=false
+ParliamentOpenData__DailyImport__RunSummaries=true
 ParliamentOpenData__DailyImport__TimeZoneId=Europe/Lisbon
 ParliamentOpenData__DailyImport__RunAt=00:00:00
 ParliamentOpenData__Legislatures__XV__InitiativesUrl=...
@@ -178,6 +179,18 @@ dotnet run --project backend/src -- parliament-import --legislatures XVII XVI XV
 ```
 
 If no legislature is supplied, command mode falls back to `ParliamentOpenData:LatestLegislature`.
+
+Seed the database end-to-end:
+
+```powershell
+dotnet run --project backend/src -- parliament-seed
+dotnet run --project backend/src -- parliament-seed --legislatures XVII
+dotnet run --project backend/src -- parliament-seed --legislatures XVII,XVI,XV
+dotnet run --project backend/src -- parliament-seed --no-summary
+dotnet run --project backend/src -- parliament-seed --max-documents 25
+```
+
+`parliament-seed` runs the full backend data pipeline: Open Data import, base-info preflight, document extraction/redaction for `ProjectLaw.FullProposalTextLink`, then AI summaries from the stored redacted plain text. If no legislature is supplied, it processes every configured legislature under `ParliamentOpenData:Legislatures`. Each phase remains idempotent: unchanged Open Data rows are skipped by source hash, current redacted documents are skipped by source/extractor/redaction/renderer versions, and current summaries are skipped by source hash/model/prompt version. Use `--no-summary` to stop after redaction, `--force-redaction` to rewrite document content, `--force-summary` to regenerate summaries, or `--force` for both.
 
 Redact/process initiative text documents:
 
@@ -295,18 +308,21 @@ Example document redaction body:
 
 ### Daily background job
 
-The backend registers a hosted service for scheduled imports. It is disabled by default.
+The backend registers a hosted service for the scheduled latest-legislature seed pipeline.
 
-When enabled, it runs once per day at `ParliamentOpenData:DailyImport:RunAt` in `ParliamentOpenData:DailyImport:TimeZoneId`, and imports only `ParliamentOpenData:LatestLegislature`.
+When enabled, it runs once per day at `ParliamentOpenData:DailyImport:RunAt` in `ParliamentOpenData:DailyImport:TimeZoneId`, and processes only `ParliamentOpenData:LatestLegislature`. Older legislatures should be seeded manually with `parliament-seed`.
+
+The daily job runs import, base-info preflight, document extraction/redaction, and summaries when `ParliamentOpenData:DailyImport:RunSummaries=true`. If summaries are enabled but `OPENAI_API_KEY` is not configured, the job logs a warning and skips the summary phase while still importing and redacting.
 
 Enable it with environment variables:
 
 ```powershell
 $env:ParliamentOpenData__DailyImport__Enabled="true"
+$env:ParliamentOpenData__DailyImport__RunSummaries="true"
 $env:ParliamentOpenData__LatestLegislature="XVII"
 ```
 
-The daily job is intended for the latest legislature only. Older legislatures can be imported manually with command mode or HTTP endpoints.
+The daily job is intended for the latest legislature only. It relies on the same idempotency checks as `parliament-seed`, so proposals already inserted are ignored unless their source hash or downstream extractor/redaction/summary version inputs change.
 
 ### Remaining migration-spec work
 
