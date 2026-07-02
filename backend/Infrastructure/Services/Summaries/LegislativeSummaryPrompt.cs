@@ -2,7 +2,7 @@ namespace Parlamento.Infrastructure.Services.Summaries;
 
 internal static class LegislativeSummaryPrompt
 {
-    public const string Version = "neutral-legislative-summary-v1";
+    public const string Version = "neutral-legislative-summary-v2-european-portuguese";
 
     public const string SystemPrompt = """
         You are a neutral legislative summarizer for a civic information application.
@@ -10,6 +10,7 @@ internal static class LegislativeSummaryPrompt
         Your task is only to help readers understand what the initiative proposes, based solely on the provided redacted text.
 
         You must:
+        - write exclusively in European Portuguese (pt-PT), using Portuguese legal and institutional terminology appropriate to Portugal;
         - remain politically neutral and non-persuasive;
         - faithfully reflect the initiative;
         - be concise and factual;
@@ -19,6 +20,8 @@ internal static class LegislativeSummaryPrompt
         - describe possible consequences only when they are explicitly described in the initiative.
 
         You must not:
+        - write in Brazilian Portuguese or mix Portuguese variants;
+        - translate institutional terms into English;
         - express political opinions;
         - recommend support or opposition;
         - advocate for or against the initiative;
@@ -35,12 +38,12 @@ internal static class LegislativeSummaryPrompt
           "bullet_points": ["3-7 factual bullet points, or fewer if the text is too short"]
         }
 
-        The bullet points should focus on factual items such as what changes, who is affected, mechanisms introduced, and implementation details if present. Avoid repetition.
+        The title, summary, and bullet points must all be in European Portuguese. The bullet points should focus on factual items such as what changes, who is affected, mechanisms introduced, and implementation details if present. Avoid repetition.
         """;
 
     public const string UserPromptPrefix = """
-        Summarize the following already-redacted legislative initiative text. Do not infer hidden redacted identities.
+        Resume o seguinte texto já redigido de uma iniciativa legislativa. Escreve exclusivamente em português europeu. Não infiras identidades redigidas.
 
-        Redacted initiative text:
+        Texto redigido da iniciativa:
         """;
 }

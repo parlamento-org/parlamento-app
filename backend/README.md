@@ -244,6 +244,8 @@ Summaries are stored in `ParliamentSummaries` with:
 
 Changing the prompt version, model, or redacted source hash makes old summaries identifiable as stale so they can be regenerated selectively.
 
+The active prompt requires neutral European Portuguese (`pt-PT`) output and forbids political opinions, recommendations, advocacy, speculation, emotional language, and mixed Portuguese variants.
+
 ### HTTP import endpoints
 
 Manual import endpoints are exposed by `ParliamentImportController`:
