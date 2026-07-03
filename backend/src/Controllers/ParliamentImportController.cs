@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using Parlamento.Application.Abstractions;
@@ -6,6 +7,7 @@ using Parlamento.Application.Imports;
 namespace backend.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("parliament-import")]
 public class ParliamentImportController : ControllerBase
 {

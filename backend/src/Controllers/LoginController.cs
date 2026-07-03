@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using backend.Extensions;
@@ -8,6 +9,7 @@ using Parlamento.Application.Users;
 namespace backend.Controllers;
 
 [ApiController]
+[AllowAnonymous]
 [Route("/user-login")]
 public class LoginController : ControllerBase
 {

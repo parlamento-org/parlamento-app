@@ -122,6 +122,7 @@ public class VotingEndpointsTests : IClassFixture<VotingEndpointsFactory>
     {
         _client = factory.CreateClient();
         _factory = factory;
+        _client.AuthenticateAsUser(_factory.UserId);
     }
 
     [Fact]

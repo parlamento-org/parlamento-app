@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using backend.Extensions;
@@ -8,6 +9,7 @@ using Parlamento.Application.Auth;
 namespace backend.Controllers;
 
 [ApiController]
+[AllowAnonymous]
 [Route("/fb-login")]
 public class FacebookLoginController : ControllerBase
 {

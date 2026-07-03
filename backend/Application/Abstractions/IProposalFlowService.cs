@@ -5,10 +5,12 @@ namespace Parlamento.Application.Abstractions;
 public interface IProposalFlowService
 {
     Task<ServiceResult<InitiativeFeedCardResponse>> GetNextFeedCardAsync(
+        int userId,
         InitiativeFeedRequest request,
         CancellationToken cancellationToken = default);
 
     Task<ServiceResult<ProposalInteractionResponse>> RecordInteractionAsync(
+        int userId,
         ProposalInteractionRequest request,
         CancellationToken cancellationToken = default);
 

@@ -1,11 +1,14 @@
 import 'package:flutter/foundation.dart';
+import 'package:frontend/auth/token_storage.dart';
 import 'package:frontend/controllers/user_controller.dart';
 import 'package:frontend/models/user.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthController extends ChangeNotifier {
   AuthController({UserController? userController})
-    : _userController = userController ?? UserController();
+    : _userController = userController ?? UserController() {
+    AppTokenStore.onUnauthorized = _handleUnauthorized;
+  }
 
   final UserController _userController;
   UserSession? _session;
@@ -15,13 +18,13 @@ class AuthController extends ChangeNotifier {
 
   Future<UserSession> login(String email, String password) async {
     final userSession = await _userController.login(email, password);
-    _setSession(userSession);
+    await _setSession(userSession);
     return userSession;
   }
 
   Future<UserSession> googleSignIn() async {
     final userSession = await _userController.googleSignIn();
-    _setSession(userSession);
+    await _setSession(userSession);
     return userSession;
   }
 
@@ -31,27 +34,41 @@ class AuthController extends ChangeNotifier {
     final userSession = await _userController.googleSignInWithAccount(
       googleSignInAccount,
     );
-    _setSession(userSession);
+    await _setSession(userSession);
     return userSession;
   }
 
   Future<UserSession> facebookSignIn() async {
     final userSession = await _userController.facebookSignIn();
-    _setSession(userSession);
+    await _setSession(userSession);
     return userSession;
   }
 
   Future<void> logout() async {
     final userType = _session?.userType;
-    if (userType != null) {
-      await _userController.logout(userType);
+    try {
+      if (userType != null) {
+        await _userController.logout(userType);
+      }
+    } finally {
+      await AppTokenStore.clear();
+      _session = null;
+      notifyListeners();
     }
-    _session = null;
+  }
+
+  Future<void> _setSession(UserSession userSession) async {
+    await AppTokenStore.saveSession(userSession);
+    _session = userSession;
     notifyListeners();
   }
 
-  void _setSession(UserSession userSession) {
-    _session = userSession;
+  void _handleUnauthorized() {
+    if (_session == null) {
+      return;
+    }
+
+    _session = null;
     notifyListeners();
   }
 }

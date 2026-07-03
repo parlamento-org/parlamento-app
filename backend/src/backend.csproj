@@ -8,6 +8,7 @@
   <ItemGroup>
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.2.2"/>
     <PackageReference Include="Macross.Json.Extensions" Version="3.0.0"/>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0"/>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.0"/>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using backend.Extensions;
@@ -8,6 +9,7 @@ using Parlamento.Application.ProposalFlow;
 namespace backend.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("/proposal-flow")]
 public sealed class ProposalFlowController : ControllerBase
 {
@@ -23,7 +25,13 @@ public sealed class ProposalFlowController : ControllerBase
         InitiativeFeedRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await _proposalFlowService.GetNextFeedCardAsync(request, cancellationToken);
+        var userId = User.GetUserId();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
+
+        var result = await _proposalFlowService.GetNextFeedCardAsync(userId.Value, request, cancellationToken);
         return this.ToActionResult(result);
     }
 
@@ -32,17 +40,28 @@ public sealed class ProposalFlowController : ControllerBase
         ProposalInteractionRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await _proposalFlowService.RecordInteractionAsync(request, cancellationToken);
+        var userId = User.GetUserId();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
+
+        var result = await _proposalFlowService.RecordInteractionAsync(userId.Value, request, cancellationToken);
         return this.ToActionResult(result);
     }
 
     [HttpGet("initiatives/{initiativeId:int}/reveal", Name = "GetProposalReveal")]
     public async Task<IActionResult> GetReveal(
         int initiativeId,
-        [FromQuery] int userId,
         CancellationToken cancellationToken)
     {
-        var result = await _proposalFlowService.GetRevealAsync(userId, initiativeId, cancellationToken);
+        var userId = User.GetUserId();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
+
+        var result = await _proposalFlowService.GetRevealAsync(userId.Value, initiativeId, cancellationToken);
         return this.ToActionResult(result);
     }
 

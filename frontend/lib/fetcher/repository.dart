@@ -43,7 +43,6 @@ abstract class Repository {
 
   Future<ProposalReveal> getProposalReveal({
     required int initiativeId,
-    required int userId,
   });
 
   Future<ProposalJourney> getProposalJourney(int initiativeId);

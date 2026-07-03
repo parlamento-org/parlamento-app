@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using backend.Extensions;
@@ -9,6 +10,7 @@ using Parlamento.Domain.Entities;
 namespace backend.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("/proposal")]
 public class ProjetoLeiController : ControllerBase
 {

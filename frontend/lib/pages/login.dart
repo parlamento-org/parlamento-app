@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:frontend/controllers/auth_controller.dart';
-import 'package:frontend/pages/main_page.dart';
 import 'package:frontend/pages/register_page.dart';
 import 'package:provider/provider.dart';
 
@@ -120,9 +119,6 @@ class _LoginPageState extends State<LoginPage> {
       setState(() {
         _isLoggingIn = false;
       });
-      Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (context) => const MainPage()));
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -166,9 +162,6 @@ class _LoginPageState extends State<LoginPage> {
       setState(() {
         _isLoggingIn = false;
       });
-      Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (context) => const MainPage()));
     } catch (error) {
       if (!mounted) return;
       setState(() {

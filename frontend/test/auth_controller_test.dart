@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:frontend/auth/token_storage.dart';
 import 'package:frontend/controllers/auth_controller.dart';
 import 'package:frontend/controllers/user_controller.dart';
 import 'package:frontend/fetcher/repository.dart';
@@ -9,6 +10,11 @@ import 'package:frontend/models/user.dart';
 import 'package:frontend/models/vote_model.dart';
 
 void main() {
+  setUp(() {
+    AppTokenStore.storage = InMemoryTokenStorage();
+    AppTokenStore.onUnauthorized = null;
+  });
+
   group('AuthController', () {
     test('stores the session and notifies listeners after login', () async {
       final repository = _FakeRepository(
@@ -26,6 +32,7 @@ void main() {
       expect(controller.session, same(session));
       expect(controller.isLoggedIn, isTrue);
       expect(notifications, 1);
+      expect(await AppTokenStore.currentAccessToken(), 'test-token');
     });
 
     test('clears the session and notifies listeners on logout', () async {
@@ -54,6 +61,8 @@ UserSession _userSession({required int userId, required UserType userType}) {
     partyStats: const [],
     userVotes: const [],
     userType: userType,
+    accessToken: 'test-token',
+    expiresAtUtc: DateTime.now().toUtc().add(const Duration(hours: 1)),
   );
 }
 
@@ -95,7 +104,6 @@ class _FakeRepository implements Repository {
   @override
   Future<ProposalReveal> getProposalReveal({
     required int initiativeId,
-    required int userId,
   }) {
     throw UnimplementedError();
   }

@@ -17,6 +17,8 @@ namespace integration_tests;
 
 public class AsnFactory : TestingWebAppFactory
 {
+    public int UserId { get; private set; }
+
     protected override void SeedDbForTests(DatabaseContext db)
     {
         User user1 = new User();
@@ -37,6 +39,8 @@ public class AsnFactory : TestingWebAppFactory
                 user2
             });
         db.SaveChanges();
+
+        UserId = user1.Id;
     }
 }
 
@@ -48,6 +52,7 @@ public class AsnIT : IClassFixture<AsnFactory>
     public AsnIT(AsnFactory factory)
     {
         _client = factory.CreateClient();
+        _client.AuthenticateAsUser(factory.UserId);
     }
 
     [Fact, Order(0)]

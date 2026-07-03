@@ -19,14 +19,19 @@ public class AuthService : IAuthService
 
     private readonly DatabaseContext _context;
     private readonly IConfiguration _configuration;
+    private readonly IAppTokenService _appTokenService;
 
-    public AuthService(DatabaseContext context, IConfiguration configuration)
+    public AuthService(
+        DatabaseContext context,
+        IConfiguration configuration,
+        IAppTokenService appTokenService)
     {
         _context = context;
         _configuration = configuration;
+        _appTokenService = appTokenService;
     }
 
-    public async Task<ServiceResult<User>> LoginAsync(UserLoginRequest request, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<AuthResponse>> LoginAsync(UserLoginRequest request, CancellationToken cancellationToken = default)
     {
         User? user;
 
@@ -43,12 +48,12 @@ public class AuthService : IAuthService
 
         if (user == null)
         {
-            return ServiceResult<User>.Failure(401, "This User does not exist!");
+            return ServiceResult<AuthResponse>.Failure(401, "This User does not exist!");
         }
 
         if (!PasswordHashingService.VerifyPassword(request.Password!, user.Password))
         {
-            return ServiceResult<User>.Failure(401, "Invalid Password!");
+            return ServiceResult<AuthResponse>.Failure(401, "Invalid Password!");
         }
 
         if (PasswordHashingService.NeedsRehash(user.Password))
@@ -57,15 +62,15 @@ public class AuthService : IAuthService
             await _context.SaveChangesAsync(cancellationToken);
         }
 
-        return ServiceResult<User>.Success(user);
+        return ServiceResult<AuthResponse>.Success(CreateAuthResponse(user));
     }
 
-    public async Task<ServiceResult<User>> AuthenticateGoogleAsync(GoogleLoginRequest request, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<AuthResponse>> AuthenticateGoogleAsync(GoogleLoginRequest request, CancellationToken cancellationToken = default)
     {
         var identity = await ValidateGoogleTokenAsync(request, cancellationToken);
         if (identity == null)
         {
-            return ServiceResult<User>.Failure(401, "Invalid Google credential.");
+            return ServiceResult<AuthResponse>.Failure(401, "Invalid Google credential.");
         }
 
         var user = await UsersWithDetails()
@@ -73,7 +78,7 @@ public class AuthService : IAuthService
 
         if (user != null)
         {
-            return ServiceResult<User>.Success(user);
+            return ServiceResult<AuthResponse>.Success(CreateAuthResponse(user));
         }
 
         var newUser = new User
@@ -90,15 +95,15 @@ public class AuthService : IAuthService
         _context.Users.Add(newUser);
         await _context.SaveChangesAsync(cancellationToken);
 
-        return ServiceResult<User>.Success(newUser);
+        return ServiceResult<AuthResponse>.Success(CreateAuthResponse(newUser));
     }
 
-    public async Task<ServiceResult<User>> AuthenticateFacebookAsync(FacebookLoginRequest request, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<AuthResponse>> AuthenticateFacebookAsync(FacebookLoginRequest request, CancellationToken cancellationToken = default)
     {
         var identity = await ValidateFacebookTokenAsync(request, cancellationToken);
         if (identity == null)
         {
-            return ServiceResult<User>.Failure(401, "Invalid Facebook credential.");
+            return ServiceResult<AuthResponse>.Failure(401, "Invalid Facebook credential.");
         }
 
         var user = await UsersWithDetails()
@@ -106,7 +111,7 @@ public class AuthService : IAuthService
 
         if (user != null)
         {
-            return ServiceResult<User>.Success(user);
+            return ServiceResult<AuthResponse>.Success(CreateAuthResponse(user));
         }
 
         var newUser = new User
@@ -123,7 +128,18 @@ public class AuthService : IAuthService
         _context.Users.Add(newUser);
         await _context.SaveChangesAsync(cancellationToken);
 
-        return ServiceResult<User>.Success(newUser);
+        return ServiceResult<AuthResponse>.Success(CreateAuthResponse(newUser));
+    }
+
+    private AuthResponse CreateAuthResponse(User user)
+    {
+        var token = _appTokenService.CreateToken(user);
+        return new AuthResponse
+        {
+            AccessToken = token.AccessToken,
+            ExpiresAtUtc = token.ExpiresAtUtc,
+            User = AuthenticatedUserResponse.FromUser(user)
+        };
     }
 
     private IQueryable<User> UsersWithDetails()

@@ -6,9 +6,6 @@ namespace Parlamento.Application.ProposalFlow;
 
 public sealed class ProposalInteractionRequest
 {
-    [JsonPropertyName("userId")]
-    public int UserId { get; set; }
-
     [JsonPropertyName("initiativeId")]
     public int InitiativeId { get; set; }
 

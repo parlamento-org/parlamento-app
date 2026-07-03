@@ -38,18 +38,12 @@ enum ParliamentaryVoteOrientation {
 }
 
 class ProposalFlowFeedRequest {
-  ProposalFlowFeedRequest({
-    required this.userId,
-    this.legislatures,
-    this.limit = 1,
-  });
+  ProposalFlowFeedRequest({this.legislatures, this.limit = 1});
 
-  final int userId;
   final List<String>? legislatures;
   final int limit;
 
   Map<String, dynamic> toJson() => {
-    'userId': userId,
     if (legislatures != null) 'legislatures': legislatures,
     'limit': limit,
   };
@@ -104,19 +98,16 @@ class InitiativeFeedCard {
 
 class ProposalInteractionSubmission {
   ProposalInteractionSubmission({
-    required this.userId,
     required this.initiativeId,
     required this.action,
     this.idempotencyKey,
   });
 
-  final int userId;
   final int initiativeId;
   final ProposalInteractionAction action;
   final String? idempotencyKey;
 
   Map<String, dynamic> toJson() => {
-    'userId': userId,
     'initiativeId': initiativeId,
     'action': action.wireName,
     if (idempotencyKey != null) 'idempotencyKey': idempotencyKey,

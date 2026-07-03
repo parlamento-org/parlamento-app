@@ -4,8 +4,6 @@ import 'package:frontend/pages/voting_section.dart';
 import 'package:frontend/themes/base_theme.dart';
 import 'package:provider/provider.dart';
 
-import 'login.dart';
-
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
 
@@ -40,11 +38,6 @@ class MainPageState extends State<MainPage> {
           icon: Icon(Icons.logout, color: baseTheme.colorScheme.primary),
           onPressed: () async {
             await context.read<AuthController>().logout();
-            if (!context.mounted) return;
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const LoginPage()),
-            );
           },
         ),
         title: Center(

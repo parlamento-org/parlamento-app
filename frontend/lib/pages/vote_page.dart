@@ -48,7 +48,6 @@ class _VotePageState extends State<VotePage> {
     try {
       final card = await _voteController.getInitiativeFeedCard(
         ProposalFlowFeedRequest(
-          userId: session.userId,
           legislatures: session.proposalCriteria?.legislaturas,
         ),
       );
@@ -69,8 +68,7 @@ class _VotePageState extends State<VotePage> {
 
   Future<void> _recordInteraction(ProposalInteractionAction action) async {
     final card = _card;
-    final session = context.read<AuthController>().session;
-    if (card == null || session == null || _isSubmitting) {
+    if (card == null || _isSubmitting) {
       return;
     }
 
@@ -79,7 +77,6 @@ class _VotePageState extends State<VotePage> {
     try {
       await _voteController.recordProposalInteraction(
         ProposalInteractionSubmission(
-          userId: session.userId,
           initiativeId: card.initiativeId,
           action: action,
         ),

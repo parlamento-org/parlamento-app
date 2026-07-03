@@ -64,10 +64,9 @@ class APIRepository implements Repository {
   @override
   Future<ProposalReveal> getProposalReveal({
     required int initiativeId,
-    required int userId,
   }) async {
     final response = await _apiClient.getJson(
-      '/proposal-flow/initiatives/$initiativeId/reveal?userId=$userId',
+      '/proposal-flow/initiatives/$initiativeId/reveal',
     );
 
     if (response.statusCode == 200) {

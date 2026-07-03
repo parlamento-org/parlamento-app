@@ -4,9 +4,6 @@ namespace Parlamento.Application.ProposalFlow;
 
 public sealed class InitiativeFeedRequest
 {
-    [JsonPropertyName("userId")]
-    public int UserId { get; set; }
-
     [JsonPropertyName("legislatures")]
     public List<string>? Legislatures { get; set; }
 

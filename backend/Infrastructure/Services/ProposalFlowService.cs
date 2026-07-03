@@ -25,18 +25,19 @@ public sealed class ProposalFlowService : IProposalFlowService
     }
 
     public async Task<ServiceResult<InitiativeFeedCardResponse>> GetNextFeedCardAsync(
+        int userId,
         InitiativeFeedRequest request,
         CancellationToken cancellationToken = default)
     {
         var votedInitiativeIds = await _context.Users
-            .Where(user => user.Id == request.UserId)
+            .Where(user => user.Id == userId)
             .SelectMany(user => user.Votes.Select(vote => vote.ProjectLawID))
             .ToListAsync(cancellationToken);
 
         var skipExclusionStart = DateTime.UtcNow.Subtract(SkipExclusionWindow);
         var interactedInitiativeIds = await _context.ProposalInteractionEvents
             .Where(interaction =>
-                interaction.UserId == request.UserId &&
+                interaction.UserId == userId &&
                 (VoteActions.Contains(interaction.InteractionType) ||
                  interaction.InteractionType == ProposalInteractionType.Skip &&
                  interaction.CreatedAtUtc >= skipExclusionStart))
@@ -91,6 +92,7 @@ public sealed class ProposalFlowService : IProposalFlowService
     }
 
     public async Task<ServiceResult<ProposalInteractionResponse>> RecordInteractionAsync(
+        int userId,
         ProposalInteractionRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -102,7 +104,7 @@ public sealed class ProposalFlowService : IProposalFlowService
         }
 
         var userExists = await _context.Users
-            .AnyAsync(user => user.Id == request.UserId, cancellationToken);
+            .AnyAsync(user => user.Id == userId, cancellationToken);
         if (!userExists)
         {
             return ServiceResult<ProposalInteractionResponse>.Failure(404, "No User found with the given id.");
@@ -115,7 +117,7 @@ public sealed class ProposalFlowService : IProposalFlowService
             return ServiceResult<ProposalInteractionResponse>.Failure(404, "No initiative found with the given id.");
         }
 
-        var duplicate = await FindDuplicateInteractionAsync(request, cancellationToken);
+        var duplicate = await FindDuplicateInteractionAsync(userId, request, cancellationToken);
         if (duplicate != null)
         {
             return ServiceResult<ProposalInteractionResponse>.Success(MapInteraction(duplicate, isDuplicate: true));
@@ -123,7 +125,7 @@ public sealed class ProposalFlowService : IProposalFlowService
 
         var interaction = new ProposalInteractionEvent
         {
-            UserId = request.UserId,
+            UserId = userId,
             ProjectLawId = request.InitiativeId,
             InteractionType = request.Action,
             IdempotencyKey = NormalizeIdempotencyKey(request.IdempotencyKey),
@@ -565,6 +567,7 @@ public sealed class ProposalFlowService : IProposalFlowService
     }
 
     private async Task<ProposalInteractionEvent?> FindDuplicateInteractionAsync(
+        int userId,
         ProposalInteractionRequest request,
         CancellationToken cancellationToken)
     {
@@ -573,7 +576,7 @@ public sealed class ProposalFlowService : IProposalFlowService
         {
             return await _context.ProposalInteractionEvents
                 .Where(interaction =>
-                    interaction.UserId == request.UserId &&
+                    interaction.UserId == userId &&
                     interaction.ProjectLawId == request.InitiativeId &&
                     interaction.IdempotencyKey == idempotencyKey)
                 .OrderByDescending(interaction => interaction.CreatedAtUtc)
@@ -583,7 +586,7 @@ public sealed class ProposalFlowService : IProposalFlowService
         var duplicateWindowStart = DateTime.UtcNow.AddSeconds(-30);
         return await _context.ProposalInteractionEvents
             .Where(interaction =>
-                interaction.UserId == request.UserId &&
+                interaction.UserId == userId &&
                 interaction.ProjectLawId == request.InitiativeId &&
                 interaction.InteractionType == request.Action &&
                 interaction.CreatedAtUtc >= duplicateWindowStart)

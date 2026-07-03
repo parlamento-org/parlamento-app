@@ -39,6 +39,7 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IAppTokenService, JwtTokenService>();
         services.AddScoped<IPoliticalPartyService, PoliticalPartyService>();
         services.AddScoped<IProposalService, ProposalService>();
         services.AddScoped<IProposalFlowService, ProposalFlowService>();
@@ -55,6 +56,16 @@ public static class DependencyInjection
             options.MaxOutputTokens = int.TryParse(section["MaxOutputTokens"], out var maxOutputTokens)
                 ? maxOutputTokens
                 : 700;
+        });
+        services.Configure<AppJwtOptions>(options =>
+        {
+            var section = configuration.GetSection(AppJwtOptions.SectionName);
+            options.Issuer = section["Issuer"] ?? "parlamento-app";
+            options.Audience = section["Audience"] ?? "parlamento-app";
+            options.SigningKey = configuration["JWT_SIGNING_KEY"] ?? section["SigningKey"] ?? string.Empty;
+            options.ExpirationMinutes = int.TryParse(section["ExpirationMinutes"], out var expirationMinutes)
+                ? expirationMinutes
+                : 60;
         });
         services.Configure<ParliamentOpenDataOptions>(options =>
         {

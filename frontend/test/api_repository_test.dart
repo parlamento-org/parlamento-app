@@ -64,6 +64,8 @@ APIRepository _repositoryWithResponse({required int statusCode}) {
   return APIRepository(
     apiClient: ApiClient(
       baseUrl: Uri.parse('http://localhost:8180'),
+      accessTokenProvider: () => null,
+      onUnauthorized: () {},
       httpClient: MockClient((request) async {
         return http.Response('{}', statusCode);
       }),

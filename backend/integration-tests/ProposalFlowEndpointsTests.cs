@@ -132,6 +132,7 @@ public sealed class ProposalFlowEndpointsTests : IClassFixture<ProposalFlowEndpo
     {
         _client = factory.CreateClient();
         _factory = factory;
+        _client.AuthenticateAsUser(_factory.UserId);
     }
 
     [Fact]
@@ -139,7 +140,6 @@ public sealed class ProposalFlowEndpointsTests : IClassFixture<ProposalFlowEndpo
     {
         var response = await _client.PostAsJsonAsync("/proposal-flow/feed", new
         {
-            userId = _factory.UserId,
             legislatures = new[] { "XV" }
         });
 
@@ -222,6 +222,7 @@ public sealed class ProposalInteractionEndpointsTests : IClassFixture<ProposalIn
     {
         _client = factory.CreateClient();
         _factory = factory;
+        _client.AuthenticateAsUser(_factory.UserId);
     }
 
     [Fact]
@@ -229,7 +230,6 @@ public sealed class ProposalInteractionEndpointsTests : IClassFixture<ProposalIn
     {
         var supportResponse = await _client.PostAsJsonAsync("/proposal-flow/interactions", new
         {
-            userId = _factory.UserId,
             initiativeId = _factory.SupportInitiativeId,
             action = "Support",
             idempotencyKey = "support-submit-1"
@@ -244,7 +244,6 @@ public sealed class ProposalInteractionEndpointsTests : IClassFixture<ProposalIn
 
         var duplicateResponse = await _client.PostAsJsonAsync("/proposal-flow/interactions", new
         {
-            userId = _factory.UserId,
             initiativeId = _factory.SupportInitiativeId,
             action = "Support",
             idempotencyKey = "support-submit-1"
@@ -258,7 +257,6 @@ public sealed class ProposalInteractionEndpointsTests : IClassFixture<ProposalIn
 
         var skipResponse = await _client.PostAsJsonAsync("/proposal-flow/interactions", new
         {
-            userId = _factory.UserId,
             initiativeId = _factory.SkipInitiativeId,
             action = "Skip"
         });
@@ -428,13 +426,14 @@ public sealed class ProposalRevealEndpointsTests : IClassFixture<ProposalRevealE
     {
         _client = factory.CreateClient();
         _factory = factory;
+        _client.AuthenticateAsUser(_factory.UserId);
     }
 
     [Fact]
     public async Task RevealEndpointReturnsPostVoteProposerOutcomeSourcesAndJourneyAction()
     {
         var response = await _client.GetAsync(
-            $"/proposal-flow/initiatives/{_factory.InitiativeId}/reveal?userId={_factory.UserId}");
+            $"/proposal-flow/initiatives/{_factory.InitiativeId}/reveal");
 
         response.EnsureSuccessStatusCode();
 
@@ -470,8 +469,10 @@ public sealed class ProposalRevealEndpointsTests : IClassFixture<ProposalRevealE
     [Fact]
     public async Task RevealEndpointRequiresUserVoteInteraction()
     {
+        _client.AuthenticateAsUser(_factory.OtherUserId);
+
         var response = await _client.GetAsync(
-            $"/proposal-flow/initiatives/{_factory.InitiativeId}/reveal?userId={_factory.OtherUserId}");
+            $"/proposal-flow/initiatives/{_factory.InitiativeId}/reveal");
 
         Assert.Equal(System.Net.HttpStatusCode.Forbidden, response.StatusCode);
     }

@@ -8,6 +8,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 
 import 'pages/login.dart';
+import 'pages/main_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,7 +48,11 @@ class MyHomePage extends StatelessWidget {
     return MaterialApp(
       title: 'Parlamento Project',
       theme: baseTheme,
-      home: const LoginPage(),
+      home: Consumer<AuthController>(
+        builder:
+            (context, authController, child) =>
+                authController.isLoggedIn ? const MainPage() : const LoginPage(),
+      ),
     );
   }
 }
