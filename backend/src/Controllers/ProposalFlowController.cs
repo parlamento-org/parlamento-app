@@ -35,4 +35,14 @@ public sealed class ProposalFlowController : ControllerBase
         var result = await _proposalFlowService.RecordInteractionAsync(request, cancellationToken);
         return this.ToActionResult(result);
     }
+
+    [HttpGet("initiatives/{initiativeId:int}/reveal", Name = "GetProposalReveal")]
+    public async Task<IActionResult> GetReveal(
+        int initiativeId,
+        [FromQuery] int userId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _proposalFlowService.GetRevealAsync(userId, initiativeId, cancellationToken);
+        return this.ToActionResult(result);
+    }
 }

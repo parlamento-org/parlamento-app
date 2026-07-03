@@ -8,6 +8,7 @@ public enum ProposalInteractionType
     Impression,
     Support,
     Oppose,
+    Abstain,
     Skip,
     DetailOpen,
     SourceLinkClick,

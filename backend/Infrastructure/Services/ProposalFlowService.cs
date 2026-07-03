@@ -98,7 +98,7 @@ public sealed class ProposalFlowService : IProposalFlowService
         {
             return ServiceResult<ProposalInteractionResponse>.Failure(
                 400,
-                "Only Support, Oppose, and Skip interactions can be recorded through this endpoint.");
+                "Only Support, Oppose, Abstain, and Skip interactions can be recorded through this endpoint.");
         }
 
         var userExists = await _context.Users
@@ -137,6 +137,48 @@ public sealed class ProposalFlowService : IProposalFlowService
         return ServiceResult<ProposalInteractionResponse>.Success(MapInteraction(interaction, isDuplicate: false));
     }
 
+    public async Task<ServiceResult<ProposalRevealResponse>> GetRevealAsync(
+        int userId,
+        int initiativeId,
+        CancellationToken cancellationToken = default)
+    {
+        var userVote = await _context.ProposalInteractionEvents
+            .AsNoTracking()
+            .Where(interaction =>
+                interaction.UserId == userId &&
+                interaction.ProjectLawId == initiativeId &&
+                VoteActions.Contains(interaction.InteractionType))
+            .OrderByDescending(interaction => interaction.CreatedAtUtc)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (userVote == null)
+        {
+            return ServiceResult<ProposalRevealResponse>.Failure(
+                403,
+                "Reveal data is available after the user votes on the initiative.");
+        }
+
+        var initiative = await _context.ProjectLaws
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Include(item => item.ProposingParty)
+            .Include(item => item.VotingResultGenerality!.votingBlocks)
+            .Include(item => item.ImportedAuthors)
+            .Include(item => item.ImportedVotes)
+                .ThenInclude(vote => vote.Blocks)
+            .Include(item => item.ImportedDocuments)
+            .Include(item => item.ImportedPublications)
+            .Include(item => item.Summaries)
+            .FirstOrDefaultAsync(item => item.Id == initiativeId, cancellationToken);
+
+        if (initiative == null)
+        {
+            return ServiceResult<ProposalRevealResponse>.Failure(404, "No initiative found with the given id.");
+        }
+
+        return ServiceResult<ProposalRevealResponse>.Success(MapReveal(initiative, userVote.InteractionType));
+    }
+
     private static InitiativeFeedCardResponse MapFeedCard(ProjectLaw initiative)
     {
         var summary = initiative.Summaries
@@ -171,6 +213,158 @@ public sealed class ProposalFlowService : IProposalFlowService
             Legislature = initiative.Legislatura,
             Date = FirstNonEmpty(initiative.VoteDate, initiative.ImportedAtUtc?.ToString("yyyy-MM-dd"))
         };
+    }
+
+    private static ProposalRevealResponse MapReveal(
+        ProjectLaw initiative,
+        ProposalInteractionType userVote)
+    {
+        var title = initiative.Summaries
+            .Where(summary => summary.GenerationStatus == "Succeeded")
+            .OrderByDescending(summary => summary.GeneratedAtUtc ?? summary.CreatedAtUtc)
+            .Select(summary => summary.ShortTitle)
+            .FirstOrDefault(title => !string.IsNullOrWhiteSpace(title));
+
+        return new ProposalRevealResponse
+        {
+            InitiativeId = initiative.Id,
+            InitiativeType = initiative.InitiativeTypeDescription ?? "Iniciativa parlamentar",
+            InitiativeNumber = initiative.InitiativeNumber,
+            Title = title ?? initiative.ProposalTitle ?? "Iniciativa sem titulo disponivel",
+            UserVote = userVote,
+            Proposers = MapProposers(initiative),
+            GeneralityVote = MapGeneralityVote(initiative),
+            OfficialSources = MapOfficialSources(initiative),
+            Journey = new ProposalJourneyActionResponse
+            {
+                Endpoint = $"/proposal-flow/initiatives/{initiative.Id}/journey"
+            }
+        };
+    }
+
+    private static List<ProposalProposerResponse> MapProposers(ProjectLaw initiative)
+    {
+        var importedAuthors = initiative.ImportedAuthors
+            .Select(author => new ProposalProposerResponse
+            {
+                Kind = author.AuthorKind,
+                Name = author.Name,
+                Acronym = author.Acronym
+            })
+            .Where(author =>
+                !string.IsNullOrWhiteSpace(author.Name) ||
+                !string.IsNullOrWhiteSpace(author.Acronym))
+            .ToList();
+
+        if (importedAuthors.Count > 0)
+        {
+            return importedAuthors;
+        }
+
+        return initiative.ProposingParty == null
+            ? []
+            :
+            [
+                new ProposalProposerResponse
+                {
+                    Kind = "PoliticalParty",
+                    Name = initiative.ProposingParty.fullName,
+                    Acronym = initiative.ProposingParty.partyAcronym
+                }
+            ];
+    }
+
+    private static ParliamentaryVoteSummaryResponse? MapGeneralityVote(ProjectLaw initiative)
+    {
+        var importedVote = initiative.ImportedVotes
+            .Where(vote => vote.Stage == "Generality")
+            .OrderByDescending(vote => vote.VoteDate)
+            .ThenByDescending(vote => vote.Id)
+            .FirstOrDefault();
+
+        if (importedVote != null)
+        {
+            return new ParliamentaryVoteSummaryResponse
+            {
+                StageCode = "250",
+                StageName = "Votacao na generalidade",
+                Date = importedVote.VoteDate,
+                Description = importedVote.Description,
+                Result = importedVote.Result,
+                Approved = IsApproved(importedVote.Result),
+                PartyVotes = importedVote.Blocks
+                    .Select(block => new PartyVoteResponse
+                    {
+                        PartyAcronym = block.PartyAcronym ?? block.RawToken ?? string.Empty,
+                        Orientation = block.VotingOrientation,
+                        NumberOfDeputies = block.NumberOfDeputies,
+                        IsUnanimousWithinParty = block.IsUnanimousWithinParty
+                    })
+                    .Where(block => !string.IsNullOrWhiteSpace(block.PartyAcronym))
+                    .ToList()
+            };
+        }
+
+        if (initiative.VotingResultGenerality?.votingBlocks is not { Count: > 0 } blocks)
+        {
+            return null;
+        }
+
+        return new ParliamentaryVoteSummaryResponse
+        {
+            StageCode = "250",
+            StageName = "Votacao na generalidade",
+            Date = initiative.VoteDate,
+            Result = MapProposalResult(initiative.ProposalResult),
+            Approved = initiative.ProposalResult is ProposalResult.ApprovedInGenerality or ProposalResult.ApprovedInSpeciality,
+            PartyVotes = blocks
+                .Select(block => new PartyVoteResponse
+                {
+                    PartyAcronym = block.politicalPartyAcronym ?? string.Empty,
+                    Orientation = block.votingOrientation,
+                    NumberOfDeputies = block.numberOfDeputies,
+                    IsUnanimousWithinParty = block.isUninamousWithinParty
+                })
+                .Where(block => !string.IsNullOrWhiteSpace(block.PartyAcronym))
+                .ToList()
+        };
+    }
+
+    private static List<OfficialSourceLinkResponse> MapOfficialSources(ProjectLaw initiative)
+    {
+        var sources = new List<OfficialSourceLinkResponse>();
+        if (!string.IsNullOrWhiteSpace(initiative.FullProposalTextLink))
+        {
+            sources.Add(new OfficialSourceLinkResponse
+            {
+                Kind = "InitiativeText",
+                Label = "Official initiative text",
+                Url = initiative.FullProposalTextLink
+            });
+        }
+
+        sources.AddRange(initiative.ImportedDocuments
+            .Where(document => !string.IsNullOrWhiteSpace(document.Url))
+            .Select(document => new OfficialSourceLinkResponse
+            {
+                Kind = document.Scope,
+                Label = document.Name ?? document.DocumentType ?? "Official document",
+                Url = document.Url!
+            }));
+
+        sources.AddRange(initiative.ImportedPublications
+            .Where(publication => !string.IsNullOrWhiteSpace(publication.DiaryUrl))
+            .Select(publication => new OfficialSourceLinkResponse
+            {
+                Kind = "Diary",
+                Label = publication.Type ?? "Diario da Assembleia da Republica",
+                Url = publication.DiaryUrl!
+            }));
+
+        return sources
+            .GroupBy(source => source.Url, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
+            .ToList();
     }
 
     private async Task<ProposalInteractionEvent?> FindDuplicateInteractionAsync(
@@ -221,6 +415,9 @@ public sealed class ProposalFlowService : IProposalFlowService
                 break;
             case ProposalInteractionType.Oppose:
                 stats.OpposeVotes += 1;
+                break;
+            case ProposalInteractionType.Abstain:
+                stats.AbstainVotes += 1;
                 break;
             case ProposalInteractionType.Skip:
                 stats.Skips += 1;
@@ -287,6 +484,35 @@ public sealed class ProposalFlowService : IProposalFlowService
         return values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
     }
 
+    private static bool? IsApproved(string? result)
+    {
+        if (string.IsNullOrWhiteSpace(result))
+        {
+            return null;
+        }
+
+        return Normalize(result) is "aprovado" or "aprovada";
+    }
+
+    private static string? MapProposalResult(ProposalResult? result)
+    {
+        return result switch
+        {
+            ProposalResult.ApprovedInGenerality => "Approved in generality",
+            ProposalResult.RejectedInGenerality => "Rejected in generality",
+            ProposalResult.ApprovedInSpeciality => "Approved in speciality",
+            ProposalResult.RejectedInSpeciality => "Rejected in speciality",
+            _ => null
+        };
+    }
+
+    private static string Normalize(string? value)
+    {
+        return (value ?? string.Empty)
+            .Trim()
+            .ToLowerInvariant();
+    }
+
     private static string? NormalizeIdempotencyKey(string? idempotencyKey)
     {
         return string.IsNullOrWhiteSpace(idempotencyKey)
@@ -298,12 +524,14 @@ public sealed class ProposalFlowService : IProposalFlowService
     [
         ProposalInteractionType.Support,
         ProposalInteractionType.Oppose,
+        ProposalInteractionType.Abstain,
         ProposalInteractionType.Skip
     ];
 
     private static readonly ProposalInteractionType[] VoteActions =
     [
         ProposalInteractionType.Support,
-        ProposalInteractionType.Oppose
+        ProposalInteractionType.Oppose,
+        ProposalInteractionType.Abstain
     ];
 }

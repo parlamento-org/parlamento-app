@@ -17,6 +17,7 @@ public class AddProposalInteractions : Migration
                 "Impressions" integer NOT NULL DEFAULT 0,
                 "SupportVotes" integer NOT NULL DEFAULT 0,
                 "OpposeVotes" integer NOT NULL DEFAULT 0,
+                "AbstainVotes" integer NOT NULL DEFAULT 0,
                 "Skips" integer NOT NULL DEFAULT 0,
                 "DetailOpens" integer NOT NULL DEFAULT 0,
                 "SourceLinkClicks" integer NOT NULL DEFAULT 0,

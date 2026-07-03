@@ -11,4 +11,9 @@ public interface IProposalFlowService
     Task<ServiceResult<ProposalInteractionResponse>> RecordInteractionAsync(
         ProposalInteractionRequest request,
         CancellationToken cancellationToken = default);
+
+    Task<ServiceResult<ProposalRevealResponse>> GetRevealAsync(
+        int userId,
+        int initiativeId,
+        CancellationToken cancellationToken = default);
 }

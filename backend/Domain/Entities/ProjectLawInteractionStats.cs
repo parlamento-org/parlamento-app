@@ -19,6 +19,8 @@ public class ProjectLawInteractionStats
 
     public int OpposeVotes { get; set; }
 
+    public int AbstainVotes { get; set; }
+
     public int Skips { get; set; }
 
     public int DetailOpens { get; set; }

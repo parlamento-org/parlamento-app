@@ -289,3 +289,190 @@ public sealed class ProposalInteractionEndpointsTests : IClassFixture<ProposalIn
         Assert.Empty(userVotes);
     }
 }
+
+public sealed class ProposalRevealEndpointsFactory : TestingWebAppFactory
+{
+    public int UserId { get; private set; }
+
+    public int OtherUserId { get; private set; }
+
+    public int InitiativeId { get; private set; }
+
+    protected override void SeedDbForTests(DatabaseContext db)
+    {
+        var ps = db.PoliticalParties.Single(party => party.partyAcronym == "PS");
+
+        var user = new User
+        {
+            ProfilePic = 1,
+            UserName = "proposal-reveal-tester",
+            Email = "proposal-reveal-tester@example.com",
+            Password = "hashed-password"
+        };
+        var otherUser = new User
+        {
+            ProfilePic = 2,
+            UserName = "proposal-reveal-locked",
+            Email = "proposal-reveal-locked@example.com",
+            Password = "hashed-password"
+        };
+
+        var initiative = new ProjectLaw
+        {
+            SourceId = 4001,
+            Legislatura = "XV",
+            InitiativeNumber = "40/XV/1",
+            InitiativeTypeDescription = "Projeto de Lei",
+            Score = 100,
+            amountOfUsersInterested = 0,
+            totalAmountOfVotesFromUsers = 0,
+            VoteDate = "2024-04-01",
+            ProposingParty = ps,
+            ProposalTitle = "Reveal candidate",
+            FullProposalTextLink = "https://example.com/proposals/4001",
+            ProposalResult = ProposalResult.ApprovedInGenerality,
+            ImportedAuthors = new List<ParliamentInitiativeAuthor>
+            {
+                new()
+                {
+                    AuthorKind = "ParliamentaryGroup",
+                    Acronym = "PS",
+                    Name = "Partido Socialista"
+                }
+            },
+            ImportedDocuments = new List<ParliamentInitiativeDocument>
+            {
+                new()
+                {
+                    Scope = "InitiativeText",
+                    Name = "Texto da iniciativa",
+                    Url = "https://example.com/proposals/4001/text"
+                }
+            },
+            ImportedPublications = new List<ParliamentInitiativePublication>
+            {
+                new()
+                {
+                    Scope = "EventPublication",
+                    Type = "Diario",
+                    DiaryUrl = "https://example.com/diario/4001"
+                }
+            },
+            ImportedVotes = new List<ParliamentInitiativeVote>
+            {
+                new()
+                {
+                    Stage = "Generality",
+                    VoteDate = "2024-04-02",
+                    Description = "Votacao na generalidade",
+                    Result = "Aprovado",
+                    Blocks = new List<ParliamentInitiativeVoteBlock>
+                    {
+                        new()
+                        {
+                            PartyAcronym = "PS",
+                            VotingOrientation = VotingOrientation.InFavor,
+                            NumberOfDeputies = 120,
+                            IsUnanimousWithinParty = true
+                        },
+                        new()
+                        {
+                            PartyAcronym = "PSD",
+                            VotingOrientation = VotingOrientation.Against,
+                            NumberOfDeputies = 80,
+                            IsUnanimousWithinParty = true
+                        }
+                    }
+                }
+            },
+            Summaries = new List<ParliamentSummary>
+            {
+                new()
+                {
+                    GenerationStatus = "Succeeded",
+                    ModelName = "test-model",
+                    PromptVersion = "test-prompt",
+                    SourceDocumentHash = "hash",
+                    ShortTitle = "Titulo neutro reveal",
+                    SummaryText = "Resumo do reveal.",
+                    GeneratedAtUtc = DateTime.UtcNow
+                }
+            }
+        };
+
+        db.Users.AddRange(user, otherUser);
+        db.ProjectLaws.Add(initiative);
+        db.SaveChanges();
+
+        db.ProposalInteractionEvents.Add(new ProposalInteractionEvent
+        {
+            UserId = user.Id,
+            ProjectLawId = initiative.Id,
+            InteractionType = ProposalInteractionType.Support,
+            CreatedAtUtc = DateTime.UtcNow
+        });
+        db.SaveChanges();
+
+        UserId = user.Id;
+        OtherUserId = otherUser.Id;
+        InitiativeId = initiative.Id;
+    }
+}
+
+public sealed class ProposalRevealEndpointsTests : IClassFixture<ProposalRevealEndpointsFactory>
+{
+    private readonly HttpClient _client;
+    private readonly ProposalRevealEndpointsFactory _factory;
+
+    public ProposalRevealEndpointsTests(ProposalRevealEndpointsFactory factory)
+    {
+        _client = factory.CreateClient();
+        _factory = factory;
+    }
+
+    [Fact]
+    public async Task RevealEndpointReturnsPostVoteProposerOutcomeSourcesAndJourneyAction()
+    {
+        var response = await _client.GetAsync(
+            $"/proposal-flow/initiatives/{_factory.InitiativeId}/reveal?userId={_factory.UserId}");
+
+        response.EnsureSuccessStatusCode();
+
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var root = document.RootElement;
+
+        Assert.Equal(_factory.InitiativeId, root.GetProperty("initiativeId").GetInt32());
+        Assert.Equal("Support", root.GetProperty("userVote").GetString());
+        Assert.Equal("Projeto de Lei", root.GetProperty("initiativeType").GetString());
+        Assert.Equal("Titulo neutro reveal", root.GetProperty("title").GetString());
+
+        var proposer = root.GetProperty("proposers").EnumerateArray().Single();
+        Assert.Equal("ParliamentaryGroup", proposer.GetProperty("kind").GetString());
+        Assert.Equal("PS", proposer.GetProperty("acronym").GetString());
+
+        var generalityVote = root.GetProperty("generalityVote");
+        Assert.Equal("250", generalityVote.GetProperty("stageCode").GetString());
+        Assert.Equal("Aprovado", generalityVote.GetProperty("result").GetString());
+        Assert.True(generalityVote.GetProperty("approved").GetBoolean());
+        Assert.Contains(
+            generalityVote.GetProperty("partyVotes").EnumerateArray(),
+            item => item.GetProperty("partyAcronym").GetString() == "PSD" &&
+                    item.GetProperty("orientation").GetString() == "Against");
+
+        Assert.Contains(
+            root.GetProperty("officialSources").EnumerateArray(),
+            item => item.GetProperty("url").GetString() == "https://example.com/diario/4001");
+        Assert.Equal(
+            $"/proposal-flow/initiatives/{_factory.InitiativeId}/journey",
+            root.GetProperty("journey").GetProperty("endpoint").GetString());
+    }
+
+    [Fact]
+    public async Task RevealEndpointRequiresUserVoteInteraction()
+    {
+        var response = await _client.GetAsync(
+            $"/proposal-flow/initiatives/{_factory.InitiativeId}/reveal?userId={_factory.OtherUserId}");
+
+        Assert.Equal(System.Net.HttpStatusCode.Forbidden, response.StatusCode);
+    }
+}
