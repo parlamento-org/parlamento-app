@@ -7,4 +7,8 @@ public interface IProposalFlowService
     Task<ServiceResult<InitiativeFeedCardResponse>> GetNextFeedCardAsync(
         InitiativeFeedRequest request,
         CancellationToken cancellationToken = default);
+
+    Task<ServiceResult<ProposalInteractionResponse>> RecordInteractionAsync(
+        ProposalInteractionRequest request,
+        CancellationToken cancellationToken = default);
 }

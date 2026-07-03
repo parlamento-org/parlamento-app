@@ -26,4 +26,13 @@ public sealed class ProposalFlowController : ControllerBase
         var result = await _proposalFlowService.GetNextFeedCardAsync(request, cancellationToken);
         return this.ToActionResult(result);
     }
+
+    [HttpPost("interactions", Name = "RecordProposalInteraction")]
+    public async Task<IActionResult> RecordInteraction(
+        ProposalInteractionRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _proposalFlowService.RecordInteractionAsync(request, cancellationToken);
+        return this.ToActionResult(result);
+    }
 }

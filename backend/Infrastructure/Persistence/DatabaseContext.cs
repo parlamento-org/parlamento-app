@@ -216,6 +216,32 @@ public class DatabaseContext : DbContext
             .WithMany(x => x.Interventions)
             .HasForeignKey(x => x.ParliamentInitiativeEventId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ProposalInteractionEvent>()
+            .HasOne(x => x.User)
+            .WithMany()
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ProposalInteractionEvent>()
+            .HasOne(x => x.ProjectLaw)
+            .WithMany()
+            .HasForeignKey(x => x.ProjectLawId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ProposalInteractionEvent>()
+            .HasIndex(x => new { x.UserId, x.ProjectLawId, x.InteractionType, x.CreatedAtUtc });
+
+        modelBuilder.Entity<ProposalInteractionEvent>()
+            .HasIndex(x => new { x.UserId, x.ProjectLawId, x.IdempotencyKey })
+            .IsUnique()
+            .HasFilter("\"IdempotencyKey\" IS NOT NULL");
+
+        modelBuilder.Entity<ProjectLawInteractionStats>()
+            .HasOne(x => x.ProjectLaw)
+            .WithMany()
+            .HasForeignKey(x => x.ProjectLawId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 
     public DbSet<ProjectLaw> ProjectLaws { get; set; } = default!;
@@ -236,4 +262,6 @@ public class DatabaseContext : DbContext
     public DbSet<ParliamentDeputy> ParliamentDeputies { get; set; } = default!;
     public DbSet<ParliamentaryGroup> ParliamentaryGroups { get; set; } = default!;
     public DbSet<ParliamentRedactionTerm> ParliamentRedactionTerms { get; set; } = default!;
+    public DbSet<ProposalInteractionEvent> ProposalInteractionEvents { get; set; } = default!;
+    public DbSet<ProjectLawInteractionStats> ProjectLawInteractionStats { get; set; } = default!;
 }

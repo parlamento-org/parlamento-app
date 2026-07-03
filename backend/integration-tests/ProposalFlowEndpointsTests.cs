@@ -6,6 +6,8 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
 
+using Microsoft.Extensions.DependencyInjection;
+
 using Parlamento.Domain.Entities;
 using Parlamento.Domain.Enums;
 using Parlamento.Infrastructure.Persistence;
@@ -157,5 +159,133 @@ public sealed class ProposalFlowEndpointsTests : IClassFixture<ProposalFlowEndpo
         Assert.DoesNotContain("proposalResult", body);
         Assert.DoesNotContain("votingResult", body);
         Assert.DoesNotContain("PS", body);
+    }
+}
+
+public sealed class ProposalInteractionEndpointsFactory : TestingWebAppFactory
+{
+    public int UserId { get; private set; }
+
+    public int SupportInitiativeId { get; private set; }
+
+    public int SkipInitiativeId { get; private set; }
+
+    protected override void SeedDbForTests(DatabaseContext db)
+    {
+        var ps = db.PoliticalParties.Single(party => party.partyAcronym == "PS");
+
+        var user = new User
+        {
+            ProfilePic = 1,
+            UserName = "proposal-interaction-tester",
+            Email = "proposal-interaction-tester@example.com",
+            Password = "hashed-password"
+        };
+
+        var supportInitiative = CreateInitiative(3001, "Support candidate", ps);
+        var skipInitiative = CreateInitiative(3002, "Skip candidate", ps);
+
+        db.Users.Add(user);
+        db.ProjectLaws.AddRange(supportInitiative, skipInitiative);
+        db.SaveChanges();
+
+        UserId = user.Id;
+        SupportInitiativeId = supportInitiative.Id;
+        SkipInitiativeId = skipInitiative.Id;
+    }
+
+    private static ProjectLaw CreateInitiative(int sourceId, string title, PoliticalParty proposingParty)
+    {
+        return new ProjectLaw
+        {
+            SourceId = sourceId,
+            Legislatura = "XV",
+            InitiativeTypeDescription = "Projeto de Lei",
+            Score = 100,
+            amountOfUsersInterested = 0,
+            totalAmountOfVotesFromUsers = 0,
+            VoteDate = "2024-03-01",
+            ProposingParty = proposingParty,
+            ProposalTitle = title,
+            FullProposalTextLink = $"https://example.com/proposals/{sourceId}",
+            ProposalResult = ProposalResult.ApprovedInGenerality
+        };
+    }
+}
+
+public sealed class ProposalInteractionEndpointsTests : IClassFixture<ProposalInteractionEndpointsFactory>
+{
+    private readonly HttpClient _client;
+    private readonly ProposalInteractionEndpointsFactory _factory;
+
+    public ProposalInteractionEndpointsTests(ProposalInteractionEndpointsFactory factory)
+    {
+        _client = factory.CreateClient();
+        _factory = factory;
+    }
+
+    [Fact]
+    public async Task InteractionEndpointRecordsActionsIdempotentlyAndKeepsSkipSeparateFromAbstention()
+    {
+        var supportResponse = await _client.PostAsJsonAsync("/proposal-flow/interactions", new
+        {
+            userId = _factory.UserId,
+            initiativeId = _factory.SupportInitiativeId,
+            action = "Support",
+            idempotencyKey = "support-submit-1"
+        });
+        supportResponse.EnsureSuccessStatusCode();
+
+        using var supportDocument = JsonDocument.Parse(await supportResponse.Content.ReadAsStringAsync());
+        var supportRoot = supportDocument.RootElement;
+        var interactionId = supportRoot.GetProperty("interactionId").GetInt32();
+        Assert.False(supportRoot.GetProperty("isDuplicate").GetBoolean());
+        Assert.Equal("Support", supportRoot.GetProperty("action").GetString());
+
+        var duplicateResponse = await _client.PostAsJsonAsync("/proposal-flow/interactions", new
+        {
+            userId = _factory.UserId,
+            initiativeId = _factory.SupportInitiativeId,
+            action = "Support",
+            idempotencyKey = "support-submit-1"
+        });
+        duplicateResponse.EnsureSuccessStatusCode();
+
+        using var duplicateDocument = JsonDocument.Parse(await duplicateResponse.Content.ReadAsStringAsync());
+        var duplicateRoot = duplicateDocument.RootElement;
+        Assert.True(duplicateRoot.GetProperty("isDuplicate").GetBoolean());
+        Assert.Equal(interactionId, duplicateRoot.GetProperty("interactionId").GetInt32());
+
+        var skipResponse = await _client.PostAsJsonAsync("/proposal-flow/interactions", new
+        {
+            userId = _factory.UserId,
+            initiativeId = _factory.SkipInitiativeId,
+            action = "Skip"
+        });
+        skipResponse.EnsureSuccessStatusCode();
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+
+        var events = db.ProposalInteractionEvents.ToList();
+        Assert.Equal(2, events.Count);
+        Assert.Contains(events, item => item.InteractionType == ProposalInteractionType.Support);
+        Assert.Contains(events, item => item.InteractionType == ProposalInteractionType.Skip);
+
+        var supportStats = db.ProjectLawInteractionStats.Single(item =>
+            item.ProjectLawId == _factory.SupportInitiativeId);
+        Assert.Equal(1, supportStats.SupportVotes);
+        Assert.Equal(0, supportStats.Skips);
+
+        var skipStats = db.ProjectLawInteractionStats.Single(item =>
+            item.ProjectLawId == _factory.SkipInitiativeId);
+        Assert.Equal(0, skipStats.SupportVotes);
+        Assert.Equal(1, skipStats.Skips);
+
+        var userVotes = db.Users
+            .Where(user => user.Id == _factory.UserId)
+            .SelectMany(user => user.Votes)
+            .ToList();
+        Assert.Empty(userVotes);
     }
 }
