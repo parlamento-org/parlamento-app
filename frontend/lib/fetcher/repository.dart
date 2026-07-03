@@ -1,4 +1,5 @@
 import 'package:frontend/models/proposal.dart';
+import 'package:frontend/models/proposal_flow.dart';
 
 import '../models/proposal_criteria.dart';
 import '../models/user.dart';
@@ -31,4 +32,19 @@ abstract class Repository {
   Future<Proposal> getProposal(ProposalCriteria proposalCriteria);
 
   Future<void> castUserVote(UserVote userVote);
+
+  Future<InitiativeFeedCard> getInitiativeFeedCard(
+    ProposalFlowFeedRequest request,
+  );
+
+  Future<ProposalInteractionResult> recordProposalInteraction(
+    ProposalInteractionSubmission submission,
+  );
+
+  Future<ProposalReveal> getProposalReveal({
+    required int initiativeId,
+    required int userId,
+  });
+
+  Future<ProposalJourney> getProposalJourney(int initiativeId);
 }

@@ -4,6 +4,7 @@ import 'package:frontend/controllers/user_controller.dart';
 import 'package:frontend/fetcher/repository.dart';
 import 'package:frontend/models/proposal.dart';
 import 'package:frontend/models/proposal_criteria.dart';
+import 'package:frontend/models/proposal_flow.dart';
 import 'package:frontend/models/user.dart';
 import 'package:frontend/models/vote_model.dart';
 
@@ -76,6 +77,33 @@ class _FakeRepository implements Repository {
 
   @override
   Future<Proposal> getProposal(ProposalCriteria proposalCriteria) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<InitiativeFeedCard> getInitiativeFeedCard(
+    ProposalFlowFeedRequest request,
+  ) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<ProposalJourney> getProposalJourney(int initiativeId) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<ProposalReveal> getProposalReveal({
+    required int initiativeId,
+    required int userId,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<ProposalInteractionResult> recordProposalInteraction(
+    ProposalInteractionSubmission submission,
+  ) {
     throw UnimplementedError();
   }
 

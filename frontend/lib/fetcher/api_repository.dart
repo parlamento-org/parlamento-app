@@ -5,6 +5,7 @@ import 'package:frontend/exceptions/username_already_exists.dart';
 import 'package:frontend/fetcher/api_client.dart';
 import 'package:frontend/fetcher/repository.dart';
 import 'package:frontend/models/proposal_criteria.dart';
+import 'package:frontend/models/proposal_flow.dart';
 import 'package:frontend/models/user.dart';
 import 'package:frontend/models/vote_model.dart';
 import 'package:http/http.dart' as http;
@@ -21,6 +22,79 @@ class APIRepository implements Repository {
           );
 
   final ApiClient _apiClient;
+
+  @override
+  Future<InitiativeFeedCard> getInitiativeFeedCard(
+    ProposalFlowFeedRequest request,
+  ) async {
+    final response = await _apiClient.postJson(
+      '/proposal-flow/feed',
+      request.toJson(),
+    );
+
+    if (response.statusCode == 200) {
+      return InitiativeFeedCard.fromJson(response.jsonObject());
+    }
+
+    throw ApiException(
+      'Failed to load initiative feed card',
+      statusCode: response.statusCode,
+    );
+  }
+
+  @override
+  Future<ProposalInteractionResult> recordProposalInteraction(
+    ProposalInteractionSubmission submission,
+  ) async {
+    final response = await _apiClient.postJson(
+      '/proposal-flow/interactions',
+      submission.toJson(),
+    );
+
+    if (response.statusCode == 200) {
+      return ProposalInteractionResult.fromJson(response.jsonObject());
+    }
+
+    throw ApiException(
+      'Failed to record proposal interaction',
+      statusCode: response.statusCode,
+    );
+  }
+
+  @override
+  Future<ProposalReveal> getProposalReveal({
+    required int initiativeId,
+    required int userId,
+  }) async {
+    final response = await _apiClient.getJson(
+      '/proposal-flow/initiatives/$initiativeId/reveal?userId=$userId',
+    );
+
+    if (response.statusCode == 200) {
+      return ProposalReveal.fromJson(response.jsonObject());
+    }
+
+    throw ApiException(
+      'Failed to load proposal reveal',
+      statusCode: response.statusCode,
+    );
+  }
+
+  @override
+  Future<ProposalJourney> getProposalJourney(int initiativeId) async {
+    final response = await _apiClient.getJson(
+      '/proposal-flow/initiatives/$initiativeId/journey',
+    );
+
+    if (response.statusCode == 200) {
+      return ProposalJourney.fromJson(response.jsonObject());
+    }
+
+    throw ApiException(
+      'Failed to load proposal journey',
+      statusCode: response.statusCode,
+    );
+  }
 
   @override
   Future<Proposal> getProposal(ProposalCriteria criteria) async {
