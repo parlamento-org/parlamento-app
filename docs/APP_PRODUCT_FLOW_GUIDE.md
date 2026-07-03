@@ -14,10 +14,10 @@ The stronger, more honest framing is:
 
 This distinction matters because Portuguese parliamentary initiatives are not all the same thing:
 
-| Initiative type | Product meaning |
-| --- | --- |
-| `Projeto de Lei` | A bill introduced by parliamentary groups/deputies. It can become law after later phases. |
-| `Proposta de Lei` | A government bill/proposal. It can also become law after later phases. |
+| Initiative type        | Product meaning                                                                                |
+| ---------------------- | ---------------------------------------------------------------------------------------------- |
+| `Projeto de Lei`       | A bill introduced by parliamentary groups/deputies. It can become law after later phases.      |
+| `Proposta de Lei`      | A government bill/proposal. It can also become law after later phases.                         |
 | `Projeto de Resolução` | A resolution/recommendation. It can be voted on, but should not be presented as a binding law. |
 
 The frontend should always display the initiative type. Avoid using a single generic label like "law" for every card.
@@ -123,6 +123,49 @@ After the user's vote, reveal:
 - debate video links
 
 This creates a fair exchange: the user gets a low-bias first impression, then receives political accountability and source context.
+
+## Proposal Journey Timeline
+
+The post-vote reveal screen should not use a generic "View Details" action.
+
+Instead, the primary CTA should be:
+
+Follow the proposal's journey
+
+This opens a dedicated initiative journey page.
+
+Purpose:
+Help the user understand what happened to the initiative after it was introduced, phase by phase, without overwhelming the swipe/reveal screen.
+
+The journey page should show a chronological legislative timeline.
+
+Recommended interaction:
+
+A vertical line animates down from the top of the screen.
+As the line reaches each phase, that phase appears with a subtle slide/fade/bounce animation.
+Completed phases use the app's active/accent color.
+Missing, skipped, or future phases appear muted or are omitted depending on available data.
+If the initiative was rejected early, the timeline should stop at the rejection point.
+If the initiative progressed to publication, the timeline should continue through final/publication phases.
+
+Each timeline item should show:
+
+phase name
+date, if available
+result/status, if available
+short explanation of what this phase means
+vote result when relevant
+party vote breakdown when relevant
+official document links
+Diário/transcript links
+debate video links, when available
+
+The page should support progressive disclosure:
+
+collapsed timeline item: short phase summary
+expanded timeline item: votes, documents, debates, source links, videos
+
+This page is the place for deeper context. The post-vote reveal screen should stay lightweight.
 
 ## Avoiding Misleading Comparisons
 
