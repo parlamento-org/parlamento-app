@@ -16,4 +16,8 @@ public interface IProposalFlowService
         int userId,
         int initiativeId,
         CancellationToken cancellationToken = default);
+
+    Task<ServiceResult<ProposalJourneyResponse>> GetJourneyAsync(
+        int initiativeId,
+        CancellationToken cancellationToken = default);
 }

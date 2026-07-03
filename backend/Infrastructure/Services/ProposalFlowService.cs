@@ -179,6 +179,38 @@ public sealed class ProposalFlowService : IProposalFlowService
         return ServiceResult<ProposalRevealResponse>.Success(MapReveal(initiative, userVote.InteractionType));
     }
 
+    public async Task<ServiceResult<ProposalJourneyResponse>> GetJourneyAsync(
+        int initiativeId,
+        CancellationToken cancellationToken = default)
+    {
+        var initiative = await _context.ProjectLaws
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Include(item => item.ImportedEvents)
+                .ThenInclude(item => item.Votes)
+                    .ThenInclude(vote => vote.Blocks)
+            .Include(item => item.ImportedEvents)
+                .ThenInclude(item => item.Documents)
+            .Include(item => item.ImportedEvents)
+                .ThenInclude(item => item.Publications)
+            .Include(item => item.ImportedEvents)
+                .ThenInclude(item => item.Interventions)
+            .Include(item => item.ImportedDocuments)
+            .Include(item => item.ImportedPublications)
+            .Include(item => item.ImportedInterventions)
+            .Include(item => item.ImportedVotes)
+                .ThenInclude(vote => vote.Blocks)
+            .Include(item => item.Summaries)
+            .FirstOrDefaultAsync(item => item.Id == initiativeId, cancellationToken);
+
+        if (initiative == null)
+        {
+            return ServiceResult<ProposalJourneyResponse>.Failure(404, "No initiative found with the given id.");
+        }
+
+        return ServiceResult<ProposalJourneyResponse>.Success(MapJourney(initiative));
+    }
+
     private static InitiativeFeedCardResponse MapFeedCard(ProjectLaw initiative)
     {
         var summary = initiative.Summaries
@@ -242,6 +274,118 @@ public sealed class ProposalFlowService : IProposalFlowService
         };
     }
 
+    private static ProposalJourneyResponse MapJourney(ProjectLaw initiative)
+    {
+        return new ProposalJourneyResponse
+        {
+            InitiativeId = initiative.Id,
+            InitiativeType = initiative.InitiativeTypeDescription ?? "Iniciativa parlamentar",
+            InitiativeNumber = initiative.InitiativeNumber,
+            Title = initiative.ProposalTitle ?? "Iniciativa sem titulo disponivel",
+            Phases = BuildJourneyPhases(initiative)
+        };
+    }
+
+    private static List<ProposalJourneyPhaseResponse> BuildJourneyPhases(ProjectLaw initiative)
+    {
+        var eventPhases = initiative.ImportedEvents
+            .Select(MapJourneyPhase)
+            .ToList();
+
+        if (eventPhases.Count == 0)
+        {
+            return BuildFallbackJourneyPhases(initiative);
+        }
+
+        return eventPhases
+            .OrderBy(phase => ParseSortableDate(phase.Date))
+            .ThenBy(phase => PhaseSortKey(phase.PhaseCode))
+            .ThenBy(phase => phase.PhaseName)
+            .ToList();
+    }
+
+    private static ProposalJourneyPhaseResponse MapJourneyPhase(ParliamentInitiativeEvent parliamentEvent)
+    {
+        var votes = parliamentEvent.Votes
+            .Select(vote => MapParliamentaryVote(vote, parliamentEvent.PhaseCode, parliamentEvent.PhaseName))
+            .ToList();
+
+        return new ProposalJourneyPhaseResponse
+        {
+            PhaseCode = parliamentEvent.PhaseCode,
+            PhaseName = parliamentEvent.PhaseName ?? PhaseNameFromCode(parliamentEvent.PhaseCode),
+            Date = parliamentEvent.PhaseDate,
+            Status = votes.Select(vote => vote.Result).FirstOrDefault(result => !string.IsNullOrWhiteSpace(result)),
+            Summary = PhaseSummary(parliamentEvent.PhaseCode, parliamentEvent.PhaseName),
+            Observation = parliamentEvent.Observation,
+            ApprovedTextId = parliamentEvent.ApprovedTextId,
+            Votes = votes,
+            Documents = parliamentEvent.Documents
+                .Where(document => !string.IsNullOrWhiteSpace(document.Url))
+                .Select(MapDocumentLink)
+                .ToList(),
+            DiaryLinks = parliamentEvent.Publications
+                .Where(publication => !string.IsNullOrWhiteSpace(publication.DiaryUrl))
+                .Select(MapDiaryLink)
+                .ToList(),
+            Videos = parliamentEvent.Interventions
+                .Where(intervention => !string.IsNullOrWhiteSpace(intervention.VideoUrl))
+                .Select(MapVideo)
+                .ToList(),
+            Transcripts = parliamentEvent.Interventions
+                .Where(intervention => !string.IsNullOrWhiteSpace(intervention.PublicationDiaryUrl))
+                .Select(MapTranscriptLink)
+                .GroupBy(source => source.Url, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.First())
+                .ToList()
+        };
+    }
+
+    private static List<ProposalJourneyPhaseResponse> BuildFallbackJourneyPhases(ProjectLaw initiative)
+    {
+        var phases = new List<ProposalJourneyPhaseResponse>();
+        if (initiative.VotingResultGenerality?.votingBlocks is { Count: > 0 })
+        {
+            phases.Add(new ProposalJourneyPhaseResponse
+            {
+                PhaseCode = "250",
+                PhaseName = "Votacao na generalidade",
+                Date = initiative.VoteDate,
+                Status = MapProposalResult(initiative.ProposalResult),
+                Summary = PhaseSummary("250", "Votacao na generalidade"),
+                Votes = MapGeneralityVote(initiative) is { } vote ? [vote] : []
+            });
+        }
+
+        var unscopedDocuments = initiative.ImportedDocuments
+            .Where(document => document.ParliamentInitiativeEventId == null && !string.IsNullOrWhiteSpace(document.Url))
+            .Select(MapDocumentLink)
+            .ToList();
+        var unscopedPublications = initiative.ImportedPublications
+            .Where(publication => publication.ParliamentInitiativeEventId == null && !string.IsNullOrWhiteSpace(publication.DiaryUrl))
+            .Select(MapDiaryLink)
+            .ToList();
+
+        if (phases.Count == 0 || unscopedDocuments.Count > 0 || unscopedPublications.Count > 0)
+        {
+            phases.Insert(0, new ProposalJourneyPhaseResponse
+            {
+                PhaseCode = null,
+                PhaseName = "Introducao da iniciativa",
+                Date = initiative.ImportedAtUtc?.ToString("yyyy-MM-dd"),
+                Summary = "The initiative was introduced and made available through official Parliament sources.",
+                Documents = unscopedDocuments,
+                DiaryLinks = unscopedPublications
+            });
+        }
+
+        return phases
+            .OrderBy(phase => ParseSortableDate(phase.Date))
+            .ThenBy(phase => PhaseSortKey(phase.PhaseCode))
+            .ThenBy(phase => phase.PhaseName)
+            .ToList();
+    }
+
     private static List<ProposalProposerResponse> MapProposers(ProjectLaw initiative)
     {
         var importedAuthors = initiative.ImportedAuthors
@@ -284,25 +428,7 @@ public sealed class ProposalFlowService : IProposalFlowService
 
         if (importedVote != null)
         {
-            return new ParliamentaryVoteSummaryResponse
-            {
-                StageCode = "250",
-                StageName = "Votacao na generalidade",
-                Date = importedVote.VoteDate,
-                Description = importedVote.Description,
-                Result = importedVote.Result,
-                Approved = IsApproved(importedVote.Result),
-                PartyVotes = importedVote.Blocks
-                    .Select(block => new PartyVoteResponse
-                    {
-                        PartyAcronym = block.PartyAcronym ?? block.RawToken ?? string.Empty,
-                        Orientation = block.VotingOrientation,
-                        NumberOfDeputies = block.NumberOfDeputies,
-                        IsUnanimousWithinParty = block.IsUnanimousWithinParty
-                    })
-                    .Where(block => !string.IsNullOrWhiteSpace(block.PartyAcronym))
-                    .ToList()
-            };
+            return MapParliamentaryVote(importedVote, "250", "Votacao na generalidade");
         }
 
         if (initiative.VotingResultGenerality?.votingBlocks is not { Count: > 0 } blocks)
@@ -324,6 +450,32 @@ public sealed class ProposalFlowService : IProposalFlowService
                     Orientation = block.votingOrientation,
                     NumberOfDeputies = block.numberOfDeputies,
                     IsUnanimousWithinParty = block.isUninamousWithinParty
+                })
+                .Where(block => !string.IsNullOrWhiteSpace(block.PartyAcronym))
+                .ToList()
+        };
+    }
+
+    private static ParliamentaryVoteSummaryResponse MapParliamentaryVote(
+        ParliamentInitiativeVote vote,
+        string? phaseCode,
+        string? phaseName)
+    {
+        return new ParliamentaryVoteSummaryResponse
+        {
+            StageCode = phaseCode ?? StageCodeFromStage(vote.Stage),
+            StageName = phaseName ?? PhaseNameFromStage(vote.Stage),
+            Date = vote.VoteDate,
+            Description = vote.Description,
+            Result = vote.Result,
+            Approved = IsApproved(vote.Result),
+            PartyVotes = vote.Blocks
+                .Select(block => new PartyVoteResponse
+                {
+                    PartyAcronym = block.PartyAcronym ?? block.RawToken ?? string.Empty,
+                    Orientation = block.VotingOrientation,
+                    NumberOfDeputies = block.NumberOfDeputies,
+                    IsUnanimousWithinParty = block.IsUnanimousWithinParty
                 })
                 .Where(block => !string.IsNullOrWhiteSpace(block.PartyAcronym))
                 .ToList()
@@ -365,6 +517,51 @@ public sealed class ProposalFlowService : IProposalFlowService
             .GroupBy(source => source.Url, StringComparer.OrdinalIgnoreCase)
             .Select(group => group.First())
             .ToList();
+    }
+
+    private static OfficialSourceLinkResponse MapDocumentLink(ParliamentInitiativeDocument document)
+    {
+        return new OfficialSourceLinkResponse
+        {
+            Kind = document.Scope,
+            Label = document.Name ?? document.DocumentType ?? "Official document",
+            Url = document.Url!
+        };
+    }
+
+    private static OfficialSourceLinkResponse MapDiaryLink(ParliamentInitiativePublication publication)
+    {
+        return new OfficialSourceLinkResponse
+        {
+            Kind = "Diary",
+            Label = publication.Type ?? "Diario da Assembleia da Republica",
+            Url = publication.DiaryUrl!
+        };
+    }
+
+    private static OfficialSourceLinkResponse MapTranscriptLink(ParliamentInitiativeIntervention intervention)
+    {
+        return new OfficialSourceLinkResponse
+        {
+            Kind = "Transcript",
+            Label = SpeakerLabel(intervention),
+            Url = intervention.PublicationDiaryUrl!
+        };
+    }
+
+    private static ProposalJourneyVideoResponse MapVideo(ParliamentInitiativeIntervention intervention)
+    {
+        return new ProposalJourneyVideoResponse
+        {
+            SpeakerName = intervention.SpeakerName,
+            SpeakerParty = intervention.SpeakerParty,
+            GovernmentMemberName = intervention.GovernmentMemberName,
+            GovernmentMemberRole = intervention.GovernmentMemberRole,
+            Date = intervention.PlenaryMeetingDate,
+            StartTime = intervention.StartTime,
+            EndTime = intervention.EndTime,
+            Url = intervention.VideoUrl!
+        };
     }
 
     private async Task<ProposalInteractionEvent?> FindDuplicateInteractionAsync(
@@ -504,6 +701,89 @@ public sealed class ProposalFlowService : IProposalFlowService
             ProposalResult.RejectedInSpeciality => "Rejected in speciality",
             _ => null
         };
+    }
+
+    private static DateTime ParseSortableDate(string? value)
+    {
+        return DateTime.TryParse(value, out var date)
+            ? date
+            : DateTime.MaxValue;
+    }
+
+    private static int PhaseSortKey(string? phaseCode)
+    {
+        return int.TryParse(phaseCode, out var key) ? key : int.MaxValue;
+    }
+
+    private static string PhaseNameFromCode(string? phaseCode)
+    {
+        return phaseCode switch
+        {
+            "250" => "Votacao na generalidade",
+            "310" => "Votacao na especialidade",
+            "320" => "Votacao final global",
+            "370" or "380" or "390" or "400" => "Fase pos-aprovacao",
+            "580" => "Publicacao",
+            _ => "Fase parlamentar"
+        };
+    }
+
+    private static string PhaseNameFromStage(string? stage)
+    {
+        return stage switch
+        {
+            "Generality" => "Votacao na generalidade",
+            "Speciality" => "Votacao na especialidade",
+            "FinalGlobal" => "Votacao final global",
+            "PostApproval" => "Fase pos-aprovacao",
+            "PublishedLaw" => "Publicacao",
+            _ => "Votacao parlamentar"
+        };
+    }
+
+    private static string StageCodeFromStage(string? stage)
+    {
+        return stage switch
+        {
+            "Generality" => "250",
+            "Speciality" => "310",
+            "FinalGlobal" => "320",
+            "PublishedLaw" => "580",
+            _ => string.Empty
+        };
+    }
+
+    private static string PhaseSummary(string? phaseCode, string? phaseName)
+    {
+        return phaseCode switch
+        {
+            "250" => "Parliament voted on whether to support the initiative in principle.",
+            "310" => "The initiative was examined or voted in speciality, where details can change.",
+            "320" => "Parliament voted on the final global text after earlier phases.",
+            "370" or "380" or "390" or "400" => "The approved text moved through post-approval legislative steps.",
+            "580" => "The final act was published through official channels.",
+            _ when !string.IsNullOrWhiteSpace(phaseName) => $"Parliament recorded the phase: {phaseName}.",
+            _ => "Parliament recorded a lifecycle phase for this initiative."
+        };
+    }
+
+    private static string SpeakerLabel(ParliamentInitiativeIntervention intervention)
+    {
+        if (!string.IsNullOrWhiteSpace(intervention.SpeakerName))
+        {
+            return intervention.SpeakerParty == null
+                ? intervention.SpeakerName
+                : $"{intervention.SpeakerName} ({intervention.SpeakerParty})";
+        }
+
+        if (!string.IsNullOrWhiteSpace(intervention.GovernmentMemberName))
+        {
+            return intervention.GovernmentMemberRole == null
+                ? intervention.GovernmentMemberName
+                : $"{intervention.GovernmentMemberName} ({intervention.GovernmentMemberRole})";
+        }
+
+        return "Debate transcript";
     }
 
     private static string Normalize(string? value)
