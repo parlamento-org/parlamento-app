@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:frontend/controllers/auth_controller.dart';
 import 'package:frontend/controllers/vote_controller.dart';
 import 'package:frontend/models/proposal_flow.dart';
+import 'package:frontend/models/proposal.dart';
+import 'package:flip_card/flip_card.dart';
+import 'package:frontend/models/vote_model.dart';
+import 'package:frontend/pages/proposal_reveal_page.dart';
 import 'package:frontend/themes/base_theme.dart';
 import 'package:provider/provider.dart';
 
@@ -59,10 +63,37 @@ class _VotePageState extends State<VotePage> {
       });
     } catch (error) {
       if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'Nao foi possivel carregar a proxima iniciativa.';
-      });
+      _showInteractionMessage(action);
+
+      if (action == ProposalInteractionAction.skip) {
+        await _loadNextCard();
+        return;
+      }
+
+      final reveal = await _voteController.getProposalReveal(card.initiativeId);
+      if (!mounted) return;
+
+      final shouldLoadNext = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (context) => ProposalRevealPage(reveal: reveal),
+        ),
+      );
+
+      if (!mounted) return;
+      if (shouldLoadNext ?? true) {
+        await _loadNextCard();
+      }
+    } catch (error) {
+      if (!mounted) return;
+      debugPrint(e.toString());
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Error getting proposal, you may be offline or they might be a problem with your connection!',
+          ),
+          duration: Duration(seconds: 2),
+        ),
+      );
     }
   }
 

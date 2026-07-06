@@ -19,4 +19,12 @@ class VoteController {
   ) {
     return _repository.recordProposalInteraction(submission);
   }
+
+  Future<ProposalReveal> getProposalReveal(int initiativeId) {
+    return _repository.getProposalReveal(initiativeId: initiativeId);
+  }
+
+  Future<ProposalJourney> getProposalJourney(int initiativeId) {
+    return _repository.getProposalJourney(initiativeId);
+  }
 }

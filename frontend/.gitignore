@@ -45,3 +45,4 @@ app.*.map.json
 
 # dont modify .env
 .env
+devtools_options.yaml
