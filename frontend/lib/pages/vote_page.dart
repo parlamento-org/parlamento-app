@@ -249,7 +249,7 @@ class _AnonymizedProposalCard extends StatelessWidget {
                     const SizedBox(height: 8),
                     _AiBulletPoints(points: card.summaryBulletPoints),
                     const SizedBox(height: 18),
-                  ] else if (card.summary != null) ...[
+                  ], if (card.summary != null) ...[
                     const _SectionLabel('AI summary'),
                     const SizedBox(height: 8),
                     Text(card.summary!, style: textTheme.bodyLarge),
