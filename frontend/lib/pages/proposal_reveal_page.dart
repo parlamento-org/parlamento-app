@@ -350,68 +350,118 @@ class _PartyVoteGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: isHighlighted ? 0.78 : 0.55),
-        borderRadius: BorderRadius.circular(28),
-        border:
-            isHighlighted
-                ? Border.all(color: Colors.white, width: 3)
-                : Border.all(color: Colors.white.withValues(alpha: 0.18)),
-        boxShadow:
-            isHighlighted
-                ? [
-                  BoxShadow(
-                    color: color.withValues(alpha: 0.28),
-                    blurRadius: 18,
-                    spreadRadius: 2,
-                  ),
-                ]
-                : null,
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: isHighlighted ? 86 : 78,
-            height: isHighlighted ? 86 : 78,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            child: Icon(icon, color: Colors.white, size: isHighlighted ? 54 : 48),
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.topCenter,
+      children: [
+        Container(
+          width: double.infinity,
+          margin: EdgeInsets.only(
+            top: isHighlighted ? 22 : 8,
+            bottom: 8,
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: Colors.black87,
-                  ),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: isHighlighted ? 0.78 : 0.55),
+            borderRadius: BorderRadius.circular(28),
+            border:
+                isHighlighted
+                    ? Border.all(color: Colors.white, width: 3)
+                    : Border.all(color: Colors.white.withValues(alpha: 0.18)),
+            boxShadow:
+                isHighlighted
+                    ? [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.28),
+                        blurRadius: 18,
+                        spreadRadius: 2,
+                      ),
+                    ]
+                    : null,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: isHighlighted ? 86 : 78,
+                height: isHighlighted ? 86 : 78,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                child: Icon(
+                  icon,
+                  color: Colors.white,
+                  size: isHighlighted ? 54 : 48,
                 ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children:
-                      votes
-                          .map(
-                            (vote) => _PartyVoteLogo(
-                              vote: vote,
-                              isSplit: splitParties.contains(
-                                _partyKey(vote.partyAcronym),
-                              ),
-                            ),
-                          )
-                          .toList(),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (!isHighlighted) ...[
+                      Text(
+                        label,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children:
+                          votes
+                              .map(
+                                (vote) => _PartyVoteLogo(
+                                  vote: vote,
+                                  isSplit: splitParties.contains(
+                                    _partyKey(vote.partyAcronym),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
+        ),
+        if (isHighlighted)
+          const Positioned(
+            top: 0,
+            child: _VoteWithLabel(),
+          ),
+      ],
+    );
+  }
+}
+
+class _VoteWithLabel extends StatelessWidget {
+  const _VoteWithLabel();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 42, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 3,
+            offset: Offset(0, 2),
           ),
         ],
+      ),
+      child: const Text(
+        'Votaste com:',
+        style: TextStyle(
+          color: Colors.black87,
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

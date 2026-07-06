@@ -19,6 +19,9 @@ public sealed class InitiativeFeedCardResponse
     [JsonPropertyName("summary")]
     public string? Summary { get; set; }
 
+    [JsonPropertyName("summaryBulletPoints")]
+    public List<string> SummaryBulletPoints { get; set; } = [];
+
     [JsonPropertyName("summaryGeneratedAtUtc")]
     public DateTime? SummaryGeneratedAtUtc { get; set; }
 

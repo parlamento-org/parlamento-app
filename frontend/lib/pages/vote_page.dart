@@ -244,22 +244,27 @@ class _AnonymizedProposalCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (card.summary != null) ...[
-                    const _SectionLabel('AI-generated summary'),
+                  if (card.summaryBulletPoints.isNotEmpty) ...[
+                    const _SectionLabel('AI bullet points'),
+                    const SizedBox(height: 8),
+                    _AiBulletPoints(points: card.summaryBulletPoints),
+                    const SizedBox(height: 18),
+                  ] else if (card.summary != null) ...[
+                    const _SectionLabel('AI summary'),
                     const SizedBox(height: 8),
                     Text(card.summary!, style: textTheme.bodyLarge),
                     const SizedBox(height: 18),
+                  ] else ...[
+                    Text(
+                      'Resumo automatico ainda indisponivel para esta iniciativa.',
+                      style: textTheme.bodyLarge?.copyWith(
+                        color: Colors.black54,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
                   ],
-                  const _SectionLabel('Redacted introduced text'),
-                  const SizedBox(height: 8),
-                  Text(
-                    card.redactedExcerpt ??
-                        card.redactedText ??
-                        'Texto redigido indisponivel para esta iniciativa.',
-                    style: textTheme.bodyLarge?.copyWith(height: 1.35),
-                  ),
                   if (card.redactedText != null || card.redactedHtml != null) ...[
-                    const SizedBox(height: 14),
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
@@ -284,6 +289,11 @@ class _AnonymizedProposalCard extends StatelessWidget {
                         label: const Text('Read full redacted text'),
                       ),
                     ),
+                  ] else ...[
+                    Text(
+                      'Texto redigido indisponivel para esta iniciativa.',
+                      style: textTheme.bodyLarge?.copyWith(height: 1.35),
+                    ),
                   ],
                 ],
               ),
@@ -291,6 +301,50 @@ class _AnonymizedProposalCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _AiBulletPoints extends StatelessWidget {
+  const _AiBulletPoints({required this.points});
+
+  final List<String> points;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children:
+          points
+              .map(
+                (line) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 7,
+                        height: 7,
+                        margin: const EdgeInsets.only(top: 8, right: 10),
+                        decoration: BoxDecoration(
+                          color: baseTheme.colorScheme.primary,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          line,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyLarge
+                              ?.copyWith(height: 1.28),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+              .toList(),
     );
   }
 }

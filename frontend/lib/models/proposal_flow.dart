@@ -56,6 +56,7 @@ class InitiativeFeedCard {
     this.initiativeNumber,
     required this.neutralTitle,
     this.summary,
+    this.summaryBulletPoints = const [],
     this.summaryGeneratedAtUtc,
     this.redactedExcerpt,
     this.redactedText,
@@ -69,6 +70,7 @@ class InitiativeFeedCard {
   final String? initiativeNumber;
   final String neutralTitle;
   final String? summary;
+  final List<String> summaryBulletPoints;
   final String? summaryGeneratedAtUtc;
   final String? redactedExcerpt;
   final String? redactedText;
@@ -89,6 +91,7 @@ class InitiativeFeedCard {
         'Iniciativa sem titulo disponivel',
       ),
       summary: _stringOrNull(json['summary']),
+      summaryBulletPoints: _stringList(json['summaryBulletPoints']),
       summaryGeneratedAtUtc: _stringOrNull(json['summaryGeneratedAtUtc']),
       redactedExcerpt: _stringOrNull(json['redactedExcerpt']),
       redactedText: _stringOrNull(json['redactedText']),
@@ -97,6 +100,16 @@ class InitiativeFeedCard {
       date: _stringOrNull(json['date']),
     );
   }
+}
+
+List<String> _stringList(dynamic value) {
+  if (value is! List) return [];
+
+  return value
+      .whereType<String>()
+      .map((item) => item.trim())
+      .where((item) => item.isNotEmpty)
+      .toList(growable: false);
 }
 
 class ProposalInteractionSubmission {

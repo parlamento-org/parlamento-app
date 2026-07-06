@@ -8,7 +8,19 @@ namespace Parlamento.Infrastructure.Services.Documents;
 
 public partial class DocumentModelRedactor : IDocumentModelRedactor
 {
-    public string PolicyVersion => "party-and-deputy-names-structured-v5-case-sensitive-acronyms";
+    private static readonly Regex EmailRegex = new(
+        @"(?<![\w.%+-])[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}(?![\w.-])",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+    private static readonly Regex UrlRegex = new(
+        @"(?<![\w@])(?:https?://|www\.)[^\s<>'"")\]]+",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+    private static readonly Regex DomainRegex = new(
+        @"(?<![\w@])(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+(?:pt|com|org|net|eu)(?:/[^\s<>'"")\]]*)?",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+    public string PolicyVersion => "party-deputy-email-link-redaction-v6";
 
     public ParliamentDocumentModel Redact(
         ParliamentDocumentModel document,
@@ -60,7 +72,7 @@ public partial class DocumentModelRedactor : IDocumentModelRedactor
         IReadOnlyList<ParliamentDocumentRun> runs,
         IReadOnlyList<string> terms)
     {
-        if (terms.Count == 0 || runs.All(x => x.Kind != ParliamentDocumentRunKind.Text))
+        if (runs.All(x => x.Kind != ParliamentDocumentRunKind.Text))
         {
             return runs.ToList();
         }
@@ -83,7 +95,7 @@ public partial class DocumentModelRedactor : IDocumentModelRedactor
             }
         }
 
-        var matches = FindMatches(flatText.ToString(), terms);
+        var matches = FindMatches(flatText.ToString(), terms, runs, map);
         if (matches.Count == 0)
         {
             return runs.ToList();
@@ -154,10 +166,17 @@ public partial class DocumentModelRedactor : IDocumentModelRedactor
         return output;
     }
 
-    private static List<TextMatch> FindMatches(string text, IReadOnlyList<string> terms)
+    private static List<TextMatch> FindMatches(
+        string text,
+        IReadOnlyList<string> terms,
+        IReadOnlyList<ParliamentDocumentRun> runs,
+        IReadOnlyList<RunCharacterMap> map)
     {
         var matches = new List<TextMatch>();
         var occupied = new bool[text.Length];
+
+        AddSensitiveMatches(text, matches, occupied);
+        AddHyperlinkMatches(runs, map, matches, occupied);
 
         foreach (var term in terms)
         {
@@ -174,21 +193,107 @@ public partial class DocumentModelRedactor : IDocumentModelRedactor
                          regexOptions))
             {
                 if (match.Length == 0 ||
-                    occupied.Skip(match.Index).Take(match.Length).Any(x => x))
+                    IsOccupied(occupied, match.Index, match.Length))
                 {
                     continue;
                 }
 
-                for (var i = match.Index; i < match.Index + match.Length; i++)
-                {
-                    occupied[i] = true;
-                }
-
-                matches.Add(new TextMatch(match.Index, match.Length));
+                AddMatch(matches, occupied, match.Index, match.Length);
             }
         }
 
         return matches.OrderBy(x => x.Start).ToList();
+    }
+
+    private static void AddSensitiveMatches(
+        string text,
+        List<TextMatch> matches,
+        bool[] occupied)
+    {
+        foreach (Match match in EmailRegex.Matches(text))
+        {
+            AddMatchIfFree(matches, occupied, match.Index, TrimTrailingPunctuation(match.Value).Length);
+        }
+
+        foreach (Match match in UrlRegex.Matches(text))
+        {
+            AddMatchIfFree(matches, occupied, match.Index, TrimTrailingPunctuation(match.Value).Length);
+        }
+
+        foreach (Match match in DomainRegex.Matches(text))
+        {
+            AddMatchIfFree(matches, occupied, match.Index, TrimTrailingPunctuation(match.Value).Length);
+        }
+    }
+
+    private static void AddHyperlinkMatches(
+        IReadOnlyList<ParliamentDocumentRun> runs,
+        IReadOnlyList<RunCharacterMap> map,
+        List<TextMatch> matches,
+        bool[] occupied)
+    {
+        var flatIndexByRunCharacter = map
+            .Select((entry, flatIndex) => new { entry.RunIndex, entry.CharIndex, FlatIndex = flatIndex })
+            .ToDictionary(x => (x.RunIndex, x.CharIndex), x => x.FlatIndex);
+
+        for (var runIndex = 0; runIndex < runs.Count; runIndex++)
+        {
+            var run = runs[runIndex];
+            if (run.Kind != ParliamentDocumentRunKind.Text ||
+                string.IsNullOrEmpty(run.Text) ||
+                string.IsNullOrWhiteSpace(run.Href))
+            {
+                continue;
+            }
+
+            if (flatIndexByRunCharacter.TryGetValue((runIndex, 0), out var start))
+            {
+                AddMatchIfFree(matches, occupied, start, run.Text.Length);
+            }
+        }
+    }
+
+    private static void AddMatchIfFree(
+        List<TextMatch> matches,
+        bool[] occupied,
+        int start,
+        int length)
+    {
+        if (length <= 0 || start < 0 || start + length > occupied.Length)
+        {
+            return;
+        }
+
+        if (IsOccupied(occupied, start, length))
+        {
+            return;
+        }
+
+        AddMatch(matches, occupied, start, length);
+    }
+
+    private static void AddMatch(
+        List<TextMatch> matches,
+        bool[] occupied,
+        int start,
+        int length)
+    {
+        for (var i = start; i < start + length; i++)
+        {
+            occupied[i] = true;
+        }
+
+        matches.Add(new TextMatch(start, length));
+    }
+
+    private static bool IsOccupied(bool[] occupied, int start, int length)
+    {
+        return occupied.Skip(start).Take(length).Any(x => x);
+    }
+
+    private static string TrimTrailingPunctuation(string value)
+    {
+        return value.TrimEnd('.', ',', ';', ':', '!', '?');
     }
 
     private static string BuildMatchPattern(string term)

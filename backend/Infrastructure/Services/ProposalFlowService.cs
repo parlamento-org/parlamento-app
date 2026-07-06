@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 using Microsoft.EntityFrameworkCore;
@@ -241,6 +242,7 @@ public sealed class ProposalFlowService : IProposalFlowService
             InitiativeNumber = initiative.InitiativeNumber,
             NeutralTitle = title ?? "Iniciativa sem titulo disponivel",
             Summary = summary?.SummaryText,
+            SummaryBulletPoints = ParseSummaryBulletPoints(summary?.BulletPointsJson),
             SummaryGeneratedAtUtc = summary?.GeneratedAtUtc,
             RedactedExcerpt = CreateExcerpt(redactedText),
             RedactedText = redactedText,
@@ -678,6 +680,27 @@ public sealed class ProposalFlowService : IProposalFlowService
         }
 
         return WhitespaceRegex.Replace(text, " ").Trim();
+    }
+
+    private static List<string> ParseSummaryBulletPoints(string? bulletPointsJson)
+    {
+        if (string.IsNullOrWhiteSpace(bulletPointsJson))
+        {
+            return [];
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(bulletPointsJson)
+                    ?.Where(item => !string.IsNullOrWhiteSpace(item))
+                    .Select(item => item.Trim())
+                    .ToList()
+                ?? [];
+        }
+        catch (JsonException)
+        {
+            return [];
+        }
     }
 
     private static string? FirstNonEmpty(params string?[] values)
