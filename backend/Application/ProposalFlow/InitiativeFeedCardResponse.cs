@@ -28,6 +28,9 @@ public sealed class InitiativeFeedCardResponse
     [JsonPropertyName("redactedText")]
     public string? RedactedText { get; set; }
 
+    [JsonPropertyName("redactedHtml")]
+    public string? RedactedHtml { get; set; }
+
     [JsonPropertyName("legislature")]
     public string? Legislature { get; set; }
 

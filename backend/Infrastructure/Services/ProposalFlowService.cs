@@ -220,15 +220,15 @@ public sealed class ProposalFlowService : IProposalFlowService
             .OrderByDescending(item => item.GeneratedAtUtc ?? item.CreatedAtUtc)
             .FirstOrDefault(item => !string.IsNullOrWhiteSpace(item.SummaryText));
 
-        var redactedText = initiative.ImportedDocuments
+        var redactedContent = initiative.ImportedDocuments
             .Select(document => document.Content)
             .Where(content =>
                 content != null &&
                 content.RedactionStatus == "Succeeded" &&
                 !string.IsNullOrWhiteSpace(content.RedactedContentText))
             .OrderByDescending(content => content!.RedactedAtUtc)
-            .Select(content => NormalizeText(content!.RedactedContentText))
             .FirstOrDefault();
+        var redactedText = NormalizeText(redactedContent?.RedactedContentText);
 
         var title = !string.IsNullOrWhiteSpace(summary?.ShortTitle)
             ? summary.ShortTitle
@@ -244,6 +244,7 @@ public sealed class ProposalFlowService : IProposalFlowService
             SummaryGeneratedAtUtc = summary?.GeneratedAtUtc,
             RedactedExcerpt = CreateExcerpt(redactedText),
             RedactedText = redactedText,
+            RedactedHtml = redactedContent?.RedactedContentHtml,
             Legislature = initiative.Legislatura,
             Date = FirstNonEmpty(initiative.VoteDate, initiative.ImportedAtUtc?.ToString("yyyy-MM-dd"))
         };

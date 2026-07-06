@@ -10,72 +10,27 @@ class ProposalRevealPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final generalityVote = reveal.generalityVote;
-    final textTheme = Theme.of(context).textTheme;
-
     return Scaffold(
       backgroundColor: baseTheme.colorScheme.surface,
       appBar: AppBar(
         backgroundColor: baseTheme.colorScheme.surface,
         foregroundColor: baseTheme.colorScheme.primary,
         elevation: 0,
-        title: const Text('Resultado'),
+        title: const Text('Resultados'),
       ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(18, 10, 18, 24),
           children: [
-            _RevealHeader(reveal: reveal),
-            const SizedBox(height: 18),
-            _Section(
-              title: 'A tua posicao',
-              child: _ValueRow(
-                icon: _userVoteIcon(reveal.userVote),
-                label: _userVoteLabel(reveal.userVote),
-                color: _userVoteColor(reveal.userVote),
-              ),
-            ),
-            const SizedBox(height: 12),
-            _Section(
-              title: 'Proponente',
-              child:
-                  reveal.proposers.isEmpty
-                      ? Text('Nao identificado', style: textTheme.bodyMedium)
-                      : Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children:
-                            reveal.proposers
-                                .map((proposer) => _ProposerChip(proposer))
-                                .toList(),
-                      ),
-            ),
-            const SizedBox(height: 12),
-            _Section(
-              title: 'Votacao na generalidade',
-              child:
-                  generalityVote == null
-                      ? Text(
-                        'Ainda sem resultado parlamentar disponivel.',
-                        style: textTheme.bodyMedium,
-                      )
-                      : _GeneralityVoteSummary(vote: generalityVote),
-            ),
-            if (generalityVote?.partyVotes.isNotEmpty ?? false) ...[
-              const SizedBox(height: 12),
-              _Section(
-                title: 'Voto por partido',
-                child: _PartyVoteList(votes: generalityVote!.partyVotes),
-              ),
-            ],
-            const SizedBox(height: 18),
+            _OutcomePanel(reveal: reveal),
+            const SizedBox(height: 14),
             FilledButton.icon(
               style: FilledButton.styleFrom(
                 backgroundColor: baseTheme.colorScheme.primary,
+                minimumSize: const Size.fromHeight(54),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                minimumSize: const Size.fromHeight(54),
               ),
               onPressed:
                   () => Navigator.of(context).push(
@@ -94,7 +49,7 @@ class ProposalRevealPage extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ),
@@ -114,109 +69,124 @@ class ProposalRevealPage extends StatelessWidget {
   }
 }
 
-class _RevealHeader extends StatelessWidget {
-  const _RevealHeader({required this.reveal});
+class _OutcomePanel extends StatelessWidget {
+  const _OutcomePanel({required this.reveal});
 
   final ProposalReveal reveal;
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final vote = reveal.generalityVote;
+    final approved = vote?.approved;
+    final outcomeColor = _outcomeColor(approved);
+    final panelColor = _panelColor(approved);
+    final partyVotes = vote?.partyVotes ?? [];
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: baseTheme.colorScheme.primary, width: 2),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.topCenter,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(top: 24),
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(18, 64, 18, 24),
+          decoration: BoxDecoration(
+            color: panelColor,
+            borderRadius: BorderRadius.circular(34),
+          ),
+          child: Column(
             children: [
-              _Badge(label: reveal.initiativeType),
-              if (reveal.initiativeNumber != null)
-                _Badge(label: reveal.initiativeNumber!),
+              _OutcomeHero(
+                label: _outcomeLabel(approved, vote?.result),
+                color: outcomeColor,
+                icon: _outcomeIcon(approved),
+              ),
+              const SizedBox(height: 34),
+              const _FloatingLabel('Proposto por:'),
+              const SizedBox(height: 14),
+              _ProposerLogoStrip(proposers: reveal.proposers),
+              const SizedBox(height: 26),
+              _PartyVoteGroups(votes: partyVotes, userVote: reveal.userVote),
+              const SizedBox(height: 18),
+              Text(
+                reveal.title,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.white.withValues(alpha: 0.92),
+                  fontWeight: FontWeight.w700,
+                  height: 1.25,
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 14),
-          Text(
-            reveal.title,
-            style: textTheme.headlineSmall?.copyWith(
-              color: baseTheme.colorScheme.primary,
-              fontWeight: FontWeight.w800,
-              height: 1.15,
+        ),
+        Positioned(
+          top: 0,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 64, vertical: 10),
+            decoration: BoxDecoration(
+              color: outcomeColor,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: const Text(
+              'Resultados',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
-class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.child});
-
-  final String title;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.black12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: baseTheme.colorScheme.primary,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 10),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-class _ValueRow extends StatelessWidget {
-  const _ValueRow({
-    required this.icon,
+class _OutcomeHero extends StatelessWidget {
+  const _OutcomeHero({
     required this.label,
     required this.color,
+    required this.icon,
   });
 
-  final IconData icon;
   final String label;
   final Color color;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        CircleAvatar(
-          radius: 18,
-          backgroundColor: color,
-          child: Icon(icon, color: Colors.white, size: 20),
+        Container(
+          width: 72,
+          height: 72,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(22),
+          ),
+          child: Icon(icon, color: Colors.white, size: 46),
         ),
-        const SizedBox(width: 10),
-        Expanded(
+        const SizedBox(width: 22),
+        Flexible(
           child: Text(
             label,
-            style: const TextStyle(fontWeight: FontWeight.w700),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+            ),
           ),
         ),
       ],
@@ -224,100 +194,36 @@ class _ValueRow extends StatelessWidget {
   }
 }
 
-class _ProposerChip extends StatelessWidget {
-  const _ProposerChip(this.proposer);
+class _ProposerLogoStrip extends StatelessWidget {
+  const _ProposerLogoStrip({required this.proposers});
 
-  final ProposalProposer proposer;
+  final List<ProposalProposer> proposers;
 
   @override
   Widget build(BuildContext context) {
-    final labels = <String>[];
-    if (proposer.acronym != null) {
-      labels.add(proposer.acronym!);
+    if (proposers.isEmpty) {
+      return const _FallbackLogo(label: '?', size: 112);
     }
-    if (proposer.name != null) {
-      labels.add(proposer.name!);
+
+    final uniqueProposers = <String, ProposalProposer>{};
+    for (final proposer in proposers) {
+      final label = proposer.acronym ?? proposer.name ?? '?';
+      final key = _partyKey(label);
+      uniqueProposers.putIfAbsent(key.isEmpty ? label : key, () => proposer);
     }
-    final label = labels.join(' - ');
 
-    return Chip(
-      backgroundColor: baseTheme.colorScheme.surface,
-      side: BorderSide(color: baseTheme.colorScheme.primary),
-      label: Text(
-        label.isEmpty ? 'Proponente' : label,
-        style: TextStyle(
-          color: baseTheme.colorScheme.primary,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
-
-class _GeneralityVoteSummary extends StatelessWidget {
-  const _GeneralityVoteSummary({required this.vote});
-
-  final ParliamentaryVoteSummary vote;
-
-  @override
-  Widget build(BuildContext context) {
-    final approved = vote.approved;
-    final color =
-        approved == true
-            ? approvedGreenBold
-            : approved == false
-            ? rejectedRedBold
-            : Colors.grey.shade700;
-    final icon =
-        approved == true
-            ? Icons.check
-            : approved == false
-            ? Icons.close
-            : Icons.remove;
-    final label = vote.result ?? vote.stageName;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _ValueRow(icon: icon, label: label, color: color),
-        if (vote.date != null) ...[
-          const SizedBox(height: 8),
-          Text(vote.date!, style: Theme.of(context).textTheme.bodySmall),
-        ],
-      ],
-    );
-  }
-}
-
-class _PartyVoteList extends StatelessWidget {
-  const _PartyVoteList({required this.votes});
-
-  final List<PartyVote> votes;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 18,
+      runSpacing: 18,
       children:
-          votes
+          uniqueProposers.values
+              .take(2)
               .map(
-                (vote) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 64,
-                        child: Text(
-                          vote.partyAcronym,
-                          style: const TextStyle(fontWeight: FontWeight.w800),
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(_partyVoteLabel(vote.orientation)),
-                      ),
-                      if (vote.numberOfDeputies != null)
-                        Text('${vote.numberOfDeputies}'),
-                    ],
-                  ),
+                (proposer) => _PartyLogo(
+                  acronym: proposer.acronym ?? proposer.name ?? '?',
+                  size: 152,
+                  fallbackLabel: proposer.acronym ?? proposer.name ?? '?',
                 ),
               )
               .toList(),
@@ -325,24 +231,281 @@ class _PartyVoteList extends StatelessWidget {
   }
 }
 
-class _Badge extends StatelessWidget {
-  const _Badge({required this.label});
+class _PartyVoteGroups extends StatelessWidget {
+  const _PartyVoteGroups({required this.votes, required this.userVote});
+
+  final List<PartyVote> votes;
+  final ProposalInteractionAction userVote;
+
+  @override
+  Widget build(BuildContext context) {
+    final favor = _byOrientation(ParliamentaryVoteOrientation.inFavor);
+    final abstain = _byOrientation(ParliamentaryVoteOrientation.abstaining);
+    final against = _byOrientation(ParliamentaryVoteOrientation.against);
+    final absent = _byOrientation(ParliamentaryVoteOrientation.absent);
+    final splitParties = _splitPartyAcronyms();
+    final highlightedOrientation = _orientationForUserVote(userVote);
+
+    if (votes.isEmpty) {
+      return const Text(
+        'Votos por partido ainda indisponiveis.',
+        textAlign: TextAlign.center,
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+      );
+    }
+
+    return Column(
+      children: [
+        if (favor.isNotEmpty)
+          _PartyVoteGroup(
+            icon: Icons.check,
+            color: approvedGreenBold,
+            votes: favor,
+            label: 'A favor',
+            splitParties: splitParties,
+            isHighlighted:
+                highlightedOrientation == ParliamentaryVoteOrientation.inFavor,
+          ),
+        if (abstain.isNotEmpty) ...[
+          const _DividerLine(),
+          _PartyVoteGroup(
+            icon: Icons.remove,
+            color: Colors.grey.shade500,
+            votes: abstain,
+            label: 'Abstencao',
+            splitParties: splitParties,
+            isHighlighted:
+                highlightedOrientation ==
+                ParliamentaryVoteOrientation.abstaining,
+          ),
+        ],
+        if (against.isNotEmpty) ...[
+          const _DividerLine(),
+          _PartyVoteGroup(
+            icon: Icons.close,
+            color: rejectedRedBold,
+            votes: against,
+            label: 'Contra',
+            splitParties: splitParties,
+            isHighlighted:
+                highlightedOrientation == ParliamentaryVoteOrientation.against,
+          ),
+        ],
+        if (absent.isNotEmpty) ...[
+          const _DividerLine(),
+          _PartyVoteGroup(
+            icon: Icons.help_outline,
+            color: Colors.grey.shade700,
+            votes: absent,
+            label: 'Ausentes',
+            splitParties: splitParties,
+            isHighlighted:
+                highlightedOrientation == ParliamentaryVoteOrientation.absent,
+          ),
+        ],
+      ],
+    );
+  }
+
+  List<PartyVote> _byOrientation(ParliamentaryVoteOrientation orientation) {
+    return votes.where((vote) => vote.orientation == orientation).toList();
+  }
+
+  Set<String> _splitPartyAcronyms() {
+    final orientationsByParty = <String, Set<ParliamentaryVoteOrientation>>{};
+    for (final vote in votes) {
+      final key = _partyKey(vote.partyAcronym);
+      if (key.isEmpty) {
+        continue;
+      }
+
+      orientationsByParty
+          .putIfAbsent(key, () => <ParliamentaryVoteOrientation>{})
+          .add(vote.orientation);
+    }
+
+    return orientationsByParty.entries
+        .where((entry) => entry.value.length > 1)
+        .map((entry) => entry.key)
+        .toSet();
+  }
+}
+
+class _PartyVoteGroup extends StatelessWidget {
+  const _PartyVoteGroup({
+    required this.icon,
+    required this.color,
+    required this.votes,
+    required this.label,
+    required this.splitParties,
+    required this.isHighlighted,
+  });
+
+  final IconData icon;
+  final Color color;
+  final List<PartyVote> votes;
+  final String label;
+  final Set<String> splitParties;
+  final bool isHighlighted;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: isHighlighted ? 0.78 : 0.55),
+        borderRadius: BorderRadius.circular(28),
+        border:
+            isHighlighted
+                ? Border.all(color: Colors.white, width: 3)
+                : Border.all(color: Colors.white.withValues(alpha: 0.18)),
+        boxShadow:
+            isHighlighted
+                ? [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.28),
+                    blurRadius: 18,
+                    spreadRadius: 2,
+                  ),
+                ]
+                : null,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: isHighlighted ? 86 : 78,
+            height: isHighlighted ? 86 : 78,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            child: Icon(icon, color: Colors.white, size: isHighlighted ? 54 : 48),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children:
+                      votes
+                          .map(
+                            (vote) => _PartyVoteLogo(
+                              vote: vote,
+                              isSplit: splitParties.contains(
+                                _partyKey(vote.partyAcronym),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PartyVoteLogo extends StatelessWidget {
+  const _PartyVoteLogo({required this.vote, required this.isSplit});
+
+  final PartyVote vote;
+  final bool isSplit;
+
+  @override
+  Widget build(BuildContext context) {
+    final count = vote.numberOfDeputies;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        _PartyLogo(acronym: vote.partyAcronym, size: 76),
+        if (count != null)
+          Positioned(
+            right: -9,
+            top: -9,
+            child: _SmallBadge(
+              label: count.toString(),
+              backgroundColor: baseTheme.colorScheme.primary,
+            ),
+          ),
+        if (isSplit)
+          Positioned(
+            left: -7,
+            bottom: -8,
+            child: _SmallBadge(
+              label: 'div.',
+              backgroundColor: Colors.black87,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _SmallBadge extends StatelessWidget {
+  const _SmallBadge({required this.label, required this.backgroundColor});
+
+  final String label;
+  final Color backgroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white, width: 1.5),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 9,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _FloatingLabel extends StatelessWidget {
+  const _FloatingLabel(this.label);
 
   final String label;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 38, vertical: 10),
       decoration: BoxDecoration(
-        color: baseTheme.colorScheme.primary,
-        borderRadius: BorderRadius.circular(8),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 3,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: Text(
         label,
         style: const TextStyle(
-          color: Colors.white,
-          fontSize: 12,
+          color: Colors.black87,
+          fontSize: 18,
           fontWeight: FontWeight.w700,
         ),
       ),
@@ -350,43 +513,175 @@ class _Badge extends StatelessWidget {
   }
 }
 
-IconData _userVoteIcon(ProposalInteractionAction action) {
+class _DividerLine extends StatelessWidget {
+  const _DividerLine();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 1,
+      margin: const EdgeInsets.symmetric(horizontal: 34, vertical: 8),
+      color: Colors.white.withValues(alpha: 0.72),
+    );
+  }
+}
+
+class _PartyLogo extends StatelessWidget {
+  const _PartyLogo({
+    required this.acronym,
+    required this.size,
+    this.fallbackLabel,
+  });
+
+  final String acronym;
+  final double size;
+  final String? fallbackLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final asset = _partyLogoAsset(acronym);
+    if (asset == null) {
+      return _FallbackLogo(
+        label: fallbackLabel ?? acronym,
+        size: size,
+      );
+    }
+
+    return Container(
+      width: size,
+      height: size * 0.68,
+      padding: const EdgeInsets.all(2),
+      child: Image.asset(
+        asset,
+        fit: BoxFit.contain,
+        errorBuilder:
+            (context, error, stackTrace) => _FallbackLogo(
+              label: fallbackLabel ?? acronym,
+              size: size,
+            ),
+      ),
+    );
+  }
+}
+
+class _FallbackLogo extends StatelessWidget {
+  const _FallbackLogo({required this.label, required this.size});
+
+  final String label;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = label.trim().isEmpty ? '?' : label.trim();
+    return Container(
+      width: size,
+      height: size * 0.62,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: Colors.black12),
+      ),
+      child: Text(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: baseTheme.colorScheme.primary,
+          fontWeight: FontWeight.w900,
+          fontSize: size > 70 ? 22 : 12,
+        ),
+      ),
+    );
+  }
+}
+
+Color _outcomeColor(bool? approved) {
+  if (approved == true) {
+    return approvedGreenBold;
+  }
+  if (approved == false) {
+    return rejectedRedBold;
+  }
+  return Colors.grey.shade700;
+}
+
+Color _panelColor(bool? approved) {
+  if (approved == true) {
+    return approvedGreenNormal.withValues(alpha: 0.78);
+  }
+  if (approved == false) {
+    return rejectedRedNormal;
+  }
+  return Colors.grey.shade300;
+}
+
+IconData _outcomeIcon(bool? approved) {
+  if (approved == true) {
+    return Icons.check;
+  }
+  if (approved == false) {
+    return Icons.close;
+  }
+  return Icons.remove;
+}
+
+String _outcomeLabel(bool? approved, String? rawResult) {
+  if (approved == true) {
+    return 'Aprovado';
+  }
+  if (approved == false) {
+    return 'Rejeitado';
+  }
+  return rawResult ?? 'Sem resultado';
+}
+
+ParliamentaryVoteOrientation? _orientationForUserVote(
+  ProposalInteractionAction action,
+) {
   return switch (action) {
-    ProposalInteractionAction.support => Icons.check,
-    ProposalInteractionAction.oppose => Icons.close,
-    ProposalInteractionAction.abstain => Icons.remove,
-    ProposalInteractionAction.skip => Icons.help_outline,
-    ProposalInteractionAction.unknown => Icons.how_to_vote,
+    ProposalInteractionAction.support => ParliamentaryVoteOrientation.inFavor,
+    ProposalInteractionAction.oppose => ParliamentaryVoteOrientation.against,
+    ProposalInteractionAction.abstain => ParliamentaryVoteOrientation.abstaining,
+    ProposalInteractionAction.skip => null,
+    ProposalInteractionAction.unknown => null,
   };
 }
 
-Color _userVoteColor(ProposalInteractionAction action) {
-  return switch (action) {
-    ProposalInteractionAction.support => approvedGreenBold,
-    ProposalInteractionAction.oppose => rejectedRedBold,
-    ProposalInteractionAction.abstain => Colors.grey.shade700,
-    ProposalInteractionAction.skip => baseTheme.colorScheme.secondary,
-    ProposalInteractionAction.unknown => baseTheme.colorScheme.primary,
-  };
+String? _partyLogoAsset(String rawAcronym) {
+  final acronym = _partyKey(rawAcronym);
+  if (acronym.contains('CDSPP')) {
+    return 'lib/images/CDSPP_logo.png';
+  }
+  if (acronym.contains('PSD') || acronym.contains('PPDPSD')) {
+    return 'lib/images/PSD_logo.png';
+  }
+  if (acronym.contains('PCP')) {
+    return 'lib/images/PCP_logo.png';
+  }
+  if (acronym == 'PS') {
+    return 'lib/images/PS_logo.png';
+  }
+  if (acronym == 'BE') {
+    return 'lib/images/BE_logo.png';
+  }
+  if (acronym == 'CH' || acronym.contains('CHEGA')) {
+    return 'lib/images/CH_logo.png';
+  }
+  if (acronym == 'IL') {
+    return 'lib/images/IL_logo.png';
+  }
+  if (acronym == 'PAN') {
+    return 'lib/images/PAN_logo.png';
+  }
+  if (acronym == 'L') {
+    return 'lib/images/L_logo.png';
+  }
+  return null;
 }
 
-String _userVoteLabel(ProposalInteractionAction action) {
-  return switch (action) {
-    ProposalInteractionAction.support => 'Apoiaste em principio',
-    ProposalInteractionAction.oppose => 'Opuseste-te em principio',
-    ProposalInteractionAction.abstain => 'Abstiveste-te em principio',
-    ProposalInteractionAction.skip => 'Saltaste a iniciativa',
-    ProposalInteractionAction.unknown => 'Escolha registada',
-  };
-}
-
-String _partyVoteLabel(ParliamentaryVoteOrientation orientation) {
-  return switch (orientation) {
-    ParliamentaryVoteOrientation.inFavor => 'A favor',
-    ParliamentaryVoteOrientation.against => 'Contra',
-    ParliamentaryVoteOrientation.abstaining => 'Abstencao',
-    ParliamentaryVoteOrientation.absent => 'Ausente',
-    ParliamentaryVoteOrientation.notInterested => 'Sem voto',
-    ParliamentaryVoteOrientation.unknown => 'Nao indicado',
-  };
+String _partyKey(String value) {
+  return value.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
 }

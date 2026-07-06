@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:frontend/controllers/auth_controller.dart';
 import 'package:frontend/controllers/vote_controller.dart';
 import 'package:frontend/models/proposal_flow.dart';
-import 'package:frontend/models/proposal.dart';
-import 'package:flip_card/flip_card.dart';
-import 'package:frontend/models/vote_model.dart';
 import 'package:frontend/pages/proposal_reveal_page.dart';
+import 'package:frontend/pages/redacted_text_reader_page.dart';
 import 'package:frontend/themes/base_theme.dart';
 import 'package:provider/provider.dart';
 
@@ -63,37 +61,10 @@ class _VotePageState extends State<VotePage> {
       });
     } catch (error) {
       if (!mounted) return;
-      _showInteractionMessage(action);
-
-      if (action == ProposalInteractionAction.skip) {
-        await _loadNextCard();
-        return;
-      }
-
-      final reveal = await _voteController.getProposalReveal(card.initiativeId);
-      if (!mounted) return;
-
-      final shouldLoadNext = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(
-          builder: (context) => ProposalRevealPage(reveal: reveal),
-        ),
-      );
-
-      if (!mounted) return;
-      if (shouldLoadNext ?? true) {
-        await _loadNextCard();
-      }
-    } catch (error) {
-      if (!mounted) return;
-      debugPrint(e.toString());
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Error getting proposal, you may be offline or they might be a problem with your connection!',
-          ),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Nao foi possivel carregar a proxima iniciativa.';
+      });
     }
   }
 
@@ -115,7 +86,25 @@ class _VotePageState extends State<VotePage> {
 
       if (!mounted) return;
       _showInteractionMessage(action);
-      await _loadNextCard();
+
+      if (action == ProposalInteractionAction.skip) {
+        await _loadNextCard();
+        return;
+      }
+
+      final reveal = await _voteController.getProposalReveal(card.initiativeId);
+      if (!mounted) return;
+
+      final shouldLoadNext = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (context) => ProposalRevealPage(reveal: reveal),
+        ),
+      );
+
+      if (!mounted) return;
+      if (shouldLoadNext ?? true) {
+        await _loadNextCard();
+      }
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -269,6 +258,33 @@ class _AnonymizedProposalCard extends StatelessWidget {
                         'Texto redigido indisponivel para esta iniciativa.',
                     style: textTheme.bodyLarge?.copyWith(height: 1.35),
                   ),
+                  if (card.redactedText != null || card.redactedHtml != null) ...[
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: baseTheme.colorScheme.primary,
+                          side: BorderSide(
+                            color: baseTheme.colorScheme.primary,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed:
+                            () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder:
+                                    (context) =>
+                                        RedactedTextReaderPage(card: card),
+                              ),
+                            ),
+                        icon: const Icon(Icons.article_outlined),
+                        label: const Text('Read full redacted text'),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

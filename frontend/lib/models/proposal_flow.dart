@@ -59,6 +59,7 @@ class InitiativeFeedCard {
     this.summaryGeneratedAtUtc,
     this.redactedExcerpt,
     this.redactedText,
+    this.redactedHtml,
     this.legislature,
     this.date,
   });
@@ -71,6 +72,7 @@ class InitiativeFeedCard {
   final String? summaryGeneratedAtUtc;
   final String? redactedExcerpt;
   final String? redactedText;
+  final String? redactedHtml;
   final String? legislature;
   final String? date;
 
@@ -90,6 +92,7 @@ class InitiativeFeedCard {
       summaryGeneratedAtUtc: _stringOrNull(json['summaryGeneratedAtUtc']),
       redactedExcerpt: _stringOrNull(json['redactedExcerpt']),
       redactedText: _stringOrNull(json['redactedText']),
+      redactedHtml: _stringOrNull(json['redactedHtml']),
       legislature: _stringOrNull(json['legislature']),
       date: _stringOrNull(json['date']),
     );
