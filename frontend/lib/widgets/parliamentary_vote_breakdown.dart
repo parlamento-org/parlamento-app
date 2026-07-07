@@ -10,6 +10,7 @@ class ParliamentaryVoteBreakdown extends StatelessWidget {
     required this.votes,
     this.isUnanimous = false,
     this.highlightedOrientation,
+    this.showHighlightedWhenEmpty = false,
     this.style = ParliamentaryVoteBreakdownStyle.compact,
     this.showAbsent = true,
     this.emptyLabel = 'Votos por partido ainda indisponíveis.',
@@ -18,6 +19,7 @@ class ParliamentaryVoteBreakdown extends StatelessWidget {
   final List<PartyVote> votes;
   final bool isUnanimous;
   final ParliamentaryVoteOrientation? highlightedOrientation;
+  final bool showHighlightedWhenEmpty;
   final ParliamentaryVoteBreakdownStyle style;
   final bool showAbsent;
   final String emptyLabel;
@@ -25,8 +27,16 @@ class ParliamentaryVoteBreakdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final groupedVotes = _groupVotes(votes, showAbsent: showAbsent);
+    final shouldShowEmptyHighlightedGroup =
+        style == ParliamentaryVoteBreakdownStyle.reveal &&
+        showHighlightedWhenEmpty &&
+        !isUnanimous &&
+        highlightedOrientation != null &&
+        groupedVotes[highlightedOrientation!]?.isNotEmpty != true;
 
-    if (groupedVotes.isEmpty && !isUnanimous) {
+    if (groupedVotes.isEmpty &&
+        !isUnanimous &&
+        !shouldShowEmptyHighlightedGroup) {
       return Text(
         emptyLabel,
         textAlign: TextAlign.center,
@@ -48,8 +58,10 @@ class ParliamentaryVoteBreakdown extends StatelessWidget {
           if (groupedVotes.isNotEmpty) const SizedBox(height: 10),
         ],
         for (final orientation in _voteOrientationOrder)
-          if (groupedVotes[orientation]?.isNotEmpty == true)
-            _buildGroup(orientation, groupedVotes[orientation]!),
+          if (groupedVotes[orientation]?.isNotEmpty == true ||
+              shouldShowEmptyHighlightedGroup &&
+                  orientation == highlightedOrientation)
+            _buildGroup(orientation, groupedVotes[orientation] ?? []),
       ],
     );
   }

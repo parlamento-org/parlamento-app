@@ -111,6 +111,7 @@ class _OutcomePanel extends StatelessWidget {
                 votes: partyVotes,
                 isUnanimous: vote?.isUnanimous == true,
                 highlightedOrientation: orientationForUserVote(reveal.userVote),
+                showHighlightedWhenEmpty: true,
                 style: ParliamentaryVoteBreakdownStyle.reveal,
                 showAbsent: false,
                 emptyLabel: 'Votos por partido ainda indisponíveis.',
