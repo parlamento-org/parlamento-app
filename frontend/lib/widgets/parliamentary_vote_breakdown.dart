@@ -27,14 +27,18 @@ class ParliamentaryVoteBreakdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final groupedVotes = _groupVotes(votes, showAbsent: showAbsent);
+    final visibleGroupedVotes = _visibleGroupedVotes(groupedVotes, style);
+    final hasVisibleGroupedVotes = visibleGroupedVotes.values.any(
+      (orientationVotes) => orientationVotes.isNotEmpty,
+    );
     final shouldShowEmptyHighlightedGroup =
         style == ParliamentaryVoteBreakdownStyle.reveal &&
         showHighlightedWhenEmpty &&
         !isUnanimous &&
         highlightedOrientation != null &&
-        groupedVotes[highlightedOrientation!]?.isNotEmpty != true;
+        visibleGroupedVotes[highlightedOrientation!]?.isNotEmpty != true;
 
-    if (groupedVotes.isEmpty &&
+    if (!hasVisibleGroupedVotes &&
         !isUnanimous &&
         !shouldShowEmptyHighlightedGroup) {
       return Text(
@@ -55,13 +59,13 @@ class ParliamentaryVoteBreakdown extends StatelessWidget {
       children: [
         if (isUnanimous) ...[
           const UnanimousVoteNotice(),
-          if (groupedVotes.isNotEmpty) const SizedBox(height: 10),
+          if (hasVisibleGroupedVotes) const SizedBox(height: 10),
         ],
         for (final orientation in _voteOrientationOrder)
-          if (groupedVotes[orientation]?.isNotEmpty == true ||
+          if (visibleGroupedVotes[orientation]?.isNotEmpty == true ||
               shouldShowEmptyHighlightedGroup &&
                   orientation == highlightedOrientation)
-            _buildGroup(orientation, groupedVotes[orientation] ?? []),
+            _buildGroup(orientation, visibleGroupedVotes[orientation] ?? []),
       ],
     );
   }
@@ -331,11 +335,12 @@ class _PartyLogoWithBadges extends StatelessWidget {
         ParliamentaryPartyLogo(acronym: vote.partyAcronym, size: 76),
         if (count != null)
           Positioned(
-            right: -9,
-            top: -9,
+            right: -11,
+            top: -12,
             child: _SmallBadge(
               label: count.toString(),
               backgroundColor: baseTheme.colorScheme.primary,
+              isProminent: true,
             ),
           ),
         if (isSplit)
@@ -417,25 +422,38 @@ class _PartyVoteChip extends StatelessWidget {
 }
 
 class _SmallBadge extends StatelessWidget {
-  const _SmallBadge({required this.label, required this.backgroundColor});
+  const _SmallBadge({
+    required this.label,
+    required this.backgroundColor,
+    this.isProminent = false,
+  });
 
   final String label;
   final Color backgroundColor;
+  final bool isProminent;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      constraints: BoxConstraints(
+        minWidth: isProminent ? 24 : 0,
+        minHeight: isProminent ? 22 : 0,
+      ),
+      alignment: Alignment.center,
+      padding: EdgeInsets.symmetric(
+        horizontal: isProminent ? 7 : 5,
+        vertical: isProminent ? 3 : 2,
+      ),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white, width: 1.5),
+        borderRadius: BorderRadius.circular(isProminent ? 12 : 8),
+        border: Border.all(color: Colors.white, width: isProminent ? 2 : 1.5),
       ),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           color: Colors.white,
-          fontSize: 9,
+          fontSize: isProminent ? 13 : 9,
           fontWeight: FontWeight.w900,
         ),
       ),
@@ -475,6 +493,24 @@ class _FallbackLogo extends StatelessWidget {
       ),
     );
   }
+}
+
+Map<ParliamentaryVoteOrientation, List<PartyVote>> _visibleGroupedVotes(
+  Map<ParliamentaryVoteOrientation, List<PartyVote>> groupedVotes,
+  ParliamentaryVoteBreakdownStyle style,
+) {
+  if (style != ParliamentaryVoteBreakdownStyle.reveal) {
+    return groupedVotes;
+  }
+
+  return groupedVotes.map(
+    (orientation, orientationVotes) => MapEntry(
+      orientation,
+      orientationVotes
+          .where((vote) => partyLogoAsset(vote.partyAcronym) != null)
+          .toList(),
+    ),
+  );
 }
 
 Map<ParliamentaryVoteOrientation, List<PartyVote>> _groupVotes(
