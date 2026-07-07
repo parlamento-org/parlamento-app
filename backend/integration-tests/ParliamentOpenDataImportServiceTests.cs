@@ -67,6 +67,34 @@ public class ParliamentOpenDataImportServiceTests
     }
 
     [Fact]
+    public async Task ImportFromFileAsync_WhenForced_UpdatesUnchangedExistingProjectLaw()
+    {
+        await using var context = CreateContext();
+        await context.Database.EnsureCreatedAsync();
+        var service = CreateService(context);
+        var samplePath = SamplePath("example_iniciativa.json");
+
+        var firstRun = await service.ImportFromFileAsync(samplePath);
+        var forcedRun = await service.ImportFromFileAsync(samplePath, force: true);
+
+        Assert.Equal(1, firstRun.RecordsInserted);
+        Assert.Equal(1, forcedRun.RecordsRead);
+        Assert.Equal(0, forcedRun.RecordsSkipped);
+        Assert.Equal(1, forcedRun.RecordsUpdated);
+        Assert.Equal(1, await context.ProjectLaws.CountAsync(x => x.SourceIdText == "356278"));
+
+        var initiative = await context.ProjectLaws
+            .Include(x => x.ImportedVotes)
+                .ThenInclude(x => x.Blocks)
+            .SingleAsync(x => x.SourceIdText == "356278");
+
+        Assert.Contains(initiative.ImportedVotes, x => x.Stage == "Generality");
+        Assert.Contains(
+            initiative.ImportedVotes.SelectMany(x => x.Blocks),
+            x => x.PartyAcronym == "CDS-PP" && x.VotingOrientation == VotingOrientation.InFavor);
+    }
+
+    [Fact]
     public async Task ImportFromFileAsync_StoresUnanimousVoteBlockAlongsideDeputyAbsence()
     {
         await using var context = CreateContext();

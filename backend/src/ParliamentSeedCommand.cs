@@ -16,10 +16,11 @@ internal static class ParliamentSeedCommand
         var seedService = scope.ServiceProvider.GetRequiredService<IParliamentDataSeedService>();
 
         app.Logger.LogInformation(
-            "Running parliament seed command. Legislatures={Legislatures} IncludeSummaries={IncludeSummaries} MaxDocuments={MaxDocuments} ForceRedaction={ForceRedaction} ForceSummaries={ForceSummaries}",
+            "Running parliament seed command. Legislatures={Legislatures} IncludeSummaries={IncludeSummaries} MaxDocuments={MaxDocuments} ForceImport={ForceImport} ForceRedaction={ForceRedaction} ForceSummaries={ForceSummaries}",
             command.Legislatures.Count == 0 ? "<all configured>" : string.Join(", ", command.Legislatures),
             command.IncludeSummaries,
             command.MaxDocuments,
+            command.ForceImport,
             command.ForceRedaction,
             command.ForceSummaries);
 
@@ -98,6 +99,12 @@ internal static class ParliamentSeedCommand
                 continue;
             }
 
+            if (string.Equals(arg, "--force-import", StringComparison.OrdinalIgnoreCase))
+            {
+                options.ForceImport = true;
+                continue;
+            }
+
             if (string.Equals(arg, "--force-summary", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(arg, "--force-summaries", StringComparison.OrdinalIgnoreCase))
             {
@@ -107,6 +114,7 @@ internal static class ParliamentSeedCommand
 
             if (string.Equals(arg, "--force", StringComparison.OrdinalIgnoreCase))
             {
+                options.ForceImport = true;
                 options.ForceRedaction = true;
                 options.ForceSummaries = true;
                 continue;

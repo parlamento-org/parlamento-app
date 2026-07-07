@@ -190,7 +190,7 @@ dotnet run --project backend/src -- parliament-seed --no-summary
 dotnet run --project backend/src -- parliament-seed --max-documents 25
 ```
 
-`parliament-seed` runs the full backend data pipeline: Open Data import, base-info preflight, document extraction/redaction for `ProjectLaw.FullProposalTextLink`, then AI summaries from the stored redacted plain text. If no legislature is supplied, it processes every configured legislature under `ParliamentOpenData:Legislatures`. Each phase remains idempotent: unchanged Open Data rows are skipped by source hash, current redacted documents are skipped by source/extractor/redaction/renderer versions, and current summaries are skipped by source hash/model/prompt version. Use `--no-summary` to stop after redaction, `--force-redaction` to rewrite document content, `--force-summary` to regenerate summaries, or `--force` for both.
+`parliament-seed` runs the full backend data pipeline: Open Data import, base-info preflight, document extraction/redaction for `ProjectLaw.FullProposalTextLink`, then AI summaries from the stored redacted plain text. If no legislature is supplied, it processes every configured legislature under `ParliamentOpenData:Legislatures`. Each phase remains idempotent: unchanged Open Data rows are skipped by source hash, current redacted documents are skipped by source/extractor/redaction/renderer versions, and current summaries are skipped by source hash/model/prompt version. Use `--no-summary` to stop after redaction, `--force-import` to rebuild existing imported initiative rows, `--force-redaction` to rewrite document content, `--force-summary` to regenerate summaries, or `--force` for all forced phases.
 
 Redact/process initiative text documents:
 

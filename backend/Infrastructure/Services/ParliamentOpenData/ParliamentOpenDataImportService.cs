@@ -40,7 +40,8 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
 
     public async Task<ParliamentImportRunResult> ImportLegislatureAsync(
         string legislature,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool force = false)
     {
         var sourceUrl = _configuration[$"ParliamentOpenData:Legislatures:{legislature}:InitiativesUrl"];
         if (string.IsNullOrWhiteSpace(sourceUrl))
@@ -65,12 +66,14 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
             legislature,
             sourceUrl,
             stream,
+            force,
             cancellationToken);
     }
 
     public async Task<ParliamentImportRunResult> ImportFromFileAsync(
         string filePath,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool force = false)
     {
         if (string.IsNullOrWhiteSpace(filePath))
         {
@@ -85,6 +88,7 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
             null,
             fullPath,
             stream,
+            force,
             cancellationToken);
     }
 
@@ -93,6 +97,7 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
         string? legislature,
         string sourceReference,
         Stream sourceStream,
+        bool force,
         CancellationToken cancellationToken)
     {
         var run = new ParliamentImportRun
@@ -121,7 +126,7 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
                 run.RecordsRead++;
                 try
                 {
-                    await ImportInitiativeAsync(run, initiative, cancellationToken);
+                    await ImportInitiativeAsync(run, initiative, force, cancellationToken);
                 }
                 catch (Exception ex)
                 {
@@ -171,6 +176,7 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
     private async Task ImportInitiativeAsync(
         ParliamentImportRun run,
         JsonElement initiative,
+        bool force,
         CancellationToken cancellationToken)
     {
         var sourceIdText = initiative.GetStringOrNull("IniId");
@@ -224,7 +230,7 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
         var sourceHash = ComputeSha256(rawJson);
         var existing = await FindExistingProjectLawAsync(sourceId, sourceIdText, cancellationToken);
 
-        if (existing is not null && existing.SourceHash == sourceHash)
+        if (existing is not null && existing.SourceHash == sourceHash && !force)
         {
             run.RecordsSkipped++;
             _logger.LogDebug(

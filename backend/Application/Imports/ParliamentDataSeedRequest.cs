@@ -6,6 +6,8 @@ public class ParliamentDataSeedRequest
 
     public bool IncludeSummaries { get; set; } = true;
 
+    public bool ForceImport { get; set; }
+
     public bool ForceRedaction { get; set; }
 
     public bool ForceSummaries { get; set; }

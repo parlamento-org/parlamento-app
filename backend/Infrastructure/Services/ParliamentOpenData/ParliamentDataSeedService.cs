@@ -82,14 +82,18 @@ public class ParliamentDataSeedService : IParliamentDataSeedService
             try
             {
                 _logger.LogInformation(
-                    "Starting parliament seed pipeline for Legislature={Legislature}. IncludeSummaries={IncludeSummaries} MaxDocuments={MaxDocuments} ForceRedaction={ForceRedaction} ForceSummaries={ForceSummaries}.",
+                    "Starting parliament seed pipeline for Legislature={Legislature}. IncludeSummaries={IncludeSummaries} MaxDocuments={MaxDocuments} ForceImport={ForceImport} ForceRedaction={ForceRedaction} ForceSummaries={ForceSummaries}.",
                     legislature,
                     includeSummaries && openAiConfigured,
                     request.MaxDocuments,
+                    request.ForceImport,
                     request.ForceRedaction,
                     request.ForceSummaries);
 
-                var importResult = await _importService.ImportLegislatureAsync(legislature, cancellationToken);
+                var importResult = await _importService.ImportLegislatureAsync(
+                    legislature,
+                    cancellationToken,
+                    force: request.ForceImport);
                 importRead += importResult.RecordsRead;
                 importInserted += importResult.RecordsInserted;
                 importUpdated += importResult.RecordsUpdated;
