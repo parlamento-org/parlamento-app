@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
@@ -768,14 +770,22 @@ public sealed class ProposalFlowService : IProposalFlowService
 
     private static string? PhaseNameFromKnownText(string? phaseName)
     {
-        return Normalize(phaseName) switch
+        return NormalizeKey(phaseName) switch
         {
-            "votacao na generalidade" or "votação na generalidade" => "Votação na generalidade",
-            "votacao na especialidade" or "votação na especialidade" => "Votação na especialidade",
-            "votacao final global" or "votação final global" => "Votação final global",
-            "fase pos-aprovacao" or "fase pós-aprovação" => "Fase pós-aprovação",
-            "publicacao" or "publicação" => "Publicação",
-            "introducao da iniciativa" or "introdução da iniciativa" => "Introdução da iniciativa",
+            "votacao na generalidade" => "Votação na generalidade",
+            "votacao na especialidade" => "Votação na especialidade",
+            "votacao final global" => "Votação final global",
+            "baixa comissao especialidade" => "Baixa à comissão para especialidade",
+            "baixa a comissao especialidade" => "Baixa à comissão para especialidade",
+            "baixa comissao" => "Baixa à comissão",
+            "baixa a comissao" => "Baixa à comissão",
+            "redacao final" => "Redação final",
+            "envio para promulgacao" => "Envio para promulgação",
+            "promulgacao" => "Promulgação",
+            "fase pos-aprovacao" => "Fase pós-aprovação",
+            "publicacao" => "Publicação",
+            "publicacao dr" => "Publicação em Diário da República",
+            "introducao da iniciativa" => "Introdução da iniciativa",
             _ => null
         };
     }
@@ -807,25 +817,97 @@ public sealed class ProposalFlowService : IProposalFlowService
 
     private static string PhaseSummary(string? phaseCode, string? phaseName)
     {
-        return phaseCode switch
+        return PhaseSummaryFromKnownText(phaseName)
+            ?? phaseCode switch
+            {
+                "250" => "A Assembleia vota se concorda, em princípio, com a iniciativa antes de a remeter para trabalho mais detalhado.",
+                "310" => "A iniciativa é apreciada na especialidade, normalmente em comissão, onde o texto pode ser alterado artigo a artigo.",
+                "320" => "A Assembleia vota o texto final resultante das fases anteriores.",
+                "370" or "380" or "390" or "400" => "O texto aprovado segue os atos posteriores necessários antes de poder tornar-se lei.",
+                "580" => "O ato final é publicado no canal oficial competente, tornando público o texto aprovado.",
+                _ when !string.IsNullOrWhiteSpace(phaseName) => $"{DisplayPhaseName(null, phaseName)}: fase registada no percurso parlamentar da iniciativa.",
+                _ => "Fase registada no percurso parlamentar da iniciativa."
+            };
+    }
+
+    private static string? PhaseSummaryFromKnownText(string? phaseName)
+    {
+        var normalized = NormalizeKey(phaseName);
+        if (string.IsNullOrWhiteSpace(normalized))
         {
-            "250" => "A Assembleia votou o apoio de princípio à iniciativa.",
-            "310" => "A iniciativa foi apreciada ou votada na especialidade, fase em que o texto pode ser alterado.",
-            "320" => "A Assembleia votou o texto final global depois das fases anteriores.",
-            "370" or "380" or "390" or "400" => "O texto aprovado seguiu os passos legislativos posteriores à aprovação.",
-            "580" => "O ato final foi publicado nos canais oficiais.",
-            _ when !string.IsNullOrWhiteSpace(phaseName) => $"A Assembleia registou a fase: {DisplayPhaseName(null, phaseName)}.",
-            _ => "A Assembleia registou uma fase do percurso desta iniciativa."
-        };
+            return null;
+        }
+
+        if (normalized.Contains("admissao") || normalized.Contains("introducao"))
+        {
+            return "A iniciativa foi apresentada e admitida para tramitação parlamentar.";
+        }
+
+        if (normalized.Contains("baixa") && normalized.Contains("comissao") && normalized.Contains("especialidade"))
+        {
+            return "A iniciativa baixou à comissão competente para apreciação na especialidade, onde o texto pode ser alterado e preparado para votação.";
+        }
+
+        if (normalized.Contains("baixa") && normalized.Contains("comissao"))
+        {
+            return "A iniciativa foi enviada à comissão parlamentar competente para análise e preparação dos trabalhos seguintes.";
+        }
+
+        if (normalized.Contains("votacao") && normalized.Contains("generalidade"))
+        {
+            return "A Assembleia vota se concorda, em princípio, com a iniciativa antes de a remeter para trabalho mais detalhado.";
+        }
+
+        if (normalized.Contains("votacao") && normalized.Contains("especialidade"))
+        {
+            return "A iniciativa é votada na especialidade, normalmente artigo a artigo ou sobre o texto preparado em comissão.";
+        }
+
+        if (normalized.Contains("votacao final global"))
+        {
+            return "A Assembleia vota o texto final resultante das fases anteriores.";
+        }
+
+        if (normalized.Contains("redacao final"))
+        {
+            return "O texto aprovado é revisto para correções formais e consolidação da versão final.";
+        }
+
+        if (normalized.Contains("decreto") || normalized.Contains("envio") && normalized.Contains("promulgacao"))
+        {
+            return "O texto aprovado segue para os atos finais, incluindo envio ao Presidente da República quando aplicável.";
+        }
+
+        if (normalized.Contains("promulgacao"))
+        {
+            return "O Presidente da República decide promulgar o diploma ou exercer o direito de veto.";
+        }
+
+        if (normalized.Contains("publicacao"))
+        {
+            return "O diploma é publicado oficialmente, tornando público o texto final aprovado.";
+        }
+
+        if (normalized.Contains("caduc"))
+        {
+            return "A iniciativa deixou de prosseguir a tramitação parlamentar, normalmente por fim da legislatura ou perda de oportunidade processual.";
+        }
+
+        if (normalized.Contains("rejei"))
+        {
+            return "A iniciativa foi rejeitada e deixou de seguir no processo legislativo.";
+        }
+
+        return null;
     }
 
     private static string SourceKindLabel(string? kind)
     {
-        return Normalize(kind) switch
+        return NormalizeKey(kind) switch
         {
             "initiativetext" or "initiative" => "Texto da iniciativa",
-            "diary" or "diario" or "diário" or "eventpublication" or "publication" => "Diário",
-            "transcript" or "transcricao" or "transcrição" => "Transcrição",
+            "diary" or "diario" or "eventpublication" or "publication" => "Diário",
+            "transcript" or "transcricao" => "Transcrição",
             "" or "document" or "eventdocument" => "Documento",
             _ => kind ?? "Documento"
         };
@@ -866,6 +948,21 @@ public sealed class ProposalFlowService : IProposalFlowService
         return (value ?? string.Empty)
             .Trim()
             .ToLowerInvariant();
+    }
+
+    private static string NormalizeKey(string? value)
+    {
+        var normalized = Normalize(value).Normalize(NormalizationForm.FormD);
+        var builder = new StringBuilder(normalized.Length);
+        foreach (var character in normalized)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(character) != UnicodeCategory.NonSpacingMark)
+            {
+                builder.Append(character);
+            }
+        }
+
+        return WhitespaceRegex.Replace(builder.ToString().Normalize(NormalizationForm.FormC), " ");
     }
 
     private static string? NormalizeIdempotencyKey(string? idempotencyKey)
