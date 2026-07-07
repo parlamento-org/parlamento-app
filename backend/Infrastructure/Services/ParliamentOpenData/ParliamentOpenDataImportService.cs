@@ -16,6 +16,8 @@ namespace Parlamento.Infrastructure.Services.ParliamentOpenData;
 
 public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
 {
+    private sealed record ExistingProjectLawLookup(int Id, string? SourceHash);
+
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
         PropertyNameCaseInsensitive = true
@@ -228,9 +230,9 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
 
         var rawJson = initiative.GetRawText();
         var sourceHash = ComputeSha256(rawJson);
-        var existing = await FindExistingProjectLawAsync(sourceId, sourceIdText, cancellationToken);
+        var existingLookup = await FindExistingProjectLawLookupAsync(sourceId, sourceIdText, cancellationToken);
 
-        if (existing is not null && existing.SourceHash == sourceHash && !force)
+        if (existingLookup is not null && existingLookup.SourceHash == sourceHash && !force)
         {
             run.RecordsSkipped++;
             _logger.LogDebug(
@@ -240,6 +242,9 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
             return;
         }
 
+        var existing = existingLookup is null
+            ? null
+            : await FindExistingProjectLawGraphAsync(existingLookup.Id, cancellationToken);
         var inserted = existing is null;
         var projectLaw = existing ?? new ProjectLaw
         {
@@ -297,12 +302,23 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
         }
     }
 
-    private async Task<ProjectLaw?> FindExistingProjectLawAsync(
+    private async Task<ExistingProjectLawLookup?> FindExistingProjectLawLookupAsync(
         int sourceId,
         string sourceIdText,
         CancellationToken cancellationToken)
     {
         return await _context.ProjectLaws
+            .Where(x => x.SourceId == sourceId || x.SourceIdText == sourceIdText)
+            .Select(x => new ExistingProjectLawLookup(x.Id, x.SourceHash))
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    private async Task<ProjectLaw?> FindExistingProjectLawGraphAsync(
+        int projectLawId,
+        CancellationToken cancellationToken)
+    {
+        return await _context.ProjectLaws
+            .AsSplitQuery()
             .Include(x => x.ProposingParty)
             .Include(x => x.VotingResultGenerality!.votingBlocks)
             .Include(x => x.VotingResultSpeciality!.votingBlocks)
@@ -314,7 +330,7 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
             .Include(x => x.ImportedPublications)
             .Include(x => x.ImportedInterventions)
             .FirstOrDefaultAsync(
-                x => x.SourceId == sourceId || x.SourceIdText == sourceIdText,
+                x => x.Id == projectLawId,
                 cancellationToken);
     }
 
