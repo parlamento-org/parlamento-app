@@ -85,7 +85,7 @@ public sealed class ProposalFlowService : IProposalFlowService
         {
             return ServiceResult<InitiativeFeedCardResponse>.Failure(
                 404,
-                "No eligible initiatives found for this user.");
+                "Não foram encontradas iniciativas elegíveis para este utilizador.");
         }
 
         var selected = candidates[Random.Shared.Next(candidates.Count)];
@@ -101,21 +101,21 @@ public sealed class ProposalFlowService : IProposalFlowService
         {
             return ServiceResult<ProposalInteractionResponse>.Failure(
                 400,
-                "Only Support, Oppose, Abstain, and Skip interactions can be recorded through this endpoint.");
+                "Só é possível registar interações de apoio, oposição, abstenção e salto neste endpoint.");
         }
 
         var userExists = await _context.Users
             .AnyAsync(user => user.Id == userId, cancellationToken);
         if (!userExists)
         {
-            return ServiceResult<ProposalInteractionResponse>.Failure(404, "No User found with the given id.");
+            return ServiceResult<ProposalInteractionResponse>.Failure(404, "Não foi encontrado nenhum utilizador com o id indicado.");
         }
 
         var initiativeExists = await _context.ProjectLaws
             .AnyAsync(initiative => initiative.Id == request.InitiativeId, cancellationToken);
         if (!initiativeExists)
         {
-            return ServiceResult<ProposalInteractionResponse>.Failure(404, "No initiative found with the given id.");
+            return ServiceResult<ProposalInteractionResponse>.Failure(404, "Não foi encontrada nenhuma iniciativa com o id indicado.");
         }
 
         var duplicate = await FindDuplicateInteractionAsync(userId, request, cancellationToken);
@@ -158,7 +158,7 @@ public sealed class ProposalFlowService : IProposalFlowService
         {
             return ServiceResult<ProposalRevealResponse>.Failure(
                 403,
-                "Reveal data is available after the user votes on the initiative.");
+                "Os resultados ficam disponíveis depois de votares na iniciativa.");
         }
 
         var initiative = await _context.ProjectLaws
@@ -176,7 +176,7 @@ public sealed class ProposalFlowService : IProposalFlowService
 
         if (initiative == null)
         {
-            return ServiceResult<ProposalRevealResponse>.Failure(404, "No initiative found with the given id.");
+            return ServiceResult<ProposalRevealResponse>.Failure(404, "Não foi encontrada nenhuma iniciativa com o id indicado.");
         }
 
         return ServiceResult<ProposalRevealResponse>.Success(MapReveal(initiative, userVote.InteractionType));
@@ -208,7 +208,7 @@ public sealed class ProposalFlowService : IProposalFlowService
 
         if (initiative == null)
         {
-            return ServiceResult<ProposalJourneyResponse>.Failure(404, "No initiative found with the given id.");
+            return ServiceResult<ProposalJourneyResponse>.Failure(404, "Não foi encontrada nenhuma iniciativa com o id indicado.");
         }
 
         return ServiceResult<ProposalJourneyResponse>.Success(MapJourney(initiative));
@@ -240,7 +240,7 @@ public sealed class ProposalFlowService : IProposalFlowService
             InitiativeId = initiative.Id,
             InitiativeType = initiative.InitiativeTypeDescription ?? "Iniciativa parlamentar",
             InitiativeNumber = initiative.InitiativeNumber,
-            NeutralTitle = title ?? "Iniciativa sem titulo disponivel",
+            NeutralTitle = title ?? "Iniciativa sem título disponível",
             Summary = summary?.SummaryText,
             SummaryBulletPoints = ParseSummaryBulletPoints(summary?.BulletPointsJson),
             SummaryGeneratedAtUtc = summary?.GeneratedAtUtc,
@@ -267,7 +267,7 @@ public sealed class ProposalFlowService : IProposalFlowService
             InitiativeId = initiative.Id,
             InitiativeType = initiative.InitiativeTypeDescription ?? "Iniciativa parlamentar",
             InitiativeNumber = initiative.InitiativeNumber,
-            Title = title ?? initiative.ProposalTitle ?? "Iniciativa sem titulo disponivel",
+            Title = title ?? initiative.ProposalTitle ?? "Iniciativa sem título disponível",
             UserVote = userVote,
             Proposers = MapProposers(initiative),
             GeneralityVote = MapGeneralityVote(initiative),
@@ -286,7 +286,7 @@ public sealed class ProposalFlowService : IProposalFlowService
             InitiativeId = initiative.Id,
             InitiativeType = initiative.InitiativeTypeDescription ?? "Iniciativa parlamentar",
             InitiativeNumber = initiative.InitiativeNumber,
-            Title = initiative.ProposalTitle ?? "Iniciativa sem titulo disponivel",
+            Title = initiative.ProposalTitle ?? "Iniciativa sem título disponível",
             Phases = BuildJourneyPhases(initiative)
         };
     }
@@ -318,7 +318,7 @@ public sealed class ProposalFlowService : IProposalFlowService
         return new ProposalJourneyPhaseResponse
         {
             PhaseCode = parliamentEvent.PhaseCode,
-            PhaseName = parliamentEvent.PhaseName ?? PhaseNameFromCode(parliamentEvent.PhaseCode),
+            PhaseName = DisplayPhaseName(parliamentEvent.PhaseCode, parliamentEvent.PhaseName),
             Date = parliamentEvent.PhaseDate,
             Status = votes.Select(vote => vote.Result).FirstOrDefault(result => !string.IsNullOrWhiteSpace(result)),
             Summary = PhaseSummary(parliamentEvent.PhaseCode, parliamentEvent.PhaseName),
@@ -354,10 +354,10 @@ public sealed class ProposalFlowService : IProposalFlowService
             phases.Add(new ProposalJourneyPhaseResponse
             {
                 PhaseCode = "250",
-                PhaseName = "Votacao na generalidade",
+                PhaseName = "Votação na generalidade",
                 Date = initiative.VoteDate,
                 Status = MapProposalResult(initiative.ProposalResult),
-                Summary = PhaseSummary("250", "Votacao na generalidade"),
+                Summary = PhaseSummary("250", "Votação na generalidade"),
                 Votes = MapGeneralityVote(initiative) is { } vote ? [vote] : []
             });
         }
@@ -376,9 +376,9 @@ public sealed class ProposalFlowService : IProposalFlowService
             phases.Insert(0, new ProposalJourneyPhaseResponse
             {
                 PhaseCode = null,
-                PhaseName = "Introducao da iniciativa",
+                PhaseName = "Introdução da iniciativa",
                 Date = initiative.ImportedAtUtc?.ToString("yyyy-MM-dd"),
-                Summary = "The initiative was introduced and made available through official Parliament sources.",
+                Summary = "A iniciativa foi apresentada e disponibilizada nas fontes oficiais da Assembleia da República.",
                 Documents = unscopedDocuments,
                 DiaryLinks = unscopedPublications
             });
@@ -433,7 +433,7 @@ public sealed class ProposalFlowService : IProposalFlowService
 
         if (importedVote != null)
         {
-            return MapParliamentaryVote(importedVote, "250", "Votacao na generalidade");
+            return MapParliamentaryVote(importedVote, "250", "Votação na generalidade");
         }
 
         if (initiative.VotingResultGenerality?.votingBlocks is not { Count: > 0 } blocks)
@@ -444,10 +444,11 @@ public sealed class ProposalFlowService : IProposalFlowService
         return new ParliamentaryVoteSummaryResponse
         {
             StageCode = "250",
-            StageName = "Votacao na generalidade",
+            StageName = "Votação na generalidade",
             Date = initiative.VoteDate,
             Result = MapProposalResult(initiative.ProposalResult),
             Approved = initiative.ProposalResult is ProposalResult.ApprovedInGenerality or ProposalResult.ApprovedInSpeciality,
+            IsUnanimous = initiative.VotingResultGenerality.isUninamous,
             PartyVotes = blocks
                 .Select(block => new PartyVoteResponse
                 {
@@ -469,12 +470,14 @@ public sealed class ProposalFlowService : IProposalFlowService
         return new ParliamentaryVoteSummaryResponse
         {
             StageCode = phaseCode ?? StageCodeFromStage(vote.Stage),
-            StageName = phaseName ?? PhaseNameFromStage(vote.Stage),
+            StageName = DisplayPhaseName(phaseCode, phaseName ?? PhaseNameFromStage(vote.Stage)),
             Date = vote.VoteDate,
             Description = vote.Description,
             Result = vote.Result,
             Approved = IsApproved(vote.Result),
+            IsUnanimous = IsUnanimousVote(vote.Unanimous),
             PartyVotes = vote.Blocks
+                .Where(block => !IsSyntheticUnanimousBlock(block))
                 .Select(block => new PartyVoteResponse
                 {
                     PartyAcronym = block.PartyAcronym ?? block.RawToken ?? string.Empty,
@@ -494,8 +497,8 @@ public sealed class ProposalFlowService : IProposalFlowService
         {
             sources.Add(new OfficialSourceLinkResponse
             {
-                Kind = "InitiativeText",
-                Label = "Official initiative text",
+                Kind = "Texto da iniciativa",
+                Label = "Texto oficial da iniciativa",
                 Url = initiative.FullProposalTextLink
             });
         }
@@ -504,8 +507,8 @@ public sealed class ProposalFlowService : IProposalFlowService
             .Where(document => !string.IsNullOrWhiteSpace(document.Url))
             .Select(document => new OfficialSourceLinkResponse
             {
-                Kind = document.Scope,
-                Label = document.Name ?? document.DocumentType ?? "Official document",
+                Kind = SourceKindLabel(document.Scope),
+                Label = document.Name ?? document.DocumentType ?? "Documento oficial",
                 Url = document.Url!
             }));
 
@@ -513,8 +516,8 @@ public sealed class ProposalFlowService : IProposalFlowService
             .Where(publication => !string.IsNullOrWhiteSpace(publication.DiaryUrl))
             .Select(publication => new OfficialSourceLinkResponse
             {
-                Kind = "Diary",
-                Label = publication.Type ?? "Diario da Assembleia da Republica",
+                Kind = "Diário",
+                Label = publication.Type ?? "Diário da Assembleia da República",
                 Url = publication.DiaryUrl!
             }));
 
@@ -528,8 +531,8 @@ public sealed class ProposalFlowService : IProposalFlowService
     {
         return new OfficialSourceLinkResponse
         {
-            Kind = document.Scope,
-            Label = document.Name ?? document.DocumentType ?? "Official document",
+            Kind = SourceKindLabel(document.Scope ?? document.DocumentType),
+            Label = document.Name ?? document.DocumentType ?? "Documento oficial",
             Url = document.Url!
         };
     }
@@ -538,8 +541,8 @@ public sealed class ProposalFlowService : IProposalFlowService
     {
         return new OfficialSourceLinkResponse
         {
-            Kind = "Diary",
-            Label = publication.Type ?? "Diario da Assembleia da Republica",
+            Kind = "Diário",
+            Label = publication.Type ?? "Diário da Assembleia da República",
             Url = publication.DiaryUrl!
         };
     }
@@ -548,7 +551,7 @@ public sealed class ProposalFlowService : IProposalFlowService
     {
         return new OfficialSourceLinkResponse
         {
-            Kind = "Transcript",
+            Kind = "Transcrição",
             Label = SpeakerLabel(intervention),
             Url = intervention.PublicationDiaryUrl!
         };
@@ -722,10 +725,10 @@ public sealed class ProposalFlowService : IProposalFlowService
     {
         return result switch
         {
-            ProposalResult.ApprovedInGenerality => "Approved in generality",
-            ProposalResult.RejectedInGenerality => "Rejected in generality",
-            ProposalResult.ApprovedInSpeciality => "Approved in speciality",
-            ProposalResult.RejectedInSpeciality => "Rejected in speciality",
+            ProposalResult.ApprovedInGenerality => "Aprovado na generalidade",
+            ProposalResult.RejectedInGenerality => "Rejeitado na generalidade",
+            ProposalResult.ApprovedInSpeciality => "Aprovado na especialidade",
+            ProposalResult.RejectedInSpeciality => "Rejeitado na especialidade",
             _ => null
         };
     }
@@ -742,16 +745,38 @@ public sealed class ProposalFlowService : IProposalFlowService
         return int.TryParse(phaseCode, out var key) ? key : int.MaxValue;
     }
 
-    private static string PhaseNameFromCode(string? phaseCode)
+    private static string DisplayPhaseName(string? phaseCode, string? phaseName)
+    {
+        return PhaseNameFromCode(phaseCode)
+            ?? PhaseNameFromKnownText(phaseName)
+            ?? phaseName
+            ?? "Fase parlamentar";
+    }
+
+    private static string? PhaseNameFromCode(string? phaseCode)
     {
         return phaseCode switch
         {
-            "250" => "Votacao na generalidade",
-            "310" => "Votacao na especialidade",
-            "320" => "Votacao final global",
-            "370" or "380" or "390" or "400" => "Fase pos-aprovacao",
-            "580" => "Publicacao",
-            _ => "Fase parlamentar"
+            "250" => "Votação na generalidade",
+            "310" => "Votação na especialidade",
+            "320" => "Votação final global",
+            "370" or "380" or "390" or "400" => "Fase pós-aprovação",
+            "580" => "Publicação",
+            _ => null
+        };
+    }
+
+    private static string? PhaseNameFromKnownText(string? phaseName)
+    {
+        return Normalize(phaseName) switch
+        {
+            "votacao na generalidade" or "votação na generalidade" => "Votação na generalidade",
+            "votacao na especialidade" or "votação na especialidade" => "Votação na especialidade",
+            "votacao final global" or "votação final global" => "Votação final global",
+            "fase pos-aprovacao" or "fase pós-aprovação" => "Fase pós-aprovação",
+            "publicacao" or "publicação" => "Publicação",
+            "introducao da iniciativa" or "introdução da iniciativa" => "Introdução da iniciativa",
+            _ => null
         };
     }
 
@@ -759,12 +784,12 @@ public sealed class ProposalFlowService : IProposalFlowService
     {
         return stage switch
         {
-            "Generality" => "Votacao na generalidade",
-            "Speciality" => "Votacao na especialidade",
-            "FinalGlobal" => "Votacao final global",
-            "PostApproval" => "Fase pos-aprovacao",
-            "PublishedLaw" => "Publicacao",
-            _ => "Votacao parlamentar"
+            "Generality" => "Votação na generalidade",
+            "Speciality" => "Votação na especialidade",
+            "FinalGlobal" => "Votação final global",
+            "PostApproval" => "Fase pós-aprovação",
+            "PublishedLaw" => "Publicação",
+            _ => "Votação parlamentar"
         };
     }
 
@@ -784,14 +809,37 @@ public sealed class ProposalFlowService : IProposalFlowService
     {
         return phaseCode switch
         {
-            "250" => "Parliament voted on whether to support the initiative in principle.",
-            "310" => "The initiative was examined or voted in speciality, where details can change.",
-            "320" => "Parliament voted on the final global text after earlier phases.",
-            "370" or "380" or "390" or "400" => "The approved text moved through post-approval legislative steps.",
-            "580" => "The final act was published through official channels.",
-            _ when !string.IsNullOrWhiteSpace(phaseName) => $"Parliament recorded the phase: {phaseName}.",
-            _ => "Parliament recorded a lifecycle phase for this initiative."
+            "250" => "A Assembleia votou o apoio de princípio à iniciativa.",
+            "310" => "A iniciativa foi apreciada ou votada na especialidade, fase em que o texto pode ser alterado.",
+            "320" => "A Assembleia votou o texto final global depois das fases anteriores.",
+            "370" or "380" or "390" or "400" => "O texto aprovado seguiu os passos legislativos posteriores à aprovação.",
+            "580" => "O ato final foi publicado nos canais oficiais.",
+            _ when !string.IsNullOrWhiteSpace(phaseName) => $"A Assembleia registou a fase: {DisplayPhaseName(null, phaseName)}.",
+            _ => "A Assembleia registou uma fase do percurso desta iniciativa."
         };
+    }
+
+    private static string SourceKindLabel(string? kind)
+    {
+        return Normalize(kind) switch
+        {
+            "initiativetext" or "initiative" => "Texto da iniciativa",
+            "diary" or "diario" or "diário" or "eventpublication" or "publication" => "Diário",
+            "transcript" or "transcricao" or "transcrição" => "Transcrição",
+            "" or "document" or "eventdocument" => "Documento",
+            _ => kind ?? "Documento"
+        };
+    }
+
+    private static bool IsUnanimousVote(string? unanimous)
+    {
+        return !string.IsNullOrWhiteSpace(unanimous);
+    }
+
+    private static bool IsSyntheticUnanimousBlock(ParliamentInitiativeVoteBlock block)
+    {
+        return string.IsNullOrWhiteSpace(block.PartyAcronym) &&
+               string.Equals(block.RawToken, "unanime", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string SpeakerLabel(ParliamentInitiativeIntervention intervention)
@@ -810,7 +858,7 @@ public sealed class ProposalFlowService : IProposalFlowService
                 : $"{intervention.GovernmentMemberName} ({intervention.GovernmentMemberRole})";
         }
 
-        return "Debate transcript";
+        return "Transcrição do debate";
     }
 
     private static string Normalize(string? value)

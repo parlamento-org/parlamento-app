@@ -22,6 +22,9 @@ public sealed class ParliamentaryVoteSummaryResponse
     [JsonPropertyName("approved")]
     public bool? Approved { get; set; }
 
+    [JsonPropertyName("isUnanimous")]
+    public bool IsUnanimous { get; set; }
+
     [JsonPropertyName("partyVotes")]
     public List<PartyVoteResponse> PartyVotes { get; set; } = [];
 }

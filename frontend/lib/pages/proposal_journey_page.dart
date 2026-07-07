@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:frontend/controllers/vote_controller.dart';
 import 'package:frontend/models/proposal_flow.dart';
 import 'package:frontend/themes/base_theme.dart';
+import 'package:frontend/widgets/parliamentary_vote_breakdown.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProposalJourneyPage extends StatefulWidget {
   const ProposalJourneyPage({
@@ -47,7 +49,7 @@ class _ProposalJourneyPageState extends State<ProposalJourneyPage> {
                 child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: Text(
-                    'Nao foi possivel carregar o percurso da proposta.',
+                    'Não foi possível carregar o percurso da proposta.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
@@ -321,7 +323,7 @@ class _ExpandedPhaseDetails extends StatelessWidget {
         const SizedBox(height: 4),
         _DetailText(label: 'Resumo', value: phase.summary),
         if (phase.observation != null)
-          _DetailText(label: 'Observacao', value: phase.observation!),
+          _DetailText(label: 'Observação', value: phase.observation!),
         if (phase.approvedTextId != null)
           _DetailText(label: 'Texto aprovado', value: phase.approvedTextId!),
         _VoteSection(votes: phase.votes),
@@ -332,16 +334,16 @@ class _ExpandedPhaseDetails extends StatelessWidget {
           emptyLabel: 'Sem documentos associados a esta fase.',
         ),
         _LinksSection(
-          title: 'Diario da Assembleia',
+          title: 'Diário da Assembleia',
           icon: Icons.article_outlined,
           links: phase.diaryLinks,
-          emptyLabel: 'Sem links de diario nesta fase.',
+          emptyLabel: 'Sem ligações ao Diário nesta fase.',
         ),
         _LinksSection(
-          title: 'Transcricoes de debate',
+          title: 'Transcrições de debate',
           icon: Icons.forum_outlined,
           links: phase.transcripts,
-          emptyLabel: 'Sem transcricoes associadas.',
+          emptyLabel: 'Sem transcrições associadas.',
         ),
         _VideosSection(videos: phase.videos),
       ],
@@ -357,11 +359,11 @@ class _VoteSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _DetailSection(
-      title: 'Votacao parlamentar',
+      title: 'Votação parlamentar',
       icon: Icons.how_to_vote_outlined,
       child:
           votes.isEmpty
-              ? const _EmptyDetail('Sem votacao registada nesta fase.')
+              ? const _EmptyDetail('Sem votação registada nesta fase.')
               : Column(
                 children:
                     votes
@@ -384,11 +386,6 @@ class _VoteSummaryBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final groups = <ParliamentaryVoteOrientation, List<PartyVote>>{};
-    for (final partyVote in vote.partyVotes) {
-      groups.putIfAbsent(partyVote.orientation, () => []).add(partyVote);
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -406,107 +403,13 @@ class _VoteSummaryBlock extends StatelessWidget {
           Text(vote.description!, style: Theme.of(context).textTheme.bodySmall),
         ],
         const SizedBox(height: 10),
-        if (groups.isEmpty)
-          const _EmptyDetail('Sem votos por partido disponiveis.')
-        else
-          Column(
-            children:
-                _voteOrientationOrder
-                    .where(
-                      (orientation) => groups[orientation]?.isNotEmpty == true,
-                    )
-                    .map(
-                      (orientation) => _PartyVoteBreakdown(
-                        orientation: orientation,
-                        votes: groups[orientation]!,
-                      ),
-                    )
-                    .toList(),
-          ),
-      ],
-    );
-  }
-}
-
-class _PartyVoteBreakdown extends StatelessWidget {
-  const _PartyVoteBreakdown({required this.orientation, required this.votes});
-
-  final ParliamentaryVoteOrientation orientation;
-  final List<PartyVote> votes;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: _orientationColor(orientation),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(_orientationIcon(orientation), color: Colors.white),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _orientationLabel(orientation),
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children:
-                      votes.map((vote) => _PartyVoteChip(vote: vote)).toList(),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PartyVoteChip extends StatelessWidget {
-  const _PartyVoteChip({required this.vote});
-
-  final PartyVote vote;
-
-  @override
-  Widget build(BuildContext context) {
-    final count = vote.numberOfDeputies;
-    final label =
-        count == null ? vote.partyAcronym : '${vote.partyAcronym} $count';
-
-    return Container(
-      constraints: const BoxConstraints(minHeight: 30),
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-      decoration: BoxDecoration(
-        color: baseTheme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.black12),
-      ),
-      child: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          color: baseTheme.colorScheme.primary,
-          fontSize: 12,
-          fontWeight: FontWeight.w900,
+        ParliamentaryVoteBreakdown(
+          votes: vote.partyVotes,
+          isUnanimous: vote.isUnanimous,
+          style: ParliamentaryVoteBreakdownStyle.compact,
+          emptyLabel: 'Sem votos por partido disponíveis.',
         ),
-      ),
+      ],
     );
   }
 }
@@ -556,11 +459,11 @@ class _VideosSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _DetailSection(
-      title: 'Videos de debate',
+      title: 'Vídeos de debate',
       icon: Icons.play_circle_outline,
       child:
           videos.isEmpty
-              ? const _EmptyDetail('Sem videos associados.')
+              ? const _EmptyDetail('Sem vídeos associados.')
               : Column(
                 children:
                     videos
@@ -662,11 +565,21 @@ class _CopyableLinkRow extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(8),
       onTap: () async {
+        final uri = Uri.tryParse(url);
+        final launched =
+            uri != null &&
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (!context.mounted) return;
+
+        if (launched) {
+          return;
+        }
+
         await Clipboard.setData(ClipboardData(text: url));
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Link copiado.'),
+            content: Text('Não foi possível abrir. Link copiado.'),
             duration: Duration(seconds: 1),
           ),
         );
@@ -718,7 +631,7 @@ class _CopyableLinkRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Icon(Icons.copy, color: Colors.grey.shade600, size: 18),
+            Icon(Icons.open_in_new, color: Colors.grey.shade600, size: 18),
           ],
         ),
       ),
@@ -847,21 +760,12 @@ class _EmptyTimeline extends StatelessWidget {
         border: Border.all(color: Colors.black12),
       ),
       child: const Text(
-        'Ainda nao ha fases parlamentares disponiveis para esta iniciativa.',
+        'Ainda não há fases parlamentares disponíveis para esta iniciativa.',
         textAlign: TextAlign.center,
       ),
     );
   }
 }
-
-const _voteOrientationOrder = [
-  ParliamentaryVoteOrientation.inFavor,
-  ParliamentaryVoteOrientation.abstaining,
-  ParliamentaryVoteOrientation.against,
-  ParliamentaryVoteOrientation.absent,
-  ParliamentaryVoteOrientation.notInterested,
-  ParliamentaryVoteOrientation.unknown,
-];
 
 IconData _phaseIcon(ProposalJourneyPhase phase) {
   final code = phase.phaseCode;
@@ -877,39 +781,6 @@ IconData _phaseIcon(ProposalJourneyPhase phase) {
   return Icons.flag_outlined;
 }
 
-String _orientationLabel(ParliamentaryVoteOrientation orientation) {
-  return switch (orientation) {
-    ParliamentaryVoteOrientation.inFavor => 'A favor',
-    ParliamentaryVoteOrientation.abstaining => 'Abstencao',
-    ParliamentaryVoteOrientation.against => 'Contra',
-    ParliamentaryVoteOrientation.absent => 'Ausencias',
-    ParliamentaryVoteOrientation.notInterested => 'Sem interesse',
-    ParliamentaryVoteOrientation.unknown => 'Outro',
-  };
-}
-
-IconData _orientationIcon(ParliamentaryVoteOrientation orientation) {
-  return switch (orientation) {
-    ParliamentaryVoteOrientation.inFavor => Icons.check,
-    ParliamentaryVoteOrientation.abstaining => Icons.remove,
-    ParliamentaryVoteOrientation.against => Icons.close,
-    ParliamentaryVoteOrientation.absent => Icons.person_off_outlined,
-    ParliamentaryVoteOrientation.notInterested => Icons.block_outlined,
-    ParliamentaryVoteOrientation.unknown => Icons.help_outline,
-  };
-}
-
-Color _orientationColor(ParliamentaryVoteOrientation orientation) {
-  return switch (orientation) {
-    ParliamentaryVoteOrientation.inFavor => approvedGreenBold,
-    ParliamentaryVoteOrientation.abstaining => Colors.grey.shade600,
-    ParliamentaryVoteOrientation.against => rejectedRedBold,
-    ParliamentaryVoteOrientation.absent => Colors.grey.shade700,
-    ParliamentaryVoteOrientation.notInterested => Colors.black54,
-    ParliamentaryVoteOrientation.unknown => baseTheme.colorScheme.secondary,
-  };
-}
-
 String _videoLabel(ProposalJourneyVideo video) {
   if (video.speakerName != null) {
     return video.speakerParty == null
@@ -923,7 +794,7 @@ String _videoLabel(ProposalJourneyVideo video) {
         : '${video.governmentMemberName!} (${video.governmentMemberRole!})';
   }
 
-  return 'Video de debate';
+  return 'Vídeo de debate';
 }
 
 String _videoDetail(ProposalJourneyVideo video) {
@@ -935,5 +806,5 @@ String _videoDetail(ProposalJourneyVideo video) {
       video.startTime!,
   ];
 
-  return parts.isEmpty ? 'Video' : parts.join(' · ');
+  return parts.isEmpty ? 'Vídeo' : parts.join(' · ');
 }

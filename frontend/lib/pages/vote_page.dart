@@ -37,7 +37,7 @@ class _VotePageState extends State<VotePage> {
     if (session == null) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Inicia sessao para votar nas iniciativas.';
+        _errorMessage = 'Inicia sessão para votar nas iniciativas.';
       });
       return;
     }
@@ -63,7 +63,7 @@ class _VotePageState extends State<VotePage> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Nao foi possivel carregar a proxima iniciativa.';
+        _errorMessage = 'Não foi possível carregar a próxima iniciativa.';
       });
     }
   }
@@ -109,7 +109,7 @@ class _VotePageState extends State<VotePage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Nao foi possivel registar a tua escolha.'),
+          content: Text('Não foi possível registar a tua escolha.'),
         ),
       );
     } finally {
@@ -122,8 +122,8 @@ class _VotePageState extends State<VotePage> {
   void _showInteractionMessage(ProposalInteractionAction action) {
     final message = switch (action) {
       ProposalInteractionAction.support => 'Apoio registado.',
-      ProposalInteractionAction.oppose => 'Oposicao registada.',
-      ProposalInteractionAction.abstain => 'Abstencao registada.',
+      ProposalInteractionAction.oppose => 'Oposição registada.',
+      ProposalInteractionAction.abstain => 'Abstenção registada.',
       ProposalInteractionAction.skip => 'Iniciativa saltada.',
       ProposalInteractionAction.unknown => 'Escolha registada.',
     };
@@ -163,7 +163,7 @@ class _VotePageState extends State<VotePage> {
           children: [
             CircularProgressIndicator(),
             SizedBox(height: 14),
-            Text('A carregar a proxima iniciativa'),
+            Text('A carregar a próxima iniciativa'),
           ],
         ),
       );
@@ -176,7 +176,7 @@ class _VotePageState extends State<VotePage> {
     final card = _card;
     if (card == null) {
       return _EmptyState(
-        message: 'Nao ha iniciativas elegiveis neste momento.',
+        message: 'Não há iniciativas elegíveis neste momento.',
         onRetry: _loadNextCard,
       );
     }
@@ -229,7 +229,7 @@ class _AnonymizedProposalCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Identity cues are hidden until you vote.',
+                  'As identidades políticas ficam ocultas até votares.',
                   style: textTheme.bodySmall?.copyWith(
                     color: Colors.black54,
                     fontWeight: FontWeight.w600,
@@ -245,18 +245,19 @@ class _AnonymizedProposalCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (card.summaryBulletPoints.isNotEmpty) ...[
-                    const _SectionLabel('AI bullet points'),
+                    const _SectionLabel('Pontos-chave automáticos'),
                     const SizedBox(height: 8),
                     _AiBulletPoints(points: card.summaryBulletPoints),
                     const SizedBox(height: 18),
-                  ], if (card.summary != null) ...[
-                    const _SectionLabel('AI summary'),
+                  ],
+                  if (card.summary != null) ...[
+                    const _SectionLabel('Resumo automático'),
                     const SizedBox(height: 8),
                     Text(card.summary!, style: textTheme.bodyLarge),
                     const SizedBox(height: 18),
                   ] else ...[
                     Text(
-                      'Resumo automatico ainda indisponivel para esta iniciativa.',
+                      'Resumo automático ainda indisponível para esta iniciativa.',
                       style: textTheme.bodyLarge?.copyWith(
                         color: Colors.black54,
                         height: 1.35,
@@ -264,7 +265,8 @@ class _AnonymizedProposalCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 18),
                   ],
-                  if (card.redactedText != null || card.redactedHtml != null) ...[
+                  if (card.redactedText != null ||
+                      card.redactedHtml != null) ...[
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
@@ -286,12 +288,12 @@ class _AnonymizedProposalCard extends StatelessWidget {
                               ),
                             ),
                         icon: const Icon(Icons.article_outlined),
-                        label: const Text('Read full redacted text'),
+                        label: const Text('Ler texto redigido completo'),
                       ),
                     ),
                   ] else ...[
                     Text(
-                      'Texto redigido indisponivel para esta iniciativa.',
+                      'Texto redigido indisponível para esta iniciativa.',
                       style: textTheme.bodyLarge?.copyWith(height: 1.35),
                     ),
                   ],
@@ -334,10 +336,9 @@ class _AiBulletPoints extends StatelessWidget {
                       Expanded(
                         child: Text(
                           line,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyLarge
-                              ?.copyWith(height: 1.28),
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodyLarge?.copyWith(height: 1.28),
                         ),
                       ),
                     ],
@@ -364,7 +365,7 @@ class _VoteActions extends StatelessWidget {
           children: [
             Expanded(
               child: _ActionButton(
-                label: 'Oppose',
+                label: 'Opor',
                 icon: Icons.close,
                 color: rejectedRedBold,
                 enabled: enabled,
@@ -374,7 +375,7 @@ class _VoteActions extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: _ActionButton(
-                label: 'Abstain',
+                label: 'Abster',
                 icon: Icons.remove,
                 color: Colors.grey.shade700,
                 enabled: enabled,
@@ -384,7 +385,7 @@ class _VoteActions extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: _ActionButton(
-                label: 'Support',
+                label: 'Apoiar',
                 icon: Icons.check,
                 color: approvedGreenBold,
                 enabled: enabled,
@@ -402,7 +403,7 @@ class _VoteActions extends StatelessWidget {
                 enabled ? () => onAction(ProposalInteractionAction.skip) : null,
             icon: const Icon(Icons.help_outline, color: Colors.white),
             label: const Text(
-              'Skip / Need more info',
+              'Saltar / Preciso de mais informação',
               style: TextStyle(color: Colors.white, fontSize: 16),
             ),
           ),
@@ -516,7 +517,7 @@ class _EmptyState extends StatelessWidget {
           TextButton(
             style: buttonStyle,
             onPressed: onRetry,
-            child: const Text('Try again'),
+            child: const Text('Tentar novamente'),
           ),
         ],
       ),

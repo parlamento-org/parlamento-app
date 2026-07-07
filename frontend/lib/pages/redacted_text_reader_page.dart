@@ -41,7 +41,7 @@ class RedactedTextReaderPage extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              'Identidades politicas ocultadas ate votares.',
+              'Identidades políticas ocultadas até votares.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Colors.black54,
                 fontWeight: FontWeight.w600,

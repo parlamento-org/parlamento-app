@@ -88,7 +88,7 @@ class InitiativeFeedCard {
       initiativeNumber: _stringOrNull(json['initiativeNumber']),
       neutralTitle: _stringOrFallback(
         json['neutralTitle'],
-        'Iniciativa sem titulo disponivel',
+        'Iniciativa sem título disponível',
       ),
       summary: _stringOrNull(json['summary']),
       summaryBulletPoints: _stringList(json['summaryBulletPoints']),
@@ -194,7 +194,7 @@ class ProposalReveal {
       initiativeNumber: _stringOrNull(json['initiativeNumber']),
       title: _stringOrFallback(
         json['title'],
-        'Iniciativa sem titulo disponivel',
+        'Iniciativa sem título disponível',
       ),
       userVote: ProposalInteractionAction.fromWireName(
         _stringOrNull(json['userVote']),
@@ -240,6 +240,7 @@ class ParliamentaryVoteSummary {
     this.description,
     this.result,
     this.approved,
+    required this.isUnanimous,
     required this.partyVotes,
   });
 
@@ -249,16 +250,18 @@ class ParliamentaryVoteSummary {
   final String? description;
   final String? result;
   final bool? approved;
+  final bool isUnanimous;
   final List<PartyVote> partyVotes;
 
   factory ParliamentaryVoteSummary.fromJson(Map<String, dynamic> json) {
     return ParliamentaryVoteSummary(
       stageCode: _stringOrFallback(json['stageCode'], ''),
-      stageName: _stringOrFallback(json['stageName'], 'Votacao parlamentar'),
+      stageName: _stringOrFallback(json['stageName'], 'Votação parlamentar'),
       date: _stringOrNull(json['date']),
       description: _stringOrNull(json['description']),
       result: _stringOrNull(json['result']),
       approved: _boolOrNull(json['approved']),
+      isUnanimous: _boolOrFalse(json['isUnanimous']),
       partyVotes: _objectList(json['partyVotes'], PartyVote.fromJson),
     );
   }
@@ -302,8 +305,8 @@ class OfficialSourceLink {
 
   factory OfficialSourceLink.fromJson(Map<String, dynamic> json) {
     return OfficialSourceLink(
-      kind: _stringOrFallback(json['kind'], 'Source'),
-      label: _stringOrFallback(json['label'], 'Official source'),
+      kind: _stringOrFallback(json['kind'], 'Fonte'),
+      label: _stringOrFallback(json['label'], 'Fonte oficial'),
       url: _stringOrFallback(json['url'], ''),
     );
   }
@@ -317,14 +320,17 @@ class ProposalJourneyAction {
 
   factory ProposalJourneyAction.fromJson(Map<String, dynamic> json) {
     return ProposalJourneyAction(
-      label: _stringOrFallback(json['label'], "Follow the proposal's journey"),
+      label: _stringOrFallback(
+        json['label'],
+        'Acompanhar percurso da proposta',
+      ),
       endpoint: _stringOrFallback(json['endpoint'], ''),
     );
   }
 
   factory ProposalJourneyAction.empty() {
     return ProposalJourneyAction(
-      label: "Follow the proposal's journey",
+      label: 'Acompanhar percurso da proposta',
       endpoint: '',
     );
   }
@@ -355,7 +361,7 @@ class ProposalJourney {
       initiativeNumber: _stringOrNull(json['initiativeNumber']),
       title: _stringOrFallback(
         json['title'],
-        'Iniciativa sem titulo disponivel',
+        'Iniciativa sem título disponível',
       ),
       phases: _objectList(json['phases'], ProposalJourneyPhase.fromJson),
     );
@@ -399,7 +405,7 @@ class ProposalJourneyPhase {
       status: _stringOrNull(json['status']),
       summary: _stringOrFallback(
         json['summary'],
-        'Parliament recorded a lifecycle phase for this initiative.',
+        'A Assembleia registou uma fase do percurso desta iniciativa.',
       ),
       observation: _stringOrNull(json['observation']),
       approvedTextId: _stringOrNull(json['approvedTextId']),

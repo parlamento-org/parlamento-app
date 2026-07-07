@@ -12,7 +12,7 @@ class RedactedHtmlDocument extends StatelessWidget {
     final blocks = _parseBlocks(html);
     if (blocks.isEmpty) {
       return Text(
-        plainText ?? 'Texto redigido indisponivel.',
+        plainText ?? 'Texto redigido indisponível.',
         style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.4),
       );
     }
@@ -44,7 +44,10 @@ class _DocumentBlock extends StatelessWidget {
       _ => baseStyle,
     };
     final spans = block.spans(style ?? const TextStyle(fontSize: 16));
-    final content = Text.rich(TextSpan(children: spans), textAlign: block.align);
+    final content = Text.rich(
+      TextSpan(children: spans),
+      textAlign: block.align,
+    );
 
     return Padding(
       padding: EdgeInsets.only(
@@ -55,10 +58,7 @@ class _DocumentBlock extends StatelessWidget {
           block.kind == _BlockKind.listItem
               ? Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('- ', style: style),
-                  Expanded(child: content),
-                ],
+                children: [Text('- ', style: style), Expanded(child: content)],
               )
               : content,
     );
