@@ -73,4 +73,17 @@ public sealed class ProposalFlowController : ControllerBase
         var result = await _proposalFlowService.GetJourneyAsync(initiativeId, cancellationToken);
         return this.ToActionResult(result);
     }
+
+    [HttpGet("history", Name = "GetProposalHistory")]
+    public async Task<IActionResult> GetHistory(CancellationToken cancellationToken)
+    {
+        var userId = User.GetUserId();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
+
+        var result = await _proposalFlowService.GetHistoryAsync(userId.Value, cancellationToken);
+        return this.ToActionResult(result);
+    }
 }

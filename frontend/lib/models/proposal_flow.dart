@@ -456,6 +456,49 @@ class ProposalJourneyVideo {
   }
 }
 
+class ProposalHistoryItem {
+  ProposalHistoryItem({
+    required this.interactionId,
+    required this.initiativeId,
+    required this.initiativeType,
+    this.initiativeNumber,
+    required this.title,
+    required this.action,
+    this.createdAtUtc,
+    required this.proposers,
+  });
+
+  final int interactionId;
+  final int initiativeId;
+  final String initiativeType;
+  final String? initiativeNumber;
+  final String title;
+  final ProposalInteractionAction action;
+  final String? createdAtUtc;
+  final List<ProposalProposer> proposers;
+
+  factory ProposalHistoryItem.fromJson(Map<String, dynamic> json) {
+    return ProposalHistoryItem(
+      interactionId: _intOrZero(json['interactionId']),
+      initiativeId: _intOrZero(json['initiativeId']),
+      initiativeType: _stringOrFallback(
+        json['initiativeType'],
+        'Iniciativa parlamentar',
+      ),
+      initiativeNumber: _stringOrNull(json['initiativeNumber']),
+      title: _stringOrFallback(
+        json['title'],
+        'Iniciativa sem título disponível',
+      ),
+      action: ProposalInteractionAction.fromWireName(
+        _stringOrNull(json['action']),
+      ),
+      createdAtUtc: _stringOrNull(json['createdAtUtc']),
+      proposers: _objectList(json['proposers'], ProposalProposer.fromJson),
+    );
+  }
+}
+
 List<T> _objectList<T>(
   dynamic value,
   T Function(Map<String, dynamic>) fromJson,

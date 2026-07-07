@@ -32,6 +32,16 @@ class ApiResponse {
       throw ApiException('Expected a JSON object response', cause: error);
     }
   }
+
+  List<dynamic> jsonArray() {
+    try {
+      return jsonDecode(body) as List<dynamic>;
+    } on FormatException catch (error) {
+      throw ApiException('Invalid JSON response', cause: error);
+    } on TypeError catch (error) {
+      throw ApiException('Expected a JSON array response', cause: error);
+    }
+  }
 }
 
 class ApiClient {

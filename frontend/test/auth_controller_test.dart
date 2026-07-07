@@ -102,9 +102,12 @@ class _FakeRepository implements Repository {
   }
 
   @override
-  Future<ProposalReveal> getProposalReveal({
-    required int initiativeId,
-  }) {
+  Future<List<ProposalHistoryItem>> getProposalHistory() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<ProposalReveal> getProposalReveal({required int initiativeId}) {
     throw UnimplementedError();
   }
 

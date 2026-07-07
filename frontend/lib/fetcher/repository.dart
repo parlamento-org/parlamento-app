@@ -41,9 +41,9 @@ abstract class Repository {
     ProposalInteractionSubmission submission,
   );
 
-  Future<ProposalReveal> getProposalReveal({
-    required int initiativeId,
-  });
+  Future<ProposalReveal> getProposalReveal({required int initiativeId});
 
   Future<ProposalJourney> getProposalJourney(int initiativeId);
+
+  Future<List<ProposalHistoryItem>> getProposalHistory();
 }

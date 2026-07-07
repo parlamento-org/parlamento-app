@@ -216,6 +216,35 @@ public sealed class ProposalFlowService : IProposalFlowService
         return ServiceResult<ProposalJourneyResponse>.Success(MapJourney(initiative));
     }
 
+    public async Task<ServiceResult<List<ProposalHistoryItemResponse>>> GetHistoryAsync(
+        int userId,
+        CancellationToken cancellationToken = default)
+    {
+        var interactions = await _context.ProposalInteractionEvents
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Include(interaction => interaction.ProjectLaw!)
+                .ThenInclude(initiative => initiative.ProposingParty)
+            .Include(interaction => interaction.ProjectLaw!)
+                .ThenInclude(initiative => initiative.ImportedAuthors)
+            .Where(interaction =>
+                interaction.UserId == userId &&
+                TerminalFeedActions.Contains(interaction.InteractionType))
+            .OrderByDescending(interaction => interaction.CreatedAtUtc)
+            .ThenByDescending(interaction => interaction.Id)
+            .Take(150)
+            .ToListAsync(cancellationToken);
+
+        var latestByInitiative = interactions
+            .Where(interaction => interaction.ProjectLaw != null)
+            .GroupBy(interaction => interaction.ProjectLawId)
+            .Select(group => group.First())
+            .Select(MapHistoryItem)
+            .ToList();
+
+        return ServiceResult<List<ProposalHistoryItemResponse>>.Success(latestByInitiative);
+    }
+
     private static InitiativeFeedCardResponse MapFeedCard(ProjectLaw initiative)
     {
         var summary = initiative.Summaries
@@ -662,6 +691,23 @@ public sealed class ProposalFlowService : IProposalFlowService
             Action = interaction.InteractionType,
             CreatedAtUtc = interaction.CreatedAtUtc,
             IsDuplicate = isDuplicate
+        };
+    }
+
+    private static ProposalHistoryItemResponse MapHistoryItem(ProposalInteractionEvent interaction)
+    {
+        var initiative = interaction.ProjectLaw!;
+
+        return new ProposalHistoryItemResponse
+        {
+            InteractionId = interaction.Id,
+            InitiativeId = initiative.Id,
+            InitiativeType = initiative.InitiativeTypeDescription ?? "Iniciativa parlamentar",
+            InitiativeNumber = initiative.InitiativeNumber,
+            Title = initiative.ProposalTitle ?? "Iniciativa sem título disponível",
+            Action = interaction.InteractionType,
+            CreatedAtUtc = interaction.CreatedAtUtc,
+            Proposers = MapProposers(initiative)
         };
     }
 

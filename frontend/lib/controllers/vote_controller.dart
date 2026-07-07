@@ -27,4 +27,8 @@ class VoteController {
   Future<ProposalJourney> getProposalJourney(int initiativeId) {
     return _repository.getProposalJourney(initiativeId);
   }
+
+  Future<List<ProposalHistoryItem>> getProposalHistory() {
+    return _repository.getProposalHistory();
+  }
 }

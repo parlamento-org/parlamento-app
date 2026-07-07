@@ -62,9 +62,7 @@ class APIRepository implements Repository {
   }
 
   @override
-  Future<ProposalReveal> getProposalReveal({
-    required int initiativeId,
-  }) async {
+  Future<ProposalReveal> getProposalReveal({required int initiativeId}) async {
     final response = await _apiClient.getJson(
       '/proposal-flow/initiatives/$initiativeId/reveal',
     );
@@ -91,6 +89,24 @@ class APIRepository implements Repository {
 
     throw ApiException(
       'Failed to load proposal journey',
+      statusCode: response.statusCode,
+    );
+  }
+
+  @override
+  Future<List<ProposalHistoryItem>> getProposalHistory() async {
+    final response = await _apiClient.getJson('/proposal-flow/history');
+
+    if (response.statusCode == 200) {
+      return response
+          .jsonArray()
+          .whereType<Map<String, dynamic>>()
+          .map(ProposalHistoryItem.fromJson)
+          .toList(growable: false);
+    }
+
+    throw ApiException(
+      'Failed to load proposal history',
       statusCode: response.statusCode,
     );
   }
