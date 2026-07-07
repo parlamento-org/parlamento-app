@@ -67,6 +67,89 @@ public class ParliamentOpenDataImportServiceTests
     }
 
     [Fact]
+    public async Task ImportFromFileAsync_StoresUnanimousVoteBlockAlongsideDeputyAbsence()
+    {
+        await using var context = CreateContext();
+        await context.Database.EnsureCreatedAsync();
+        var service = CreateService(context);
+        var samplePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.json");
+
+        await File.WriteAllTextAsync(
+            samplePath,
+            """
+            {
+              "IniId": "999001",
+              "IniLeg": "XVI",
+              "IniTipo": "J",
+              "IniDescTipo": "Projeto de Lei",
+              "IniTitulo": "Teste voto unanime com ausencia",
+              "IniLinkTexto": "https://example.test/iniciativa.pdf",
+              "IniEventos": [
+                {
+                  "EvtId": "13",
+                  "CodigoFase": "250",
+                  "Fase": "Votacao na generalidade",
+                  "DataFase": "2025-03-13",
+                  "Votacao": [
+                    {
+                      "id": "138843",
+                      "data": "2025-03-13",
+                      "descricao": "Texto de substituicao",
+                      "detalhe": "Aus\u00eancia: <I>Miguel Arruda (Ninsc)</I>",
+                      "resultado": "Aprovado",
+                      "reuniao": "100",
+                      "tipoReuniao": "RP",
+                      "unanime": "unanime",
+                      "ausencias": ["Miguel Arruda (Ninsc)"]
+                    }
+                  ]
+                }
+              ]
+            }
+            """);
+
+        try
+        {
+            var result = await service.ImportFromFileAsync(samplePath);
+
+            Assert.Equal(1, result.RecordsInserted);
+
+            var vote = await context.ParliamentInitiativeVotes
+                .Include(x => x.Blocks)
+                .SingleAsync(x => x.SourceVoteId == "138843");
+
+            Assert.Equal("unanime", vote.Unanimous);
+            Assert.Equal(2, vote.Blocks.Count);
+            Assert.Contains(
+                vote.Blocks,
+                block =>
+                    block.PartyAcronym == null &&
+                    block.RawToken == "unanime" &&
+                    block.VotingOrientation == VotingOrientation.InFavor &&
+                    block.IsUnanimousWithinParty == true &&
+                    block.ParseWarning == null);
+
+            var absence = Assert.Single(vote.Blocks.Where(x => x.VotingOrientation == VotingOrientation.Absent));
+            Assert.Equal("Ninsc", absence.PartyAcronym);
+            Assert.Equal("Miguel Arruda (Ninsc)", absence.RawToken);
+            Assert.Null(absence.ParseWarning);
+
+            var initiative = await context.ProjectLaws
+                .Include(x => x.VotingResultGenerality!.votingBlocks)
+                .SingleAsync(x => x.SourceIdText == "999001");
+
+            Assert.True(initiative.VotingResultGenerality!.isUninamous);
+            Assert.DoesNotContain(
+                initiative.VotingResultGenerality.votingBlocks!,
+                block => block.politicalPartyAcronym == "unanime");
+        }
+        finally
+        {
+            File.Delete(samplePath);
+        }
+    }
+
+    [Fact]
     public async Task SummaryGeneration_UsesRedactedPlainTextAndIsIdempotent()
     {
         await using var context = CreateContext();

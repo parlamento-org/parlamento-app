@@ -212,12 +212,22 @@ class _ProposerLogoStrip extends StatelessWidget {
       uniqueProposers.putIfAbsent(key.isEmpty ? label : key, () => proposer);
     }
 
+    final knownLogoProposers =
+        uniqueProposers.values.where((proposer) {
+          final label = proposer.acronym ?? proposer.name ?? '';
+          return _partyLogoAsset(label) != null;
+        }).toList();
+    final visibleProposers =
+        knownLogoProposers.isNotEmpty
+            ? knownLogoProposers
+            : uniqueProposers.values.toList();
+
     return Wrap(
       alignment: WrapAlignment.center,
       spacing: 18,
       runSpacing: 18,
       children:
-          uniqueProposers.values
+          visibleProposers
               .take(2)
               .map(
                 (proposer) => _PartyLogo(
@@ -291,18 +301,6 @@ class _PartyVoteGroups extends StatelessWidget {
                 highlightedOrientation == ParliamentaryVoteOrientation.against,
           ),
         ],
-        if (absent.isNotEmpty) ...[
-          const _DividerLine(),
-          _PartyVoteGroup(
-            icon: Icons.help_outline,
-            color: Colors.grey.shade700,
-            votes: absent,
-            label: 'Ausentes',
-            splitParties: splitParties,
-            isHighlighted:
-                highlightedOrientation == ParliamentaryVoteOrientation.absent,
-          ),
-        ],
       ],
     );
   }
@@ -356,10 +354,7 @@ class _PartyVoteGroup extends StatelessWidget {
       children: [
         Container(
           width: double.infinity,
-          margin: EdgeInsets.only(
-            top: isHighlighted ? 22 : 8,
-            bottom: 8,
-          ),
+          margin: EdgeInsets.only(top: isHighlighted ? 22 : 8, bottom: 8),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: isHighlighted ? 0.78 : 0.55),
@@ -427,11 +422,7 @@ class _PartyVoteGroup extends StatelessWidget {
             ],
           ),
         ),
-        if (isHighlighted)
-          const Positioned(
-            top: 0,
-            child: _VoteWithLabel(),
-          ),
+        if (isHighlighted) const Positioned(top: 0, child: _VoteWithLabel()),
       ],
     );
   }
@@ -448,11 +439,7 @@ class _VoteWithLabel extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 3,
-            offset: Offset(0, 2),
-          ),
+          BoxShadow(color: Colors.black26, blurRadius: 3, offset: Offset(0, 2)),
         ],
       ),
       child: const Text(
@@ -494,10 +481,7 @@ class _PartyVoteLogo extends StatelessWidget {
           Positioned(
             left: -7,
             bottom: -8,
-            child: _SmallBadge(
-              label: 'div.',
-              backgroundColor: Colors.black87,
-            ),
+            child: _SmallBadge(label: 'div.', backgroundColor: Colors.black87),
           ),
       ],
     );
@@ -544,11 +528,7 @@ class _FloatingLabel extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 3,
-            offset: Offset(0, 2),
-          ),
+          BoxShadow(color: Colors.black26, blurRadius: 3, offset: Offset(0, 2)),
         ],
       ),
       child: Text(
@@ -591,10 +571,7 @@ class _PartyLogo extends StatelessWidget {
   Widget build(BuildContext context) {
     final asset = _partyLogoAsset(acronym);
     if (asset == null) {
-      return _FallbackLogo(
-        label: fallbackLabel ?? acronym,
-        size: size,
-      );
+      return _FallbackLogo(label: fallbackLabel ?? acronym, size: size);
     }
 
     return Container(
@@ -605,10 +582,8 @@ class _PartyLogo extends StatelessWidget {
         asset,
         fit: BoxFit.contain,
         errorBuilder:
-            (context, error, stackTrace) => _FallbackLogo(
-              label: fallbackLabel ?? acronym,
-              size: size,
-            ),
+            (context, error, stackTrace) =>
+                _FallbackLogo(label: fallbackLabel ?? acronym, size: size),
       ),
     );
   }
@@ -694,7 +669,8 @@ ParliamentaryVoteOrientation? _orientationForUserVote(
   return switch (action) {
     ProposalInteractionAction.support => ParliamentaryVoteOrientation.inFavor,
     ProposalInteractionAction.oppose => ParliamentaryVoteOrientation.against,
-    ProposalInteractionAction.abstain => ParliamentaryVoteOrientation.abstaining,
+    ProposalInteractionAction.abstain =>
+      ParliamentaryVoteOrientation.abstaining,
     ProposalInteractionAction.skip => null,
     ProposalInteractionAction.unknown => null,
   };

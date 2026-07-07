@@ -410,7 +410,8 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
         foreach (var block in VoteDetailParser.Parse(
             vote.GetStringOrNull("detalhe"),
             vote.GetStringOrNull("unanime"),
-            vote.GetRawPropertyOrNull("ausencias")))
+            vote.GetRawPropertyOrNull("ausencias"),
+            includeUnanimousBlock: false))
         {
             result.votingBlocks.Add(new VotingBlock
             {

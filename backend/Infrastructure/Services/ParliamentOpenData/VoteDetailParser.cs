@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 using Parlamento.Domain.Enums;
@@ -7,9 +8,25 @@ namespace Parlamento.Infrastructure.Services.ParliamentOpenData;
 
 internal static partial class VoteDetailParser
 {
-    public static IReadOnlyList<ParsedVoteBlock> Parse(string? detail, string? unanimous, string? absencesJson = null)
+    public static IReadOnlyList<ParsedVoteBlock> Parse(
+        string? detail,
+        string? unanimous,
+        string? absencesJson = null,
+        bool includeUnanimousBlock = true)
     {
         var blocks = new List<ParsedVoteBlock>();
+        var isUnanimous = IsTruthyUnanimous(unanimous);
+
+        if (isUnanimous && includeUnanimousBlock)
+        {
+            blocks.Add(new ParsedVoteBlock(
+                VotingOrientation.InFavor,
+                null,
+                null,
+                true,
+                unanimous!.Trim(),
+                null));
+        }
 
         if (!string.IsNullOrWhiteSpace(detail))
         {
@@ -26,19 +43,11 @@ internal static partial class VoteDetailParser
             }
         }
 
-        if (blocks.Count == 0 &&
-            !string.IsNullOrWhiteSpace(unanimous) &&
-            !string.IsNullOrWhiteSpace(absencesJson))
+        if (isUnanimous && !blocks.Any(x => x.Orientation == VotingOrientation.Absent))
         {
-            foreach (var absence in AbsenceTokenRegex().Matches(absencesJson).Select(x => x.Value))
+            foreach (var absence in ParseAbsenceTokens(absencesJson))
             {
-                blocks.Add(new ParsedVoteBlock(
-                    VotingOrientation.Absent,
-                    absence,
-                    null,
-                    true,
-                    absence,
-                    null));
+                blocks.Add(ParseToken(VotingOrientation.Absent, absence));
             }
         }
 
@@ -73,6 +82,16 @@ internal static partial class VoteDetailParser
     private static ParsedVoteBlock ParseToken(VotingOrientation orientation, string token)
     {
         var cleaned = token.Trim();
+
+        if (orientation == VotingOrientation.Absent)
+        {
+            var absenceBlock = ParseAbsenceToken(cleaned);
+            if (absenceBlock is not null)
+            {
+                return absenceBlock;
+            }
+        }
+
         var match = PartyTokenRegex().Match(cleaned);
 
         if (!match.Success)
@@ -99,6 +118,84 @@ internal static partial class VoteDetailParser
             null);
     }
 
+    private static ParsedVoteBlock? ParseAbsenceToken(string cleaned)
+    {
+        var deputyMatch = DeputyAbsenceTokenRegex().Match(cleaned);
+        if (deputyMatch.Success)
+        {
+            return new ParsedVoteBlock(
+                VotingOrientation.Absent,
+                deputyMatch.Groups["party"].Value.Trim(),
+                null,
+                null,
+                cleaned,
+                null);
+        }
+
+        var partyMatch = AbsencePartyTokenRegex().Match(cleaned);
+        if (!partyMatch.Success)
+        {
+            return null;
+        }
+
+        return new ParsedVoteBlock(
+            VotingOrientation.Absent,
+            partyMatch.Groups["party"].Value.Trim(),
+            null,
+            true,
+            cleaned,
+            null);
+    }
+
+    private static IEnumerable<string> ParseAbsenceTokens(string? absencesJson)
+    {
+        if (string.IsNullOrWhiteSpace(absencesJson))
+        {
+            yield break;
+        }
+
+        JsonDocument document;
+        try
+        {
+            document = JsonDocument.Parse(absencesJson);
+        }
+        catch (JsonException)
+        {
+            yield break;
+        }
+
+        using (document)
+        {
+            if (document.RootElement.ValueKind == JsonValueKind.String)
+            {
+                var value = document.RootElement.GetString();
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    yield return value;
+                }
+
+                yield break;
+            }
+
+            if (document.RootElement.ValueKind != JsonValueKind.Array)
+            {
+                yield break;
+            }
+
+            foreach (var item in document.RootElement.EnumerateArray())
+            {
+                var value = item.ValueKind == JsonValueKind.String
+                    ? item.GetString()
+                    : item.GetRawText();
+
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    yield return value;
+                }
+            }
+        }
+    }
+
     private static string NormalizeLabel(string value)
     {
         return WebUtility.HtmlDecode(value)
@@ -108,7 +205,12 @@ internal static partial class VoteDetailParser
             .Replace("ã", "a")
             .Replace("ê", "e")
             .Replace("é", "e")
-            .Replace("í", "i");
+            .Replace("í", "i")
+            .Replace("Ã§", "c")
+            .Replace("Ã£", "a")
+            .Replace("Ãª", "e")
+            .Replace("Ã©", "e")
+            .Replace("Ã­", "i");
     }
 
     private static VotingOrientation? LabelToOrientation(string label)
@@ -145,18 +247,26 @@ internal static partial class VoteDetailParser
         }
     }
 
+    private static bool IsTruthyUnanimous(string? unanimous)
+    {
+        return !string.IsNullOrWhiteSpace(unanimous);
+    }
+
     [GeneratedRegex(@"<br\s*/?>", RegexOptions.IgnoreCase)]
     private static partial Regex BrRegex();
 
     [GeneratedRegex(@"</?i>", RegexOptions.IgnoreCase)]
     private static partial Regex ItalicRegex();
 
-    [GeneratedRegex(@"(?<label>A Favor|Contra|Absten(?:ç|c)ão|Aus(?:ê|e)ncia|Aus(?:ê|e)ncias)\s*:", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"(?<label>A Favor|Contra|Absten(?:ç|Ã§|c)(?:ã|Ã£|a)o|Aus(?:ê|Ãª|e)ncia|Aus(?:ê|Ãª|e)ncias)\s*:", RegexOptions.IgnoreCase)]
     private static partial Regex SectionRegex();
 
     [GeneratedRegex(@"^(?:(?<count>\d+)\s*-\s*)?(?<party>[A-Z][A-Z0-9-]{0,12})$")]
     private static partial Regex PartyTokenRegex();
 
-    [GeneratedRegex(@"[A-Z][A-Z0-9-]{0,12}")]
-    private static partial Regex AbsenceTokenRegex();
+    [GeneratedRegex(@"^.+\((?<party>[A-Za-z][A-Za-z0-9-]{0,12})\)$")]
+    private static partial Regex DeputyAbsenceTokenRegex();
+
+    [GeneratedRegex(@"^(?<party>[A-Za-z][A-Za-z0-9-]{0,12})$")]
+    private static partial Regex AbsencePartyTokenRegex();
 }
