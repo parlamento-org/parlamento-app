@@ -6,6 +6,7 @@ import 'package:frontend/fetcher/repository.dart';
 import 'package:frontend/models/proposal.dart';
 import 'package:frontend/models/proposal_criteria.dart';
 import 'package:frontend/models/proposal_flow.dart';
+import 'package:frontend/models/profile.dart';
 import 'package:frontend/models/user.dart';
 import 'package:frontend/models/vote_model.dart';
 
@@ -102,7 +103,14 @@ class _FakeRepository implements Repository {
   }
 
   @override
-  Future<ProposalHistoryPage> getProposalHistory(ProposalHistoryRequest request) {
+  Future<ProposalHistoryPage> getProposalHistory(
+    ProposalHistoryRequest request,
+  ) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<ProfileStats> getProfileStats() {
     throw UnimplementedError();
   }
 

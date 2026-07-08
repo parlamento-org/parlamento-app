@@ -1,5 +1,6 @@
 import 'package:frontend/models/proposal.dart';
 import 'package:frontend/models/proposal_flow.dart';
+import 'package:frontend/models/profile.dart';
 
 import '../models/proposal_criteria.dart';
 import '../models/user.dart';
@@ -45,5 +46,9 @@ abstract class Repository {
 
   Future<ProposalJourney> getProposalJourney(int initiativeId);
 
-  Future<ProposalHistoryPage> getProposalHistory(ProposalHistoryRequest request);
+  Future<ProposalHistoryPage> getProposalHistory(
+    ProposalHistoryRequest request,
+  );
+
+  Future<ProfileStats> getProfileStats();
 }
