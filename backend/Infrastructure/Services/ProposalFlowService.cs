@@ -290,6 +290,31 @@ public sealed class ProposalFlowService : IProposalFlowService
                 interaction.InteractionType == interactionType);
         }
 
+        if (!string.IsNullOrWhiteSpace(filters.Search))
+        {
+            var search = filters.Search.ToLowerInvariant();
+            var normalizedSearch = NormalizeKey(filters.Search);
+            var matchingResults = MatchingProposalResults(normalizedSearch);
+
+            filteredInteractions = filteredInteractions.Where(interaction =>
+                interaction.ProjectLaw!.ProposalTitle != null &&
+                    interaction.ProjectLaw.ProposalTitle.ToLower().Contains(search) ||
+                interaction.ProjectLaw!.InitiativeTypeDescription != null &&
+                    interaction.ProjectLaw.InitiativeTypeDescription.ToLower().Contains(search) ||
+                interaction.ProjectLaw!.InitiativeNumber != null &&
+                    interaction.ProjectLaw.InitiativeNumber.ToLower().Contains(search) ||
+                interaction.ProjectLaw!.Legislatura != null &&
+                    interaction.ProjectLaw.Legislatura.ToLower().Contains(search) ||
+                interaction.ProjectLaw!.ProposingParty != null &&
+                    interaction.ProjectLaw.ProposingParty.partyAcronym != null &&
+                    interaction.ProjectLaw.ProposingParty.partyAcronym.ToLower().Contains(search) ||
+                interaction.ProjectLaw!.ProposingParty != null &&
+                    interaction.ProjectLaw.ProposingParty.fullName != null &&
+                    interaction.ProjectLaw.ProposingParty.fullName.ToLower().Contains(search) ||
+                interaction.ProjectLaw!.ProposalResult.HasValue &&
+                    matchingResults.Contains(interaction.ProjectLaw.ProposalResult.Value));
+        }
+
         var latestInteractionIds = filteredInteractions
             .GroupBy(interaction => interaction.ProjectLawId)
             .Select(group => group
@@ -871,6 +896,20 @@ public sealed class ProposalFlowService : IProposalFlowService
             ProposalResult.RejectedInSpeciality => "Rejeitado na especialidade",
             _ => null
         };
+    }
+
+    private static ProposalResult[] MatchingProposalResults(string normalizedSearch)
+    {
+        if (string.IsNullOrWhiteSpace(normalizedSearch))
+        {
+            return [];
+        }
+
+        return Enum.GetValues<ProposalResult>()
+            .Where(result =>
+                NormalizeKey(result.ToString()).Contains(normalizedSearch) ||
+                NormalizeKey(MapProposalResult(result)).Contains(normalizedSearch))
+            .ToArray();
     }
 
     private static DateTime ParseSortableDate(string? value)

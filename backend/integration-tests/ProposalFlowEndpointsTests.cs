@@ -487,6 +487,87 @@ public sealed class ProposalHistoryEndpointsTests : IClassFixture<ProposalHistor
     }
 
     [Fact]
+    public async Task HistoryEndpointSearchesByTitle()
+    {
+        var response = await _client.GetAsync("/proposal-flow/history?page=1&pageSize=10&search=Older");
+
+        response.EnsureSuccessStatusCode();
+
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var root = document.RootElement;
+        var item = root.GetProperty("items").EnumerateArray().Single();
+
+        Assert.Equal(1, root.GetProperty("totalItems").GetInt32());
+        Assert.Equal("Older XV initiative", item.GetProperty("title").GetString());
+    }
+
+    [Fact]
+    public async Task HistoryEndpointCombinesSearchAndLegislatureFilter()
+    {
+        var response = await _client.GetAsync("/proposal-flow/history?page=1&pageSize=10&search=initiative&legislature=XVII");
+
+        response.EnsureSuccessStatusCode();
+
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var root = document.RootElement;
+        var item = root.GetProperty("items").EnumerateArray().Single();
+
+        Assert.Equal(1, root.GetProperty("totalItems").GetInt32());
+        Assert.Equal("XVII", item.GetProperty("legislature").GetString());
+        Assert.Equal("Newest XVII initiative", item.GetProperty("title").GetString());
+    }
+
+    [Fact]
+    public async Task HistoryEndpointCombinesSearchAndProposingPartyFilter()
+    {
+        var response = await _client.GetAsync("/proposal-flow/history?page=1&pageSize=10&search=Newest&proposingParty=PSD");
+
+        response.EnsureSuccessStatusCode();
+
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var root = document.RootElement;
+        var item = root.GetProperty("items").EnumerateArray().Single();
+
+        Assert.Equal(1, root.GetProperty("totalItems").GetInt32());
+        Assert.Equal("Newest XVII initiative", item.GetProperty("title").GetString());
+        Assert.Contains(
+            item.GetProperty("proposers").EnumerateArray(),
+            proposer => proposer.GetProperty("acronym").GetString() == "PSD");
+    }
+
+    [Fact]
+    public async Task HistoryEndpointReturnsPaginationMetadataUnderSearch()
+    {
+        var response = await _client.GetAsync("/proposal-flow/history?page=1&pageSize=2&search=initiative");
+
+        response.EnsureSuccessStatusCode();
+
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var root = document.RootElement;
+
+        Assert.Equal(2, root.GetProperty("items").EnumerateArray().Count());
+        Assert.Equal(4, root.GetProperty("totalItems").GetInt32());
+        Assert.Equal(2, root.GetProperty("totalPages").GetInt32());
+        Assert.True(root.GetProperty("hasNextPage").GetBoolean());
+    }
+
+    [Fact]
+    public async Task HistoryEndpointReturnsEmptySearchResults()
+    {
+        var response = await _client.GetAsync("/proposal-flow/history?page=1&pageSize=20&search=zzzz-not-found");
+
+        response.EnsureSuccessStatusCode();
+
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var root = document.RootElement;
+
+        Assert.Empty(root.GetProperty("items").EnumerateArray());
+        Assert.Equal(0, root.GetProperty("totalItems").GetInt32());
+        Assert.Equal(0, root.GetProperty("totalPages").GetInt32());
+        Assert.False(root.GetProperty("hasNextPage").GetBoolean());
+    }
+
+    [Fact]
     public async Task HistoryEndpointReturnsEmptyResults()
     {
         _client.AuthenticateAsUser(_factory.EmptyUserId);

@@ -52,6 +52,9 @@ public sealed class ProposalHistoryRequest
     [JsonPropertyName("proposingParty")]
     public string? ProposingParty { get; set; }
 
+    [JsonPropertyName("search")]
+    public string? Search { get; set; }
+
     [JsonPropertyName("interactionType")]
     public ProposalInteractionType? InteractionType { get; set; }
 
@@ -70,12 +73,16 @@ public sealed class ProposalHistoryRequest
     public string? NormalizedProposingParty =>
         string.IsNullOrWhiteSpace(ProposingParty) ? null : ProposingParty.Trim();
 
+    public string? NormalizedSearch =>
+        string.IsNullOrWhiteSpace(Search) ? null : Search.Trim();
+
     public ProposalHistoryFilters ToFilters()
     {
         return new ProposalHistoryFilters
         {
             Legislature = NormalizedLegislature,
             ProposingParty = NormalizedProposingParty,
+            Search = NormalizedSearch,
             InteractionType = InteractionType
         };
     }
@@ -86,6 +93,8 @@ public sealed class ProposalHistoryFilters
     public string? Legislature { get; set; }
 
     public string? ProposingParty { get; set; }
+
+    public string? Search { get; set; }
 
     public ProposalInteractionType? InteractionType { get; set; }
 }

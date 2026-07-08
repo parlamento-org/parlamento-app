@@ -95,6 +95,7 @@ void main() {
         filters: const ProposalHistoryFilters(
           legislature: 'XVII',
           proposingParty: 'PS',
+          search: 'energia',
           interactionType: ProposalInteractionAction.support,
         ),
       );
@@ -104,6 +105,7 @@ void main() {
         'pageSize': '10',
         'legislature': 'XVII',
         'proposingParty': 'PS',
+        'search': 'energia',
         'interactionType': 'Support',
       });
     });

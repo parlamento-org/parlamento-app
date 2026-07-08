@@ -154,16 +154,19 @@ class ProposalHistoryFilters {
   const ProposalHistoryFilters({
     this.legislature,
     this.proposingParty,
+    this.search,
     this.interactionType,
   });
 
   final String? legislature;
   final String? proposingParty;
+  final String? search;
   final ProposalInteractionAction? interactionType;
 
   bool get hasActiveFilters =>
       _hasValue(legislature) ||
       _hasValue(proposingParty) ||
+      _hasValue(search) ||
       interactionType != null &&
           interactionType != ProposalInteractionAction.unknown;
 
@@ -172,6 +175,8 @@ class ProposalHistoryFilters {
     bool clearLegislature = false,
     String? proposingParty,
     bool clearProposingParty = false,
+    String? search,
+    bool clearSearch = false,
     ProposalInteractionAction? interactionType,
     bool clearInteractionType = false,
   }) {
@@ -179,6 +184,7 @@ class ProposalHistoryFilters {
       legislature: clearLegislature ? null : legislature ?? this.legislature,
       proposingParty:
           clearProposingParty ? null : proposingParty ?? this.proposingParty,
+      search: clearSearch ? null : search ?? this.search,
       interactionType:
           clearInteractionType ? null : interactionType ?? this.interactionType,
     );
@@ -188,6 +194,7 @@ class ProposalHistoryFilters {
     return {
       if (_hasValue(legislature)) 'legislature': legislature!.trim(),
       if (_hasValue(proposingParty)) 'proposingParty': proposingParty!.trim(),
+      if (_hasValue(search)) 'search': search!.trim(),
       if (interactionType != null &&
           interactionType != ProposalInteractionAction.unknown)
         'interactionType': interactionType!.wireName,

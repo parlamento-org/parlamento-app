@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:frontend/controllers/vote_controller.dart';
 import 'package:frontend/models/proposal_flow.dart';
@@ -42,6 +44,7 @@ class PreviousVotesHistoryPage extends StatefulWidget {
 
 class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
   static const int _pageSize = 20;
+  static const Duration _searchDebounceDuration = Duration(milliseconds: 650);
 
   late final VoteController _voteController =
       widget._voteController ?? VoteController();
@@ -55,24 +58,26 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
   _HistoryFilter _filter = _HistoryFilter.all;
   ProposalHistoryFilters _filters = const ProposalHistoryFilters();
   bool _showFilters = false;
+  bool _hasLoadedHistory = false;
+  bool _isRefreshing = false;
   bool _isLoadingMore = false;
   bool _hasLoadMoreError = false;
   bool _hasNextPage = false;
   int _nextPage = 1;
+  int _historyRequestSequence = 0;
   int _totalItems = 0;
-  String _searchText = '';
+  Timer? _searchDebounce;
 
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(() {
-      setState(() => _searchText = _searchController.text.trim());
-    });
+    _searchController.addListener(_onSearchChanged);
     _historyFuture = _loadHistory();
   }
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -84,12 +89,14 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
       child: SafeArea(
         child: FutureBuilder<List<ProposalHistoryItem>>(
           future: _historyFuture,
+          initialData: _hasLoadedHistory ? List.unmodifiable(_history) : null,
           builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
+            if (snapshot.connectionState != ConnectionState.done &&
+                !_hasLoadedHistory) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (snapshot.hasError) {
+            if (snapshot.hasError && !_hasLoadedHistory) {
               return _HistoryEmptyState(
                 icon: Icons.error_outline,
                 message: 'Não foi possível carregar o histórico.',
@@ -98,8 +105,8 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
               );
             }
 
-            final history = snapshot.data ?? [];
-            final filteredHistory = _filterHistory(history);
+            final history = snapshot.data ?? List.unmodifiable(_history);
+            final filteredHistory = history;
 
             return RefreshIndicator(
               onRefresh: () async => _reloadHistory(),
@@ -111,9 +118,24 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
                   _HistorySearchBar(
                     controller: _searchController,
                     showFilters: _showFilters,
+                    onClearSearch: _clearSearch,
                     onToggleFilters:
                         () => setState(() => _showFilters = !_showFilters),
                   ),
+                  if (_isRefreshing) ...[
+                    const SizedBox(height: 10),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(999),
+                      child: LinearProgressIndicator(
+                        minHeight: 3,
+                        backgroundColor: baseTheme.colorScheme.primary
+                            .withValues(alpha: 0.10),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          baseTheme.colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ],
                   _HistoryFilterPanel(
                     visible: _showFilters,
                     child: Column(
@@ -149,7 +171,7 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
                       icon: Icons.how_to_vote_outlined,
                       message:
                           _hasActiveServerFilter
-                              ? 'Sem votos para o filtro selecionado.'
+                              ? 'Sem resultados para a pesquisa ou filtros selecionados.'
                               : 'Ainda não tens votos registados.',
                     )
                   else if (filteredHistory.isEmpty)
@@ -183,25 +205,82 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
   }
 
   Future<List<ProposalHistoryItem>> _loadHistory() async {
-    final response = await _voteController.getProposalHistory(
-      ProposalHistoryRequest(page: 1, pageSize: _pageSize, filters: _filters),
-    );
+    final requestSequence = ++_historyRequestSequence;
+    try {
+      final response = await _voteController.getProposalHistory(
+        ProposalHistoryRequest(page: 1, pageSize: _pageSize, filters: _filters),
+      );
 
-    _history
-      ..clear()
-      ..addAll(response.items);
-    _availableLegislatures = response.availableLegislatures;
-    _availableProposingParties = response.availableProposingParties;
-    _nextPage = response.page + 1;
-    _totalItems = response.totalItems;
-    _hasNextPage = response.hasNextPage;
-    _hasLoadMoreError = false;
+      if (requestSequence != _historyRequestSequence) {
+        return List.unmodifiable(_history);
+      }
 
-    return List.unmodifiable(_history);
+      _history
+        ..clear()
+        ..addAll(response.items);
+      _availableLegislatures = response.availableLegislatures;
+      _availableProposingParties = response.availableProposingParties;
+      _nextPage = response.page + 1;
+      _totalItems = response.totalItems;
+      _hasNextPage = response.hasNextPage;
+      _hasLoadMoreError = false;
+      _hasLoadedHistory = true;
+      _isRefreshing = false;
+
+      return List.unmodifiable(_history);
+    } catch (_) {
+      if (requestSequence == _historyRequestSequence) {
+        _isRefreshing = false;
+      }
+      rethrow;
+    }
   }
 
   void _reloadHistory() {
-    setState(() => _historyFuture = _loadHistory());
+    _startHistoryRefresh();
+  }
+
+  void _startHistoryRefresh() {
+    setState(() {
+      _isRefreshing = _hasLoadedHistory;
+      _historyFuture = _loadHistory();
+    });
+  }
+
+  void _onSearchChanged() {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(_searchDebounceDuration, () {
+      if (!mounted) return;
+
+      final search = _searchController.text.trim();
+      final currentSearch = _filters.search?.trim() ?? '';
+      if (search == currentSearch) {
+        return;
+      }
+
+      setState(() {
+        _filters = _filters.copyWith(
+          search: search,
+          clearSearch: search.isEmpty,
+        );
+      });
+      _startHistoryRefresh();
+    });
+  }
+
+  void _clearSearch() {
+    _searchDebounce?.cancel();
+    if (_searchController.text.isNotEmpty) {
+      _searchController.clear();
+    }
+    _searchDebounce?.cancel();
+
+    if ((_filters.search ?? '').isEmpty) return;
+
+    setState(() {
+      _filters = _filters.copyWith(search: '', clearSearch: true);
+    });
+    _startHistoryRefresh();
   }
 
   Future<void> _loadMoreHistory() async {
@@ -212,6 +291,7 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
       _isLoadingMore = true;
       _hasLoadMoreError = false;
     });
+    final requestSequence = _historyRequestSequence;
 
     try {
       final response = await _voteController.getProposalHistory(
@@ -223,6 +303,11 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
       );
 
       if (!mounted) return;
+      if (requestSequence != _historyRequestSequence) {
+        setState(() => _isLoadingMore = false);
+        return;
+      }
+
       setState(() {
         final existingIds = _history.map((item) => item.interactionId).toSet();
         _history.addAll(
@@ -253,8 +338,8 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
         interactionType: filter.interactionType,
         clearInteractionType: filter == _HistoryFilter.all,
       );
-      _historyFuture = _loadHistory();
     });
+    _startHistoryRefresh();
   }
 
   void _changeLegislature(String? legislature) {
@@ -264,8 +349,8 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
         legislature: legislature,
         clearLegislature: legislature == null,
       );
-      _historyFuture = _loadHistory();
     });
+    _startHistoryRefresh();
   }
 
   void _changeProposingParty(String? proposingParty) {
@@ -275,38 +360,11 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
         proposingParty: proposingParty,
         clearProposingParty: proposingParty == null,
       );
-      _historyFuture = _loadHistory();
     });
+    _startHistoryRefresh();
   }
 
   bool get _hasActiveServerFilter => _filters.hasActiveFilters;
-
-  List<ProposalHistoryItem> _filterHistory(List<ProposalHistoryItem> history) {
-    final normalizedSearch = _searchText.toLowerCase();
-    return history
-        .where((item) {
-          if (normalizedSearch.isEmpty) {
-            return true;
-          }
-
-          final searchableText =
-              [
-                item.title,
-                item.initiativeType,
-                if (item.initiativeNumber != null) item.initiativeNumber!,
-                if (item.legislature != null) item.legislature!,
-                ...item.proposers.expand(
-                  (proposer) => [
-                    if (proposer.acronym != null) proposer.acronym!,
-                    if (proposer.name != null) proposer.name!,
-                  ],
-                ),
-              ].join(' ').toLowerCase();
-
-          return searchableText.contains(normalizedSearch);
-        })
-        .toList(growable: false);
-  }
 }
 
 class _HistoryHeader extends StatelessWidget {
@@ -336,63 +394,85 @@ class _HistorySearchBar extends StatelessWidget {
   const _HistorySearchBar({
     required this.controller,
     required this.showFilters,
+    required this.onClearSearch,
     required this.onToggleFilters,
   });
 
   final TextEditingController controller;
   final bool showFilters;
+  final VoidCallback onClearSearch;
   final VoidCallback onToggleFilters;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: TextField(
-            controller: controller,
-            textInputAction: TextInputAction.search,
-            decoration: InputDecoration(
-              hintText: 'Pesquisar votos',
-              prefixIcon: Icon(
-                Icons.search,
-                color: baseTheme.colorScheme.primary.withValues(alpha: 0.72),
-              ),
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(vertical: 16),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(24),
-                borderSide: BorderSide(
-                  color: baseTheme.colorScheme.primary,
-                  width: 2,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(24),
-                borderSide: BorderSide(
-                  color: baseTheme.colorScheme.primary,
-                  width: 3,
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: controller,
+      builder: (context, value, _) {
+        return Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: controller,
+                textInputAction: TextInputAction.search,
+                decoration: InputDecoration(
+                  hintText: 'Pesquisar nos meus votos',
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: baseTheme.colorScheme.primary.withValues(
+                      alpha: 0.72,
+                    ),
+                  ),
+                  suffixIcon:
+                      value.text.isEmpty
+                          ? null
+                          : IconButton(
+                            tooltip: 'Limpar pesquisa',
+                            onPressed: onClearSearch,
+                            icon: Icon(
+                              Icons.close,
+                              color: baseTheme.colorScheme.primary.withValues(
+                                alpha: 0.72,
+                              ),
+                            ),
+                          ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide(
+                      color: baseTheme.colorScheme.primary,
+                      width: 2,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide(
+                      color: baseTheme.colorScheme.primary,
+                      width: 3,
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        IconButton(
-          tooltip: showFilters ? 'Ocultar filtros' : 'Mostrar filtros',
-          onPressed: onToggleFilters,
-          icon: AnimatedRotation(
-            turns: showFilters ? 0.5 : 0,
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOutCubic,
-            child: Icon(
-              Icons.filter_list,
-              color: baseTheme.colorScheme.primary,
-              size: 30,
+            const SizedBox(width: 12),
+            IconButton(
+              tooltip: showFilters ? 'Ocultar filtros' : 'Mostrar filtros',
+              onPressed: onToggleFilters,
+              icon: AnimatedRotation(
+                turns: showFilters ? 0.5 : 0,
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOutCubic,
+                child: Icon(
+                  Icons.filter_list,
+                  color: baseTheme.colorScheme.primary,
+                  size: 30,
+                ),
+              ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }
