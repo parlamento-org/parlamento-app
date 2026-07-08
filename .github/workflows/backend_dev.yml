@@ -3,7 +3,7 @@ name: Deploy Backend Development
 on:
   push:
     branches:
-      - feat/backend-ci
+      - development
     paths:
       - "backend/**"
       - ".github/workflows/backend_dev.yml"
