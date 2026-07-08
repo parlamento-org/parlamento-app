@@ -5,15 +5,25 @@ import 'package:frontend/models/user.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthController extends ChangeNotifier {
-  AuthController({UserController? userController})
+  AuthController({
+    UserController? userController,
+    bool restoreSessionOnStart = true,
+  })
     : _userController = userController ?? UserController() {
     AppTokenStore.onUnauthorized = _handleUnauthorized;
+    if (restoreSessionOnStart) {
+      _restoreSession();
+    } else {
+      _isInitializing = false;
+    }
   }
 
   final UserController _userController;
   UserSession? _session;
+  bool _isInitializing = true;
 
   UserSession? get session => _session;
+  bool get isInitializing => _isInitializing;
   bool get isLoggedIn => _session?.isLoggedIn ?? false;
 
   Future<UserSession> login(String email, String password) async {
@@ -60,6 +70,33 @@ class AuthController extends ChangeNotifier {
   Future<void> _setSession(UserSession userSession) async {
     await AppTokenStore.saveSession(userSession);
     _session = userSession;
+    _isInitializing = false;
+    notifyListeners();
+  }
+
+  Future<void> _restoreSession() async {
+    final storedToken = await AppTokenStore.currentAccessToken();
+    if (storedToken == null) {
+      _finishInitialization();
+      return;
+    }
+
+    try {
+      final userSession = await _userController.restoreSession();
+      await _setSession(userSession);
+    } catch (_) {
+      await AppTokenStore.clear();
+      _session = null;
+      _finishInitialization();
+    }
+  }
+
+  void _finishInitialization() {
+    if (!_isInitializing) {
+      return;
+    }
+
+    _isInitializing = false;
     notifyListeners();
   }
 

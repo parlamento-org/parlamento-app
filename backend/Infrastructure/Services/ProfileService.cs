@@ -156,9 +156,8 @@ public sealed class ProfileService : IProfileService
                 party.logoLink))
             .ToListAsync(cancellationToken);
 
-        var partyAcronyms = knownParties
-            .Select(party => party.Acronym)
-            .Concat(alignmentRows.Select(row => row.PartyAcronym))
+        var partyAcronyms = alignmentRows
+            .Select(row => row.PartyAcronym)
             .Where(acronym => !string.IsNullOrWhiteSpace(acronym))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -214,6 +213,7 @@ public sealed class ProfileService : IProfileService
                     AlignmentPercentage = Percentage(alignedCount, comparableCount)
                 };
             })
+            .Where(party => party.ComparableCount > 0)
             .OrderByDescending(party => party.AlignmentPercentage)
             .ThenByDescending(party => party.ComparableCount)
             .ThenBy(party => party.PartyAcronym)

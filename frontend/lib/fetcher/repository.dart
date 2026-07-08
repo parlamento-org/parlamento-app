@@ -9,6 +9,8 @@ import '../models/vote_model.dart';
 abstract class Repository {
   Future<UserSession> loginRequest(String email, String password);
 
+  Future<UserSession> currentSessionRequest();
+
   Future<bool> registerRequest(
     String email,
     String userName,

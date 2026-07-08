@@ -61,11 +61,22 @@ class _ProfilePageState extends State<ProfilePage> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
                 children: [
-                  const _ProfileHeader(),
-                  const SizedBox(height: 22),
-                  _OverviewSection(overview: profile.overview),
-                  const SizedBox(height: 16),
-                  _PartyAlignmentSection(alignment: profile.partyAlignment),
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1180),
+                      child: Column(
+                        children: [
+                          const _ProfileHeader(),
+                          const SizedBox(height: 18),
+                          _OverviewSection(overview: profile.overview),
+                          const SizedBox(height: 14),
+                          _PartyAlignmentSection(
+                            alignment: profile.partyAlignment,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             );
@@ -163,15 +174,27 @@ class _OverviewSection extends StatelessWidget {
           ],
           LayoutBuilder(
             builder: (context, constraints) {
-              final isNarrow = constraints.maxWidth < 360;
-              return GridView.count(
-                crossAxisCount: isNarrow ? 1 : 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                childAspectRatio: isNarrow ? 4.4 : 2.45,
-                children: stats,
+              final availableWidth = constraints.maxWidth;
+              final tileWidth =
+                  availableWidth < 340
+                      ? availableWidth
+                      : availableWidth < 620
+                      ? (availableWidth - 10) / 2
+                      : 154.0;
+
+              return Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children:
+                    stats
+                        .map(
+                          (stat) => SizedBox(
+                            width: tileWidth,
+                            height: 68,
+                            child: stat,
+                          ),
+                        )
+                        .toList(),
               );
             },
           ),
@@ -258,6 +281,11 @@ class _PartyAlignmentSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final visibleParties =
+        alignment.parties
+            .where((party) => party.comparableCount > 0)
+            .toList(growable: false);
+
     return _ProfileSectionCard(
       title: 'Alinhamento com votos dos partidos',
       child: Column(
@@ -274,13 +302,13 @@ class _PartyAlignmentSection extends StatelessWidget {
           const SizedBox(height: 16),
           if (!alignment.isUnlocked)
             _AlignmentLockedState(alignment: alignment)
-          else if (alignment.parties.isEmpty)
+          else if (visibleParties.isEmpty)
             const _ProfileEmptyState(
               icon: Icons.insights_outlined,
               message: 'Ainda nao ha votos parlamentares comparaveis.',
             )
           else
-            ...alignment.parties.map(
+            ...visibleParties.map(
               (party) => Padding(
                 padding: const EdgeInsets.only(bottom: 14),
                 child: _PartyAlignmentRow(party: party),
@@ -440,7 +468,7 @@ class _ProfileSectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),

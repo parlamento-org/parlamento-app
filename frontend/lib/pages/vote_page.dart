@@ -17,7 +17,12 @@ class VotePage extends StatefulWidget {
   State<VotePage> createState() => _VotePageState();
 }
 
-class _VotePageState extends State<VotePage> {
+class _VotePageState extends State<VotePage>
+    with AutomaticKeepAliveClientMixin<VotePage> {
+  static InitiativeFeedCard? _cachedCard;
+  static int? _cachedUserId;
+  static String? _cachedLegislaturesKey;
+
   late final VoteController _voteController =
       widget._voteController ?? VoteController();
 
@@ -32,12 +37,30 @@ class _VotePageState extends State<VotePage> {
     _loadNextCard();
   }
 
-  Future<void> _loadNextCard() async {
+  @override
+  bool get wantKeepAlive => true;
+
+  Future<void> _loadNextCard({bool forceRefresh = false}) async {
     final session = context.read<AuthController>().session;
     if (session == null) {
       setState(() {
         _isLoading = false;
         _errorMessage = 'Inicia sessão para votar nas iniciativas.';
+      });
+      return;
+    }
+
+    final legislaturesKey = _legislaturesKey(
+      session.proposalCriteria?.legislaturas,
+    );
+    if (!forceRefresh &&
+        _cachedCard != null &&
+        _cachedUserId == session.userId &&
+        _cachedLegislaturesKey == legislaturesKey) {
+      setState(() {
+        _card = _cachedCard;
+        _isLoading = false;
+        _errorMessage = null;
       });
       return;
     }
@@ -57,6 +80,9 @@ class _VotePageState extends State<VotePage> {
       if (!mounted) return;
       setState(() {
         _card = card;
+        _cachedCard = card;
+        _cachedUserId = session.userId;
+        _cachedLegislaturesKey = legislaturesKey;
         _isLoading = false;
       });
     } catch (error) {
@@ -88,7 +114,8 @@ class _VotePageState extends State<VotePage> {
       _showInteractionMessage(action);
 
       if (action == ProposalInteractionAction.skip) {
-        await _loadNextCard();
+        _clearCachedCard();
+        await _loadNextCard(forceRefresh: true);
         return;
       }
 
@@ -103,7 +130,8 @@ class _VotePageState extends State<VotePage> {
 
       if (!mounted) return;
       if (shouldLoadNext ?? true) {
-        await _loadNextCard();
+        _clearCachedCard();
+        await _loadNextCard(forceRefresh: true);
       }
     } catch (error) {
       if (!mounted) return;
@@ -135,6 +163,8 @@ class _VotePageState extends State<VotePage> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     return ColoredBox(
       color: baseTheme.colorScheme.surface,
       child: SafeArea(
@@ -182,6 +212,21 @@ class _VotePageState extends State<VotePage> {
     }
 
     return _AnonymizedProposalCard(card: card);
+  }
+
+  static void _clearCachedCard() {
+    _cachedCard = null;
+    _cachedUserId = null;
+    _cachedLegislaturesKey = null;
+  }
+
+  static String _legislaturesKey(List<String>? legislatures) {
+    if (legislatures == null || legislatures.isEmpty) {
+      return '';
+    }
+
+    final normalized = [...legislatures]..sort();
+    return normalized.join('|');
   }
 }
 
@@ -245,19 +290,19 @@ class _AnonymizedProposalCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (card.summaryBulletPoints.isNotEmpty) ...[
-                    const _SectionLabel('Pontos-chave automáticos'),
+                    const _SectionLabel('Pontos-chave AI', showAiIcon: true),
                     const SizedBox(height: 8),
                     _AiBulletPoints(points: card.summaryBulletPoints),
                     const SizedBox(height: 18),
                   ],
                   if (card.summary != null) ...[
-                    const _SectionLabel('Resumo automático'),
+                    const _SectionLabel('Resumo AI', showAiIcon: true),
                     const SizedBox(height: 8),
                     Text(card.summary!, style: textTheme.bodyLarge),
                     const SizedBox(height: 18),
                   ] else ...[
                     Text(
-                      'Resumo automático ainda indisponível para esta iniciativa.',
+                      'Resumo AI ainda indisponível para esta iniciativa.',
                       style: textTheme.bodyLarge?.copyWith(
                         color: Colors.black54,
                         height: 1.35,
@@ -484,18 +529,32 @@ class _Badge extends StatelessWidget {
 }
 
 class _SectionLabel extends StatelessWidget {
-  const _SectionLabel(this.label);
+  const _SectionLabel(this.label, {this.showAiIcon = false});
 
   final String label;
+  final bool showAiIcon;
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      label,
-      style: TextStyle(
-        color: baseTheme.colorScheme.primary,
-        fontWeight: FontWeight.w800,
-      ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (showAiIcon) ...[
+          Icon(
+            Icons.auto_awesome,
+            color: baseTheme.colorScheme.primary,
+            size: 18,
+          ),
+          const SizedBox(width: 6),
+        ],
+        Text(
+          label,
+          style: TextStyle(
+            color: baseTheme.colorScheme.primary,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
     );
   }
 }

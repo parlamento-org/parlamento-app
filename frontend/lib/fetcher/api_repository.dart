@@ -214,6 +214,17 @@ class APIRepository implements Repository {
   }
 
   @override
+  Future<UserSession> currentSessionRequest() async {
+    final response = await _apiClient.getJson('/auth/session');
+
+    if (response.statusCode == 200) {
+      return UserSession.fromJson(response.jsonObject());
+    }
+
+    throw InvalidCredentials();
+  }
+
+  @override
   Future<bool> registerRequest(
     String email,
     String userName,

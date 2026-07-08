@@ -84,6 +84,10 @@ class UserController {
     return _repository.loginRequest(email, password);
   }
 
+  Future<UserSession> restoreSession() async {
+    return _repository.currentSessionRequest();
+  }
+
   Future<bool> register(
     String email,
     String userName,

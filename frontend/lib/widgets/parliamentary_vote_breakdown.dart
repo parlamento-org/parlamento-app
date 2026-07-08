@@ -629,6 +629,9 @@ String? partyLogoAsset(String rawAcronym) {
   if (acronym == 'IL') {
     return 'lib/images/IL_logo.png';
   }
+  if (acronym == 'JPP') {
+    return 'lib/images/JPP_logo.png';
+  }
   if (acronym == 'PAN') {
     return 'lib/images/PAN_logo.png';
   }
