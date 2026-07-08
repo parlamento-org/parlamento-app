@@ -22,6 +22,15 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Create .env
+        working-directory: ./frontend
+        run: |
+          cat > .env <<EOF
+          BACKEND_URL=${{ secrets.BACKEND_URL }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          FACEBOOK_APP_ID=${{ secrets.FACEBOOK_APP_ID }}
+          EOF
+
       - name: Install dependencies
         working-directory: ./frontend
         run: flutter pub get
@@ -44,6 +53,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy frontend/build/web --project-name=parlamento-dev --branch=development
+
 ###backend:
 ###
 ###    runs-on: ubuntu-latest
