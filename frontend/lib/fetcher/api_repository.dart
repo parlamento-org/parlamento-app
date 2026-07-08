@@ -6,6 +6,7 @@ import 'package:frontend/fetcher/api_client.dart';
 import 'package:frontend/fetcher/repository.dart';
 import 'package:frontend/models/proposal_criteria.dart';
 import 'package:frontend/models/proposal_flow.dart';
+import 'package:frontend/models/profile.dart';
 import 'package:frontend/models/user.dart';
 import 'package:frontend/models/vote_model.dart';
 import 'package:http/http.dart' as http;
@@ -115,6 +116,20 @@ class APIRepository implements Repository {
   }
 
   @override
+  Future<ProfileStats> getProfileStats() async {
+    final response = await _apiClient.getJson('/profile');
+
+    if (response.statusCode == 200) {
+      return ProfileStats.fromJson(response.jsonObject());
+    }
+
+    throw ApiException(
+      'Failed to load profile statistics',
+      statusCode: response.statusCode,
+    );
+  }
+
+  @override
   Future<Proposal> getProposal(ProposalCriteria criteria) async {
     final response = await _apiClient.putJson('/vote', criteria.toJson());
 
@@ -190,6 +205,17 @@ class APIRepository implements Repository {
     final Map<String, dynamic> data = {identifier: email, "password": password};
 
     final response = await _apiClient.postJson('/user-login', data);
+
+    if (response.statusCode == 200) {
+      return UserSession.fromJson(response.jsonObject());
+    }
+
+    throw InvalidCredentials();
+  }
+
+  @override
+  Future<UserSession> currentSessionRequest() async {
+    final response = await _apiClient.getJson('/auth/session');
 
     if (response.statusCode == 200) {
       return UserSession.fromJson(response.jsonObject());

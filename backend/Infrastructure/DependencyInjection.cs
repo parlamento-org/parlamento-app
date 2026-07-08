@@ -43,6 +43,7 @@ public static class DependencyInjection
         services.AddScoped<IPoliticalPartyService, PoliticalPartyService>();
         services.AddScoped<IProposalService, ProposalService>();
         services.AddScoped<IProposalFlowService, ProposalFlowService>();
+        services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IVotingService, VotingService>();
         services.Configure<OpenAiSummaryOptions>(options =>

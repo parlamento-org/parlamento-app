@@ -131,6 +131,19 @@ public class AuthService : IAuthService
         return ServiceResult<AuthResponse>.Success(CreateAuthResponse(newUser));
     }
 
+    public async Task<ServiceResult<AuthResponse>> GetSessionAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        var user = await UsersWithDetails()
+            .FirstOrDefaultAsync(x => x.Id == userId, cancellationToken);
+
+        if (user == null)
+        {
+            return ServiceResult<AuthResponse>.Failure(404, "This User does not exist!");
+        }
+
+        return ServiceResult<AuthResponse>.Success(CreateAuthResponse(user));
+    }
+
     private AuthResponse CreateAuthResponse(User user)
     {
         var token = _appTokenService.CreateToken(user);

@@ -6,6 +6,7 @@ import 'package:frontend/fetcher/repository.dart';
 import 'package:frontend/models/proposal.dart';
 import 'package:frontend/models/proposal_criteria.dart';
 import 'package:frontend/models/proposal_flow.dart';
+import 'package:frontend/models/profile.dart';
 import 'package:frontend/models/user.dart';
 import 'package:frontend/models/vote_model.dart';
 
@@ -22,6 +23,7 @@ void main() {
       );
       final controller = AuthController(
         userController: UserController(repository: repository),
+        restoreSessionOnStart: false,
       );
       var notifications = 0;
       controller.addListener(() => notifications++);
@@ -41,6 +43,7 @@ void main() {
       );
       final controller = AuthController(
         userController: UserController(repository: repository),
+        restoreSessionOnStart: false,
       );
       await controller.login('person@example.com', 'password');
 
@@ -48,6 +51,29 @@ void main() {
 
       expect(controller.session, isNull);
       expect(controller.isLoggedIn, isFalse);
+    });
+
+    test('restores a stored session on startup', () async {
+      final session = _userSession(userId: 12, userType: UserType.email);
+      final repository = _FakeRepository(userSession: session);
+      await AppTokenStore.saveSession(session);
+
+      final controller = AuthController(
+        userController: UserController(repository: repository),
+      );
+      final initialized = Future.doWhile(() async {
+        if (!controller.isInitializing) {
+          return false;
+        }
+
+        await Future<void>.delayed(Duration.zero);
+        return true;
+      });
+
+      await initialized;
+
+      expect(controller.session?.userId, 12);
+      expect(controller.isLoggedIn, isTrue);
     });
   });
 }
@@ -70,6 +96,11 @@ class _FakeRepository implements Repository {
   _FakeRepository({required this.userSession});
 
   final UserSession userSession;
+
+  @override
+  Future<UserSession> currentSessionRequest() async {
+    return userSession;
+  }
 
   @override
   Future<void> castUserVote(UserVote userVote) async {}
@@ -102,7 +133,14 @@ class _FakeRepository implements Repository {
   }
 
   @override
-  Future<ProposalHistoryPage> getProposalHistory(ProposalHistoryRequest request) {
+  Future<ProposalHistoryPage> getProposalHistory(
+    ProposalHistoryRequest request,
+  ) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<ProfileStats> getProfileStats() {
     throw UnimplementedError();
   }
 

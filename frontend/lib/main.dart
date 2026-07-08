@@ -49,9 +49,17 @@ class MyHomePage extends StatelessWidget {
       title: 'Parlamento Project',
       theme: baseTheme,
       home: Consumer<AuthController>(
-        builder:
-            (context, authController, child) =>
-                authController.isLoggedIn ? const MainPage() : const LoginPage(),
+        builder: (context, authController, child) {
+          if (authController.isInitializing) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          return authController.isLoggedIn
+              ? const MainPage()
+              : const LoginPage();
+        },
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/models/proposal.dart';
 import 'package:frontend/models/proposal_flow.dart';
+import 'package:frontend/models/profile.dart';
 import 'package:frontend/models/vote_model.dart';
 
 void main() {
@@ -130,6 +131,44 @@ void main() {
 
       expect(withoutLink.fullProposalTextLink, isNull);
       expect(withoutLink.phases, isEmpty);
+    });
+
+    test('parses profile overview and party alignment metadata', () {
+      final profile = ProfileStats.fromJson({
+        'overview': {
+          'proposalsInteracted': 12,
+          'supportCount': 5,
+          'opposeCount': 4,
+          'abstentionCount': 2,
+          'skipCount': 1,
+          'supportRate': 41.7,
+          'skipRate': 8.3,
+        },
+        'partyAlignment': {
+          'isUnlocked': true,
+          'minimumComparableVotes': 10,
+          'totalComparableVotes': 11,
+          'parties': [
+            {
+              'partyId': 'PS',
+              'partyAcronym': 'PS',
+              'partyName': 'Partido Socialista',
+              'partyLogo': 'https://example.com/ps.png',
+              'alignedCount': 9,
+              'comparableCount': 11,
+              'alignmentPercentage': 81.8,
+            },
+          ],
+        },
+      });
+
+      expect(profile.overview.proposalsInteracted, 12);
+      expect(profile.overview.skipCount, 1);
+      expect(profile.partyAlignment.isUnlocked, isTrue);
+      expect(profile.partyAlignment.minimumComparableVotes, 10);
+      expect(profile.partyAlignment.parties.single.partyAcronym, 'PS');
+      expect(profile.partyAlignment.parties.single.alignedCount, 9);
+      expect(profile.partyAlignment.parties.single.alignmentPercentage, 81.8);
     });
   });
 }

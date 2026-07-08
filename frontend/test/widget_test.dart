@@ -6,13 +6,17 @@
 // tree, read text, and verify that the values of widget properties are correct.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:frontend/auth/token_storage.dart';
 import 'package:frontend/main.dart';
 
 void main() {
   testWidgets('shows the login page', (WidgetTester tester) async {
+    AppTokenStore.storage = InMemoryTokenStorage();
+    AppTokenStore.onUnauthorized = null;
+
     await dotenv.load();
     await tester.pumpWidget(const MyApp());
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(find.text('Bem vinde!'), findsOneWidget);
   });
