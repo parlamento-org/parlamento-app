@@ -134,26 +134,68 @@ class ProposalHistoryRequest {
   ProposalHistoryRequest({
     this.page = 1,
     this.pageSize = 20,
-    this.legislature,
-    this.interactionType,
+    this.filters = const ProposalHistoryFilters(),
   });
 
   final int page;
   final int pageSize;
-  final String? legislature;
-  final ProposalInteractionAction? interactionType;
+  final ProposalHistoryFilters filters;
 
   Map<String, String> toQueryParameters() {
     return {
       'page': page.toString(),
       'pageSize': pageSize.toString(),
-      if (legislature != null && legislature!.trim().isNotEmpty)
-        'legislature': legislature!.trim(),
+      ...filters.toQueryParameters(),
+    };
+  }
+}
+
+class ProposalHistoryFilters {
+  const ProposalHistoryFilters({
+    this.legislature,
+    this.proposingParty,
+    this.interactionType,
+  });
+
+  final String? legislature;
+  final String? proposingParty;
+  final ProposalInteractionAction? interactionType;
+
+  bool get hasActiveFilters =>
+      _hasValue(legislature) ||
+      _hasValue(proposingParty) ||
+      interactionType != null &&
+          interactionType != ProposalInteractionAction.unknown;
+
+  ProposalHistoryFilters copyWith({
+    String? legislature,
+    bool clearLegislature = false,
+    String? proposingParty,
+    bool clearProposingParty = false,
+    ProposalInteractionAction? interactionType,
+    bool clearInteractionType = false,
+  }) {
+    return ProposalHistoryFilters(
+      legislature: clearLegislature ? null : legislature ?? this.legislature,
+      proposingParty:
+          clearProposingParty ? null : proposingParty ?? this.proposingParty,
+      interactionType:
+          clearInteractionType ? null : interactionType ?? this.interactionType,
+    );
+  }
+
+  Map<String, String> toQueryParameters() {
+    return {
+      if (_hasValue(legislature)) 'legislature': legislature!.trim(),
+      if (_hasValue(proposingParty)) 'proposingParty': proposingParty!.trim(),
       if (interactionType != null &&
           interactionType != ProposalInteractionAction.unknown)
         'interactionType': interactionType!.wireName,
     };
   }
+
+  static bool _hasValue(String? value) =>
+      value != null && value.trim().isNotEmpty;
 }
 
 class ProposalInteractionResult {
@@ -538,6 +580,7 @@ class ProposalHistoryPage {
     required this.hasNextPage,
     required this.hasPreviousPage,
     required this.availableLegislatures,
+    required this.availableProposingParties,
   });
 
   final List<ProposalHistoryItem> items;
@@ -548,6 +591,7 @@ class ProposalHistoryPage {
   final bool hasNextPage;
   final bool hasPreviousPage;
   final List<String> availableLegislatures;
+  final List<ProposalHistoryProposingParty> availableProposingParties;
 
   factory ProposalHistoryPage.fromJson(Map<String, dynamic> json) {
     return ProposalHistoryPage(
@@ -559,6 +603,24 @@ class ProposalHistoryPage {
       hasNextPage: _boolOrFalse(json['hasNextPage']),
       hasPreviousPage: _boolOrFalse(json['hasPreviousPage']),
       availableLegislatures: _stringList(json['availableLegislatures']),
+      availableProposingParties: _objectList(
+        json['availableProposingParties'],
+        ProposalHistoryProposingParty.fromJson,
+      ),
+    );
+  }
+}
+
+class ProposalHistoryProposingParty {
+  ProposalHistoryProposingParty({required this.acronym, this.name});
+
+  final String acronym;
+  final String? name;
+
+  factory ProposalHistoryProposingParty.fromJson(Map<String, dynamic> json) {
+    return ProposalHistoryProposingParty(
+      acronym: _stringOrFallback(json['acronym'], ''),
+      name: _stringOrNull(json['name']),
     );
   }
 }

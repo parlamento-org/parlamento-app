@@ -223,7 +223,7 @@ public sealed class ProposalFlowService : IProposalFlowService
     {
         var page = request.NormalizedPage;
         var pageSize = request.NormalizedPageSize;
-        var legislature = request.NormalizedLegislature;
+        var filters = request.ToFilters();
 
         var availableLegislatures = await _context.ProposalInteractionEvents
             .AsNoTracking()
@@ -238,6 +238,32 @@ public sealed class ProposalFlowService : IProposalFlowService
             .OrderByDescending(item => item)
             .ToListAsync(cancellationToken);
 
+        var availableProposingPartyRows = await _context.ProposalInteractionEvents
+            .AsNoTracking()
+            .Where(interaction =>
+                interaction.UserId == userId &&
+                TerminalFeedActions.Contains(interaction.InteractionType) &&
+                interaction.ProjectLaw != null &&
+                interaction.ProjectLaw.ProposingParty != null &&
+                interaction.ProjectLaw.ProposingParty.partyAcronym != null &&
+                interaction.ProjectLaw.ProposingParty.partyAcronym != string.Empty)
+            .Select(interaction => new
+            {
+                Acronym = interaction.ProjectLaw!.ProposingParty!.partyAcronym!,
+                Name = interaction.ProjectLaw.ProposingParty.fullName
+            })
+            .ToListAsync(cancellationToken);
+
+        var availableProposingParties = availableProposingPartyRows
+            .GroupBy(item => item.Acronym, StringComparer.OrdinalIgnoreCase)
+            .Select(group => new ProposalHistoryProposingPartyResponse
+            {
+                Acronym = group.Key,
+                Name = group.Select(item => item.Name).FirstOrDefault(name => !string.IsNullOrWhiteSpace(name))
+            })
+            .OrderBy(item => item.Acronym)
+            .ToList();
+
         var filteredInteractions = _context.ProposalInteractionEvents
             .AsNoTracking()
             .Where(interaction =>
@@ -245,13 +271,20 @@ public sealed class ProposalFlowService : IProposalFlowService
                 TerminalFeedActions.Contains(interaction.InteractionType) &&
                 interaction.ProjectLaw != null);
 
-        if (!string.IsNullOrWhiteSpace(legislature))
+        if (!string.IsNullOrWhiteSpace(filters.Legislature))
         {
             filteredInteractions = filteredInteractions.Where(interaction =>
-                interaction.ProjectLaw!.Legislatura == legislature);
+                interaction.ProjectLaw!.Legislatura == filters.Legislature);
         }
 
-        if (request.InteractionType is { } interactionType)
+        if (!string.IsNullOrWhiteSpace(filters.ProposingParty))
+        {
+            filteredInteractions = filteredInteractions.Where(interaction =>
+                interaction.ProjectLaw!.ProposingParty != null &&
+                interaction.ProjectLaw.ProposingParty.partyAcronym == filters.ProposingParty);
+        }
+
+        if (filters.InteractionType is { } interactionType)
         {
             filteredInteractions = filteredInteractions.Where(interaction =>
                 interaction.InteractionType == interactionType);
@@ -298,7 +331,8 @@ public sealed class ProposalFlowService : IProposalFlowService
             TotalPages = totalPages,
             HasNextPage = page < totalPages,
             HasPreviousPage = page > 1 && totalPages > 0,
-            AvailableLegislatures = availableLegislatures
+            AvailableLegislatures = availableLegislatures,
+            AvailableProposingParties = availableProposingParties
         });
     }
 

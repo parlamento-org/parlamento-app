@@ -49,6 +49,9 @@ public sealed class ProposalHistoryRequest
     [JsonPropertyName("legislature")]
     public string? Legislature { get; set; }
 
+    [JsonPropertyName("proposingParty")]
+    public string? ProposingParty { get; set; }
+
     [JsonPropertyName("interactionType")]
     public ProposalInteractionType? InteractionType { get; set; }
 
@@ -63,6 +66,28 @@ public sealed class ProposalHistoryRequest
 
     public string? NormalizedLegislature =>
         string.IsNullOrWhiteSpace(Legislature) ? null : Legislature.Trim();
+
+    public string? NormalizedProposingParty =>
+        string.IsNullOrWhiteSpace(ProposingParty) ? null : ProposingParty.Trim();
+
+    public ProposalHistoryFilters ToFilters()
+    {
+        return new ProposalHistoryFilters
+        {
+            Legislature = NormalizedLegislature,
+            ProposingParty = NormalizedProposingParty,
+            InteractionType = InteractionType
+        };
+    }
+}
+
+public sealed class ProposalHistoryFilters
+{
+    public string? Legislature { get; set; }
+
+    public string? ProposingParty { get; set; }
+
+    public ProposalInteractionType? InteractionType { get; set; }
 }
 
 public sealed class ProposalHistoryPageResponse
@@ -90,4 +115,16 @@ public sealed class ProposalHistoryPageResponse
 
     [JsonPropertyName("availableLegislatures")]
     public List<string> AvailableLegislatures { get; set; } = [];
+
+    [JsonPropertyName("availableProposingParties")]
+    public List<ProposalHistoryProposingPartyResponse> AvailableProposingParties { get; set; } = [];
+}
+
+public sealed class ProposalHistoryProposingPartyResponse
+{
+    [JsonPropertyName("acronym")]
+    public string Acronym { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
 }

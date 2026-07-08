@@ -74,6 +74,9 @@ void main() {
         'totalPages': 1,
         'hasNextPage': false,
         'availableLegislatures': ['XVII', 'XVI'],
+        'availableProposingParties': [
+          {'acronym': 'PS', 'name': 'Partido Socialista'},
+        ],
       });
 
       expect(page.items, hasLength(1));
@@ -82,6 +85,27 @@ void main() {
       expect(page.items.single.action, ProposalInteractionAction.support);
       expect(page.hasPreviousPage, isFalse);
       expect(page.availableLegislatures, ['XVII', 'XVI']);
+      expect(page.availableProposingParties.single.acronym, 'PS');
+    });
+
+    test('serializes proposal history filters as query parameters', () {
+      final request = ProposalHistoryRequest(
+        page: 2,
+        pageSize: 10,
+        filters: const ProposalHistoryFilters(
+          legislature: 'XVII',
+          proposingParty: 'PS',
+          interactionType: ProposalInteractionAction.support,
+        ),
+      );
+
+      expect(request.toQueryParameters(), {
+        'page': '2',
+        'pageSize': '10',
+        'legislature': 'XVII',
+        'proposingParty': 'PS',
+        'interactionType': 'Support',
+      });
     });
   });
 }
