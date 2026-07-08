@@ -109,5 +109,27 @@ void main() {
         'interactionType': 'Support',
       });
     });
+
+    test('parses proposal journey original document link', () {
+      final journey = ProposalJourney.fromJson({
+        'initiativeId': 10,
+        'initiativeType': 'Projeto de Lei',
+        'initiativeNumber': '10/XV/1',
+        'title': 'Titulo da iniciativa',
+        'fullProposalTextLink': 'https://example.com/propostas/10',
+        'phases': [],
+      });
+
+      expect(journey.fullProposalTextLink, 'https://example.com/propostas/10');
+
+      final withoutLink = ProposalJourney.fromJson({
+        'initiativeId': 11,
+        'initiativeType': 'Projeto de Lei',
+        'title': 'Sem link',
+      });
+
+      expect(withoutLink.fullProposalTextLink, isNull);
+      expect(withoutLink.phases, isEmpty);
+    });
   });
 }

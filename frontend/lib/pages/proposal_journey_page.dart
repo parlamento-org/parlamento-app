@@ -99,6 +99,7 @@ class _JourneyHeader extends StatelessWidget {
       journey.initiativeType,
       if (journey.initiativeNumber != null) journey.initiativeNumber!,
     ];
+    final originalProposalUrl = journey.fullProposalTextLink?.trim();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,7 +118,90 @@ class _JourneyHeader extends StatelessWidget {
             height: 1.15,
           ),
         ),
+        if (originalProposalUrl != null && originalProposalUrl.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _OriginalProposalSection(url: originalProposalUrl),
+        ],
       ],
+    );
+  }
+}
+
+class _OriginalProposalSection extends StatelessWidget {
+  const _OriginalProposalSection({required this.url});
+
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: baseTheme.colorScheme.primary.withValues(alpha: 0.18),
+        ),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final button = FilledButton.icon(
+            onPressed: () => _openExternalLink(context, url),
+            icon: const Icon(Icons.description_outlined, size: 18),
+            label: const Text('Abrir proposta original'),
+            style: FilledButton.styleFrom(
+              backgroundColor: baseTheme.colorScheme.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              textStyle: const TextStyle(fontWeight: FontWeight.w900),
+            ),
+          );
+
+          final copy = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Proposta original',
+                style: TextStyle(
+                  color: baseTheme.colorScheme.primary,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                'Texto introduzido no Parlamento.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: baseTheme.colorScheme.primary.withValues(alpha: 0.72),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          );
+
+          if (constraints.maxWidth < 420) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                copy,
+                const SizedBox(height: 10),
+                SizedBox(width: double.infinity, child: button),
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              Expanded(child: copy),
+              const SizedBox(width: 12),
+              button,
+            ],
+          );
+        },
+      ),
     );
   }
 }
@@ -547,6 +631,26 @@ class _DetailText extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _openExternalLink(BuildContext context, String url) async {
+  final uri = Uri.tryParse(url);
+  final launched =
+      uri != null && await launchUrl(uri, mode: LaunchMode.externalApplication);
+  if (!context.mounted) return;
+
+  if (launched) {
+    return;
+  }
+
+  await Clipboard.setData(ClipboardData(text: url));
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('Nao foi possivel abrir. Link copiado.'),
+      duration: Duration(seconds: 1),
+    ),
+  );
 }
 
 class _CopyableLinkRow extends StatelessWidget {

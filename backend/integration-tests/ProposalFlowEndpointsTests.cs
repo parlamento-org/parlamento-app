@@ -768,6 +768,23 @@ public sealed class ProposalRevealEndpointsTests : IClassFixture<ProposalRevealE
     }
 
     [Fact]
+    public async Task JourneyEndpointReturnsOriginalProposalTextLink()
+    {
+        var response = await _client.GetAsync(
+            $"/proposal-flow/initiatives/{_factory.InitiativeId}/journey");
+
+        response.EnsureSuccessStatusCode();
+
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var root = document.RootElement;
+
+        Assert.Equal(_factory.InitiativeId, root.GetProperty("initiativeId").GetInt32());
+        Assert.Equal(
+            "https://example.com/proposals/4001",
+            root.GetProperty("fullProposalTextLink").GetString());
+    }
+
+    [Fact]
     public async Task RevealEndpointRequiresUserVoteInteraction()
     {
         _client.AuthenticateAsUser(_factory.OtherUserId);

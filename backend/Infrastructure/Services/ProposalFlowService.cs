@@ -434,6 +434,9 @@ public sealed class ProposalFlowService : IProposalFlowService
             InitiativeType = initiative.InitiativeTypeDescription ?? "Iniciativa parlamentar",
             InitiativeNumber = initiative.InitiativeNumber,
             Title = initiative.ProposalTitle ?? "Iniciativa sem título disponível",
+            FullProposalTextLink = string.IsNullOrWhiteSpace(initiative.FullProposalTextLink)
+                ? null
+                : initiative.FullProposalTextLink,
             Phases = BuildJourneyPhases(initiative)
         };
     }

@@ -417,6 +417,7 @@ class ProposalJourney {
     required this.initiativeType,
     this.initiativeNumber,
     required this.title,
+    this.fullProposalTextLink,
     required this.phases,
   });
 
@@ -424,6 +425,7 @@ class ProposalJourney {
   final String initiativeType;
   final String? initiativeNumber;
   final String title;
+  final String? fullProposalTextLink;
   final List<ProposalJourneyPhase> phases;
 
   factory ProposalJourney.fromJson(Map<String, dynamic> json) {
@@ -438,6 +440,7 @@ class ProposalJourney {
         json['title'],
         'Iniciativa sem título disponível',
       ),
+      fullProposalTextLink: _stringOrNull(json['fullProposalTextLink']),
       phases: _objectList(json['phases'], ProposalJourneyPhase.fromJson),
     );
   }
