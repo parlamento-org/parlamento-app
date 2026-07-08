@@ -130,6 +130,32 @@ class ProposalInteractionSubmission {
   };
 }
 
+class ProposalHistoryRequest {
+  ProposalHistoryRequest({
+    this.page = 1,
+    this.pageSize = 20,
+    this.legislature,
+    this.interactionType,
+  });
+
+  final int page;
+  final int pageSize;
+  final String? legislature;
+  final ProposalInteractionAction? interactionType;
+
+  Map<String, String> toQueryParameters() {
+    return {
+      'page': page.toString(),
+      'pageSize': pageSize.toString(),
+      if (legislature != null && legislature!.trim().isNotEmpty)
+        'legislature': legislature!.trim(),
+      if (interactionType != null &&
+          interactionType != ProposalInteractionAction.unknown)
+        'interactionType': interactionType!.wireName,
+    };
+  }
+}
+
 class ProposalInteractionResult {
   ProposalInteractionResult({
     required this.interactionId,
@@ -463,6 +489,7 @@ class ProposalHistoryItem {
     required this.initiativeType,
     this.initiativeNumber,
     required this.title,
+    this.legislature,
     required this.action,
     this.createdAtUtc,
     required this.proposers,
@@ -473,6 +500,7 @@ class ProposalHistoryItem {
   final String initiativeType;
   final String? initiativeNumber;
   final String title;
+  final String? legislature;
   final ProposalInteractionAction action;
   final String? createdAtUtc;
   final List<ProposalProposer> proposers;
@@ -493,8 +521,44 @@ class ProposalHistoryItem {
       action: ProposalInteractionAction.fromWireName(
         _stringOrNull(json['action']),
       ),
+      legislature: _stringOrNull(json['legislature']),
       createdAtUtc: _stringOrNull(json['createdAtUtc']),
       proposers: _objectList(json['proposers'], ProposalProposer.fromJson),
+    );
+  }
+}
+
+class ProposalHistoryPage {
+  ProposalHistoryPage({
+    required this.items,
+    required this.page,
+    required this.pageSize,
+    required this.totalItems,
+    required this.totalPages,
+    required this.hasNextPage,
+    required this.hasPreviousPage,
+    required this.availableLegislatures,
+  });
+
+  final List<ProposalHistoryItem> items;
+  final int page;
+  final int pageSize;
+  final int totalItems;
+  final int totalPages;
+  final bool hasNextPage;
+  final bool hasPreviousPage;
+  final List<String> availableLegislatures;
+
+  factory ProposalHistoryPage.fromJson(Map<String, dynamic> json) {
+    return ProposalHistoryPage(
+      items: _objectList(json['items'], ProposalHistoryItem.fromJson),
+      page: _intOrFallback(json['page'], 1),
+      pageSize: _intOrFallback(json['pageSize'], 20),
+      totalItems: _intOrZero(json['totalItems']),
+      totalPages: _intOrZero(json['totalPages']),
+      hasNextPage: _boolOrFalse(json['hasNextPage']),
+      hasPreviousPage: _boolOrFalse(json['hasPreviousPage']),
+      availableLegislatures: _stringList(json['availableLegislatures']),
     );
   }
 }
@@ -528,6 +592,10 @@ int? _intOrNull(dynamic value) {
 
 int _intOrZero(dynamic value) {
   return _intOrNull(value) ?? 0;
+}
+
+int _intOrFallback(dynamic value, int fallback) {
+  return _intOrNull(value) ?? fallback;
 }
 
 bool? _boolOrNull(dynamic value) {

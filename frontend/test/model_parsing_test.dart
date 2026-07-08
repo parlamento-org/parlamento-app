@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/models/proposal.dart';
+import 'package:frontend/models/proposal_flow.dart';
 import 'package:frontend/models/vote_model.dart';
 
 void main() {
@@ -54,6 +55,33 @@ void main() {
         proposal.votingResultInGenerality.votingBlocks.single.voteOrientation,
         VoteOrientation.inFavor,
       );
+    });
+
+    test('parses paginated proposal history with missing optional fields', () {
+      final page = ProposalHistoryPage.fromJson({
+        'items': [
+          {
+            'interactionId': 12,
+            'initiativeId': 99,
+            'initiativeType': 'Projeto de Lei',
+            'title': 'Histórico sem campos opcionais',
+            'action': 'Support',
+          },
+        ],
+        'page': 1,
+        'pageSize': 20,
+        'totalItems': 1,
+        'totalPages': 1,
+        'hasNextPage': false,
+        'availableLegislatures': ['XVII', 'XVI'],
+      });
+
+      expect(page.items, hasLength(1));
+      expect(page.items.single.legislature, isNull);
+      expect(page.items.single.proposers, isEmpty);
+      expect(page.items.single.action, ProposalInteractionAction.support);
+      expect(page.hasPreviousPage, isFalse);
+      expect(page.availableLegislatures, ['XVII', 'XVI']);
     });
   });
 }

@@ -94,15 +94,18 @@ class APIRepository implements Repository {
   }
 
   @override
-  Future<List<ProposalHistoryItem>> getProposalHistory() async {
-    final response = await _apiClient.getJson('/proposal-flow/history');
+  Future<ProposalHistoryPage> getProposalHistory(
+    ProposalHistoryRequest request,
+  ) async {
+    final path =
+        Uri(
+          path: '/proposal-flow/history',
+          queryParameters: request.toQueryParameters(),
+        ).toString();
+    final response = await _apiClient.getJson(path);
 
     if (response.statusCode == 200) {
-      return response
-          .jsonArray()
-          .whereType<Map<String, dynamic>>()
-          .map(ProposalHistoryItem.fromJson)
-          .toList(growable: false);
+      return ProposalHistoryPage.fromJson(response.jsonObject());
     }
 
     throw ApiException(

@@ -23,7 +23,8 @@ public interface IProposalFlowService
         int initiativeId,
         CancellationToken cancellationToken = default);
 
-    Task<ServiceResult<List<ProposalHistoryItemResponse>>> GetHistoryAsync(
+    Task<ServiceResult<ProposalHistoryPageResponse>> GetHistoryAsync(
         int userId,
+        ProposalHistoryRequest request,
         CancellationToken cancellationToken = default);
 }

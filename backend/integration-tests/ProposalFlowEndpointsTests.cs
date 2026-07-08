@@ -288,6 +288,170 @@ public sealed class ProposalInteractionEndpointsTests : IClassFixture<ProposalIn
     }
 }
 
+public sealed class ProposalHistoryEndpointsFactory : TestingWebAppFactory
+{
+    public int UserId { get; private set; }
+
+    public int EmptyUserId { get; private set; }
+
+    protected override void SeedDbForTests(DatabaseContext db)
+    {
+        var ps = db.PoliticalParties.Single(party => party.partyAcronym == "PS");
+        var psd = db.PoliticalParties.Single(party => party.partyAcronym == "PSD");
+
+        var user = new User
+        {
+            ProfilePic = 1,
+            UserName = "proposal-history-tester",
+            Email = "proposal-history-tester@example.com",
+            Password = "hashed-password"
+        };
+        var emptyUser = new User
+        {
+            ProfilePic = 2,
+            UserName = "proposal-history-empty",
+            Email = "proposal-history-empty@example.com",
+            Password = "hashed-password"
+        };
+
+        var xvOld = CreateInitiative(5001, "Older XV initiative", "XV", ps);
+        var xvDuplicate = CreateInitiative(5002, "Latest duplicate XV initiative", "XV", psd);
+        var xvi = CreateInitiative(5003, "Only XVI initiative", "XVI", ps);
+        var xvii = CreateInitiative(5004, "Newest XVII initiative", "XVII", psd);
+
+        db.Users.AddRange(user, emptyUser);
+        db.ProjectLaws.AddRange(xvOld, xvDuplicate, xvi, xvii);
+        db.SaveChanges();
+
+        var now = DateTime.UtcNow;
+        db.ProposalInteractionEvents.AddRange(
+            CreateInteraction(user.Id, xvOld.Id, ProposalInteractionType.Support, now.AddMinutes(-40)),
+            CreateInteraction(user.Id, xvDuplicate.Id, ProposalInteractionType.Oppose, now.AddMinutes(-30)),
+            CreateInteraction(user.Id, xvDuplicate.Id, ProposalInteractionType.Support, now.AddMinutes(-10)),
+            CreateInteraction(user.Id, xvi.Id, ProposalInteractionType.Skip, now.AddMinutes(-20)),
+            CreateInteraction(user.Id, xvii.Id, ProposalInteractionType.Abstain, now.AddMinutes(-5)));
+        db.SaveChanges();
+
+        UserId = user.Id;
+        EmptyUserId = emptyUser.Id;
+    }
+
+    private static ProjectLaw CreateInitiative(
+        int sourceId,
+        string title,
+        string legislature,
+        PoliticalParty proposingParty)
+    {
+        return new ProjectLaw
+        {
+            SourceId = sourceId,
+            Legislatura = legislature,
+            InitiativeNumber = $"{sourceId}/{legislature}/1",
+            InitiativeTypeDescription = "Projeto de Lei",
+            Score = 100,
+            amountOfUsersInterested = 0,
+            totalAmountOfVotesFromUsers = 0,
+            VoteDate = "2024-05-01",
+            ProposingParty = proposingParty,
+            ProposalTitle = title,
+            FullProposalTextLink = $"https://example.com/proposals/{sourceId}",
+            ProposalResult = ProposalResult.ApprovedInGenerality
+        };
+    }
+
+    private static ProposalInteractionEvent CreateInteraction(
+        int userId,
+        int initiativeId,
+        ProposalInteractionType action,
+        DateTime createdAtUtc)
+    {
+        return new ProposalInteractionEvent
+        {
+            UserId = userId,
+            ProjectLawId = initiativeId,
+            InteractionType = action,
+            CreatedAtUtc = createdAtUtc
+        };
+    }
+}
+
+public sealed class ProposalHistoryEndpointsTests : IClassFixture<ProposalHistoryEndpointsFactory>
+{
+    private readonly HttpClient _client;
+    private readonly ProposalHistoryEndpointsFactory _factory;
+
+    public ProposalHistoryEndpointsTests(ProposalHistoryEndpointsFactory factory)
+    {
+        _client = factory.CreateClient();
+        _factory = factory;
+        _client.AuthenticateAsUser(_factory.UserId);
+    }
+
+    [Fact]
+    public async Task HistoryEndpointReturnsPaginatedMetadata()
+    {
+        var response = await _client.GetAsync("/proposal-flow/history?page=1&pageSize=2");
+
+        response.EnsureSuccessStatusCode();
+
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var root = document.RootElement;
+        var items = root.GetProperty("items").EnumerateArray().ToList();
+
+        Assert.Equal(2, items.Count);
+        Assert.Equal(1, root.GetProperty("page").GetInt32());
+        Assert.Equal(2, root.GetProperty("pageSize").GetInt32());
+        Assert.Equal(4, root.GetProperty("totalItems").GetInt32());
+        Assert.Equal(2, root.GetProperty("totalPages").GetInt32());
+        Assert.True(root.GetProperty("hasNextPage").GetBoolean());
+        Assert.False(root.GetProperty("hasPreviousPage").GetBoolean());
+        Assert.Equal("Newest XVII initiative", items[0].GetProperty("title").GetString());
+        Assert.Equal("Latest duplicate XV initiative", items[1].GetProperty("title").GetString());
+        Assert.Equal("Support", items[1].GetProperty("action").GetString());
+        Assert.Contains(
+            root.GetProperty("availableLegislatures").EnumerateArray(),
+            item => item.GetString() == "XVI");
+    }
+
+    [Fact]
+    public async Task HistoryEndpointFiltersByLegislature()
+    {
+        var response = await _client.GetAsync("/proposal-flow/history?page=1&pageSize=10&legislature=XVI");
+
+        response.EnsureSuccessStatusCode();
+
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var root = document.RootElement;
+        var item = root.GetProperty("items").EnumerateArray().Single();
+
+        Assert.Equal(1, root.GetProperty("totalItems").GetInt32());
+        Assert.Equal("XVI", item.GetProperty("legislature").GetString());
+        Assert.Equal("Only XVI initiative", item.GetProperty("title").GetString());
+        Assert.False(root.GetProperty("hasNextPage").GetBoolean());
+    }
+
+    [Fact]
+    public async Task HistoryEndpointReturnsEmptyResults()
+    {
+        _client.AuthenticateAsUser(_factory.EmptyUserId);
+
+        var response = await _client.GetAsync("/proposal-flow/history?page=1&pageSize=20");
+
+        response.EnsureSuccessStatusCode();
+
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var root = document.RootElement;
+
+        Assert.Empty(root.GetProperty("items").EnumerateArray());
+        Assert.Equal(1, root.GetProperty("page").GetInt32());
+        Assert.Equal(20, root.GetProperty("pageSize").GetInt32());
+        Assert.Equal(0, root.GetProperty("totalItems").GetInt32());
+        Assert.Equal(0, root.GetProperty("totalPages").GetInt32());
+        Assert.False(root.GetProperty("hasNextPage").GetBoolean());
+        Assert.False(root.GetProperty("hasPreviousPage").GetBoolean());
+    }
+}
+
 public sealed class ProposalRevealEndpointsFactory : TestingWebAppFactory
 {
     public int UserId { get; private set; }

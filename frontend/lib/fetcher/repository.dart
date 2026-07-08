@@ -45,5 +45,5 @@ abstract class Repository {
 
   Future<ProposalJourney> getProposalJourney(int initiativeId);
 
-  Future<List<ProposalHistoryItem>> getProposalHistory();
+  Future<ProposalHistoryPage> getProposalHistory(ProposalHistoryRequest request);
 }

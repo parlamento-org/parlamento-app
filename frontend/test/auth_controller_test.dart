@@ -102,7 +102,7 @@ class _FakeRepository implements Repository {
   }
 
   @override
-  Future<List<ProposalHistoryItem>> getProposalHistory() {
+  Future<ProposalHistoryPage> getProposalHistory(ProposalHistoryRequest request) {
     throw UnimplementedError();
   }
 

@@ -75,7 +75,9 @@ public sealed class ProposalFlowController : ControllerBase
     }
 
     [HttpGet("history", Name = "GetProposalHistory")]
-    public async Task<IActionResult> GetHistory(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetHistory(
+        [FromQuery] ProposalHistoryRequest request,
+        CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
         if (userId == null)
@@ -83,7 +85,7 @@ public sealed class ProposalFlowController : ControllerBase
             return Unauthorized();
         }
 
-        var result = await _proposalFlowService.GetHistoryAsync(userId.Value, cancellationToken);
+        var result = await _proposalFlowService.GetHistoryAsync(userId.Value, request, cancellationToken);
         return this.ToActionResult(result);
     }
 }

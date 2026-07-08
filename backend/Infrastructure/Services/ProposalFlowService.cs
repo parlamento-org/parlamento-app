@@ -216,10 +216,60 @@ public sealed class ProposalFlowService : IProposalFlowService
         return ServiceResult<ProposalJourneyResponse>.Success(MapJourney(initiative));
     }
 
-    public async Task<ServiceResult<List<ProposalHistoryItemResponse>>> GetHistoryAsync(
+    public async Task<ServiceResult<ProposalHistoryPageResponse>> GetHistoryAsync(
         int userId,
+        ProposalHistoryRequest request,
         CancellationToken cancellationToken = default)
     {
+        var page = request.NormalizedPage;
+        var pageSize = request.NormalizedPageSize;
+        var legislature = request.NormalizedLegislature;
+
+        var availableLegislatures = await _context.ProposalInteractionEvents
+            .AsNoTracking()
+            .Where(interaction =>
+                interaction.UserId == userId &&
+                TerminalFeedActions.Contains(interaction.InteractionType) &&
+                interaction.ProjectLaw != null &&
+                interaction.ProjectLaw.Legislatura != null &&
+                interaction.ProjectLaw.Legislatura != string.Empty)
+            .Select(interaction => interaction.ProjectLaw!.Legislatura!)
+            .Distinct()
+            .OrderByDescending(item => item)
+            .ToListAsync(cancellationToken);
+
+        var filteredInteractions = _context.ProposalInteractionEvents
+            .AsNoTracking()
+            .Where(interaction =>
+                interaction.UserId == userId &&
+                TerminalFeedActions.Contains(interaction.InteractionType) &&
+                interaction.ProjectLaw != null);
+
+        if (!string.IsNullOrWhiteSpace(legislature))
+        {
+            filteredInteractions = filteredInteractions.Where(interaction =>
+                interaction.ProjectLaw!.Legislatura == legislature);
+        }
+
+        if (request.InteractionType is { } interactionType)
+        {
+            filteredInteractions = filteredInteractions.Where(interaction =>
+                interaction.InteractionType == interactionType);
+        }
+
+        var latestInteractionIds = filteredInteractions
+            .GroupBy(interaction => interaction.ProjectLawId)
+            .Select(group => group
+                .OrderByDescending(interaction => interaction.CreatedAtUtc)
+                .ThenByDescending(interaction => interaction.Id)
+                .Select(interaction => interaction.Id)
+                .First());
+
+        var totalItems = await latestInteractionIds.CountAsync(cancellationToken);
+        var totalPages = totalItems == 0
+            ? 0
+            : (int)Math.Ceiling(totalItems / (double)pageSize);
+
         var interactions = await _context.ProposalInteractionEvents
             .AsNoTracking()
             .AsSplitQuery()
@@ -227,22 +277,29 @@ public sealed class ProposalFlowService : IProposalFlowService
                 .ThenInclude(initiative => initiative.ProposingParty)
             .Include(interaction => interaction.ProjectLaw!)
                 .ThenInclude(initiative => initiative.ImportedAuthors)
-            .Where(interaction =>
-                interaction.UserId == userId &&
-                TerminalFeedActions.Contains(interaction.InteractionType))
+            .Where(interaction => latestInteractionIds.Contains(interaction.Id))
             .OrderByDescending(interaction => interaction.CreatedAtUtc)
             .ThenByDescending(interaction => interaction.Id)
-            .Take(150)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync(cancellationToken);
 
-        var latestByInitiative = interactions
+        var items = interactions
             .Where(interaction => interaction.ProjectLaw != null)
-            .GroupBy(interaction => interaction.ProjectLawId)
-            .Select(group => group.First())
             .Select(MapHistoryItem)
             .ToList();
 
-        return ServiceResult<List<ProposalHistoryItemResponse>>.Success(latestByInitiative);
+        return ServiceResult<ProposalHistoryPageResponse>.Success(new ProposalHistoryPageResponse
+        {
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            TotalItems = totalItems,
+            TotalPages = totalPages,
+            HasNextPage = page < totalPages,
+            HasPreviousPage = page > 1 && totalPages > 0,
+            AvailableLegislatures = availableLegislatures
+        });
     }
 
     private static InitiativeFeedCardResponse MapFeedCard(ProjectLaw initiative)
@@ -704,6 +761,7 @@ public sealed class ProposalFlowService : IProposalFlowService
             InitiativeId = initiative.Id,
             InitiativeType = initiative.InitiativeTypeDescription ?? "Iniciativa parlamentar",
             InitiativeNumber = initiative.InitiativeNumber,
+            Legislature = initiative.Legislatura,
             Title = initiative.ProposalTitle ?? "Iniciativa sem título disponível",
             Action = interaction.InteractionType,
             CreatedAtUtc = interaction.CreatedAtUtc,

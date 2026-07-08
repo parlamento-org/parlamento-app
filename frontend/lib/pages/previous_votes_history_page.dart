@@ -17,6 +17,18 @@ enum _HistoryFilter {
   final String label;
 }
 
+extension _HistoryFilterInteractionType on _HistoryFilter {
+  ProposalInteractionAction? get interactionType {
+    return switch (this) {
+      _HistoryFilter.all => null,
+      _HistoryFilter.support => ProposalInteractionAction.support,
+      _HistoryFilter.oppose => ProposalInteractionAction.oppose,
+      _HistoryFilter.abstain => ProposalInteractionAction.abstain,
+      _HistoryFilter.skip => ProposalInteractionAction.skip,
+    };
+  }
+}
+
 class PreviousVotesHistoryPage extends StatefulWidget {
   const PreviousVotesHistoryPage({super.key, VoteController? voteController})
     : _voteController = voteController;
@@ -29,13 +41,24 @@ class PreviousVotesHistoryPage extends StatefulWidget {
 }
 
 class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
+  static const int _pageSize = 20;
+
   late final VoteController _voteController =
       widget._voteController ?? VoteController();
-  late Future<List<ProposalHistoryItem>> _historyFuture = _loadHistory();
+  late Future<List<ProposalHistoryItem>> _historyFuture;
   final TextEditingController _searchController = TextEditingController();
 
+  final List<ProposalHistoryItem> _history = [];
+  List<String> _availableLegislatures = [];
+
   _HistoryFilter _filter = _HistoryFilter.all;
+  String? _selectedLegislature;
   bool _showFilters = false;
+  bool _isLoadingMore = false;
+  bool _hasLoadMoreError = false;
+  bool _hasNextPage = false;
+  int _nextPage = 1;
+  int _totalItems = 0;
   String _searchText = '';
 
   @override
@@ -44,6 +67,7 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
     _searchController.addListener(() {
       setState(() => _searchText = _searchController.text.trim());
     });
+    _historyFuture = _loadHistory();
   }
 
   @override
@@ -93,27 +117,47 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
                     const SizedBox(height: 12),
                     _HistoryFilterChips(
                       selectedFilter: _filter,
-                      onSelected: (filter) => setState(() => _filter = filter),
+                      onSelected: _changeInteractionFilter,
                     ),
+                    if (_availableLegislatures.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      _HistoryLegislatureChips(
+                        legislatures: _availableLegislatures,
+                        selectedLegislature: _selectedLegislature,
+                        onSelected: _changeLegislature,
+                      ),
+                    ],
                   ],
                   const SizedBox(height: 24),
                   if (history.isEmpty)
-                    const _HistoryEmptyState(
+                    _HistoryEmptyState(
                       icon: Icons.how_to_vote_outlined,
-                      message: 'Ainda não tens votos registados.',
+                      message:
+                          _hasActiveServerFilter
+                              ? 'Sem votos para o filtro selecionado.'
+                              : 'Ainda não tens votos registados.',
                     )
                   else if (filteredHistory.isEmpty)
                     const _HistoryEmptyState(
                       icon: Icons.search_off,
                       message: 'Nenhum voto corresponde à pesquisa.',
                     )
-                  else
+                  else ...[
                     ...filteredHistory.map(
                       (item) => Padding(
                         padding: const EdgeInsets.only(bottom: 14),
                         child: _HistoryCard(item: item),
                       ),
                     ),
+                    _HistoryPaginationFooter(
+                      isLoading: _isLoadingMore,
+                      hasNextPage: _hasNextPage,
+                      hasError: _hasLoadMoreError,
+                      loadedItems: history.length,
+                      totalItems: _totalItems,
+                      onLoadMore: _loadMoreHistory,
+                    ),
+                  ],
                 ],
               ),
             );
@@ -123,13 +167,91 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
     );
   }
 
-  Future<List<ProposalHistoryItem>> _loadHistory() {
-    return _voteController.getProposalHistory();
+  Future<List<ProposalHistoryItem>> _loadHistory() async {
+    final response = await _voteController.getProposalHistory(
+      ProposalHistoryRequest(
+        page: 1,
+        pageSize: _pageSize,
+        legislature: _selectedLegislature,
+        interactionType: _filter.interactionType,
+      ),
+    );
+
+    _history
+      ..clear()
+      ..addAll(response.items);
+    _availableLegislatures = response.availableLegislatures;
+    _nextPage = response.page + 1;
+    _totalItems = response.totalItems;
+    _hasNextPage = response.hasNextPage;
+    _hasLoadMoreError = false;
+
+    return List.unmodifiable(_history);
   }
 
   void _reloadHistory() {
     setState(() => _historyFuture = _loadHistory());
   }
+
+  Future<void> _loadMoreHistory() async {
+    if (_isLoadingMore) return;
+    if (!_hasNextPage && !_hasLoadMoreError) return;
+
+    setState(() {
+      _isLoadingMore = true;
+      _hasLoadMoreError = false;
+    });
+
+    try {
+      final response = await _voteController.getProposalHistory(
+        ProposalHistoryRequest(
+          page: _nextPage,
+          pageSize: _pageSize,
+          legislature: _selectedLegislature,
+          interactionType: _filter.interactionType,
+        ),
+      );
+
+      if (!mounted) return;
+      setState(() {
+        final existingIds = _history.map((item) => item.interactionId).toSet();
+        _history.addAll(
+          response.items.where((item) => existingIds.add(item.interactionId)),
+        );
+        _availableLegislatures = response.availableLegislatures;
+        _nextPage = response.page + 1;
+        _totalItems = response.totalItems;
+        _hasNextPage = response.hasNextPage;
+        _isLoadingMore = false;
+        _historyFuture = Future.value(List.unmodifiable(_history));
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _hasLoadMoreError = true;
+        _isLoadingMore = false;
+      });
+    }
+  }
+
+  void _changeInteractionFilter(_HistoryFilter filter) {
+    if (_filter == filter) return;
+    setState(() {
+      _filter = filter;
+      _historyFuture = _loadHistory();
+    });
+  }
+
+  void _changeLegislature(String? legislature) {
+    if (_selectedLegislature == legislature) return;
+    setState(() {
+      _selectedLegislature = legislature;
+      _historyFuture = _loadHistory();
+    });
+  }
+
+  bool get _hasActiveServerFilter =>
+      _filter != _HistoryFilter.all || _selectedLegislature != null;
 
   List<ProposalHistoryItem> _filterHistory(List<ProposalHistoryItem> history) {
     final normalizedSearch = _searchText.toLowerCase();
@@ -160,6 +282,7 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
                 item.title,
                 item.initiativeType,
                 if (item.initiativeNumber != null) item.initiativeNumber!,
+                if (item.legislature != null) item.legislature!,
                 ...item.proposers.expand(
                   (proposer) => [
                     if (proposer.acronym != null) proposer.acronym!,
@@ -293,6 +416,100 @@ class _HistoryFilterChips extends StatelessWidget {
                 ),
               )
               .toList(),
+    );
+  }
+}
+
+class _HistoryLegislatureChips extends StatelessWidget {
+  const _HistoryLegislatureChips({
+    required this.legislatures,
+    required this.selectedLegislature,
+    required this.onSelected,
+  });
+
+  final List<String> legislatures;
+  final String? selectedLegislature;
+  final ValueChanged<String?> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final values = [null, ...legislatures];
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children:
+          values
+              .map(
+                (legislature) => ChoiceChip(
+                  label: Text(legislature ?? 'Todas'),
+                  selected: selectedLegislature == legislature,
+                  onSelected: (_) => onSelected(legislature),
+                  selectedColor: baseTheme.colorScheme.primary,
+                  labelStyle: TextStyle(
+                    color:
+                        selectedLegislature == legislature
+                            ? Colors.white
+                            : baseTheme.colorScheme.primary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                  side: BorderSide(color: baseTheme.colorScheme.primary),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              )
+              .toList(),
+    );
+  }
+}
+
+class _HistoryPaginationFooter extends StatelessWidget {
+  const _HistoryPaginationFooter({
+    required this.isLoading,
+    required this.hasNextPage,
+    required this.hasError,
+    required this.loadedItems,
+    required this.totalItems,
+    required this.onLoadMore,
+  });
+
+  final bool isLoading;
+  final bool hasNextPage;
+  final bool hasError;
+  final int loadedItems;
+  final int totalItems;
+  final VoidCallback onLoadMore;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!hasNextPage && !hasError) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Center(
+          child: Text(
+            totalItems == 0 ? '' : '$loadedItems de $totalItems votos',
+            style: TextStyle(
+              color: baseTheme.colorScheme.primary.withValues(alpha: 0.72),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Center(
+        child:
+            isLoading
+                ? const CircularProgressIndicator()
+                : TextButton(
+                  style: buttonStyle,
+                  onPressed: onLoadMore,
+                  child: Text(hasError ? 'Tentar novamente' : 'Carregar mais'),
+                ),
+      ),
     );
   }
 }
