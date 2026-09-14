@@ -33,6 +33,14 @@ Start the development stack:
 docker compose up postgres-parlamento db-parlamento-migrate dev-parlamento-be dev-parlamento-fe
 ```
 
+To run the development backend against Neon instead, set `PARLAMENTO_NEON_CONNECTION_STRING` in the root `.env` file, then use the Neon profile:
+
+```powershell
+docker compose --profile neon up db-parlamento-migrate-neon dev-parlamento-be-neon dev-parlamento-fe
+```
+
+Do not commit the Neon connection string. The root `.env` file is ignored; `.env.example` documents the expected keys without secrets.
+
 Start only the backend side:
 
 ```powershell
@@ -140,7 +148,7 @@ PDF extraction is heuristic and layout-aware, not pixel-perfect. The production 
 
 Open Data URLs are configured under `ParliamentOpenData`. `appsettings.json` contains defaults for legislatures `XV`, `XVI`, and `XVII`.
 
-For Docker Compose, the root `.env` file provides substitution values, and `docker-compose.yml` passes them into backend containers as ASP.NET environment variables.
+For Docker Compose, the root `.env` file provides substitution values, and `docker-compose.yml` passes them into backend containers as ASP.NET environment variables. The default backend service uses the local `postgres-parlamento` container; the `neon` Compose profile uses `PARLAMENTO_NEON_CONNECTION_STRING` from `.env`.
 
 Important keys:
 

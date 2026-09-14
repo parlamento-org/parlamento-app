@@ -1,4 +1,3 @@
-version: "3.9" # optional since v1.27.0
 services:
   dev-parlamento-fe:
     stdin_open: true # Allow hot reload
@@ -48,19 +47,19 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: Host=postgres-parlamento;Port=5432;Database=${PARLAMENTO_DB_NAME:-parlamento};Username=${PARLAMENTO_DB_USER:-parlamento};Password=${PARLAMENTO_DB_PASSWORD:-parlamento}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini-2024-07-18}
       ParliamentOpenData__LatestLegislature: ${PARLIAMENT_OPEN_DATA_LATEST_LEGISLATURE:-XVII}
       ParliamentOpenData__DailyImport__Enabled: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_ENABLED:-false}
       ParliamentOpenData__DailyImport__RunSummaries: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_SUMMARIES:-true}
       ParliamentOpenData__DailyImport__TimeZoneId: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_TIME_ZONE_ID:-Europe/Lisbon}
       ParliamentOpenData__DailyImport__RunAt: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_AT:-00:00:00}
-      ParliamentOpenData__Legislatures__XV__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XV_INITIATIVES_URL}
-      ParliamentOpenData__Legislatures__XV__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XV_BASE_INFO_URL}
-      ParliamentOpenData__Legislatures__XVI__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVI_INITIATIVES_URL}
-      ParliamentOpenData__Legislatures__XVI__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVI_BASE_INFO_URL}
-      ParliamentOpenData__Legislatures__XVII__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVII_INITIATIVES_URL}
-      ParliamentOpenData__Legislatures__XVII__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVII_BASE_INFO_URL}
+      ParliamentOpenData__Legislatures__XV__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XV_INITIATIVES_URL:-}
+      ParliamentOpenData__Legislatures__XV__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XV_BASE_INFO_URL:-}
+      ParliamentOpenData__Legislatures__XVI__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVI_INITIATIVES_URL:-}
+      ParliamentOpenData__Legislatures__XVI__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVI_BASE_INFO_URL:-}
+      ParliamentOpenData__Legislatures__XVII__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVII_INITIATIVES_URL:-}
+      ParliamentOpenData__Legislatures__XVII__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVII_BASE_INFO_URL:-}
     volumes:
       - ./backend/src:/usr/src/app/src
       - ./backend/Domain:/usr/src/app/Domain
@@ -71,6 +70,42 @@ services:
         condition: service_healthy
       db-parlamento-migrate:
         condition: service_completed_successfully
+  dev-parlamento-be-neon:
+    profiles: ["neon"]
+    build:
+      context: ./backend
+      dockerfile: ./Dockerfile
+    ports:
+      - "8180:8080"
+      - "8181:8081"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: ${PARLAMENTO_NEON_CONNECTION_STRING:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini-2024-07-18}
+      ParliamentOpenData__LatestLegislature: ${PARLIAMENT_OPEN_DATA_LATEST_LEGISLATURE:-XVII}
+      ParliamentOpenData__DailyImport__Enabled: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_ENABLED:-false}
+      ParliamentOpenData__DailyImport__RunSummaries: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_SUMMARIES:-true}
+      ParliamentOpenData__DailyImport__TimeZoneId: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_TIME_ZONE_ID:-Europe/Lisbon}
+      ParliamentOpenData__DailyImport__RunAt: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_AT:-00:00:00}
+      ParliamentOpenData__Legislatures__XV__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XV_INITIATIVES_URL:-}
+      ParliamentOpenData__Legislatures__XV__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XV_BASE_INFO_URL:-}
+      ParliamentOpenData__Legislatures__XVI__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVI_INITIATIVES_URL:-}
+      ParliamentOpenData__Legislatures__XVI__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVI_BASE_INFO_URL:-}
+      ParliamentOpenData__Legislatures__XVII__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVII_INITIATIVES_URL:-}
+      ParliamentOpenData__Legislatures__XVII__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVII_BASE_INFO_URL:-}
+    volumes:
+      - ./backend/src:/usr/src/app/src
+      - ./backend/Domain:/usr/src/app/Domain
+      - ./backend/Application:/usr/src/app/Application
+      - ./backend/Infrastructure:/usr/src/app/Infrastructure
+    depends_on:
+      db-parlamento-migrate-neon:
+        condition: service_completed_successfully
+    command: >
+      sh -c 'test -n "$$ConnectionStrings__DefaultConnection" ||
+      (echo "Set PARLAMENTO_NEON_CONNECTION_STRING in the root .env file to use the Neon profile." >&2; exit 1);
+      dotnet watch'
   prod-parlamento-be:
     build:
       context: ./backend
@@ -81,19 +116,19 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: Host=postgres-parlamento;Port=5432;Database=${PARLAMENTO_DB_NAME:-parlamento};Username=${PARLAMENTO_DB_USER:-parlamento};Password=${PARLAMENTO_DB_PASSWORD:-parlamento}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini-2024-07-18}
       ParliamentOpenData__LatestLegislature: ${PARLIAMENT_OPEN_DATA_LATEST_LEGISLATURE:-XVII}
       ParliamentOpenData__DailyImport__Enabled: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_ENABLED:-false}
       ParliamentOpenData__DailyImport__RunSummaries: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_SUMMARIES:-true}
       ParliamentOpenData__DailyImport__TimeZoneId: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_TIME_ZONE_ID:-Europe/Lisbon}
       ParliamentOpenData__DailyImport__RunAt: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_AT:-00:00:00}
-      ParliamentOpenData__Legislatures__XV__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XV_INITIATIVES_URL}
-      ParliamentOpenData__Legislatures__XV__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XV_BASE_INFO_URL}
-      ParliamentOpenData__Legislatures__XVI__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVI_INITIATIVES_URL}
-      ParliamentOpenData__Legislatures__XVI__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVI_BASE_INFO_URL}
-      ParliamentOpenData__Legislatures__XVII__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVII_INITIATIVES_URL}
-      ParliamentOpenData__Legislatures__XVII__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVII_BASE_INFO_URL}
+      ParliamentOpenData__Legislatures__XV__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XV_INITIATIVES_URL:-}
+      ParliamentOpenData__Legislatures__XV__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XV_BASE_INFO_URL:-}
+      ParliamentOpenData__Legislatures__XVI__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVI_INITIATIVES_URL:-}
+      ParliamentOpenData__Legislatures__XVI__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVI_BASE_INFO_URL:-}
+      ParliamentOpenData__Legislatures__XVII__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVII_INITIATIVES_URL:-}
+      ParliamentOpenData__Legislatures__XVII__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVII_BASE_INFO_URL:-}
     depends_on:
       postgres-parlamento:
         condition: service_healthy
@@ -106,19 +141,19 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Test
       ConnectionStrings__DefaultConnection: Host=postgres-parlamento;Port=5432;Database=${PARLAMENTO_DB_NAME:-parlamento};Username=${PARLAMENTO_DB_USER:-parlamento};Password=${PARLAMENTO_DB_PASSWORD:-parlamento}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini-2024-07-18}
       ParliamentOpenData__LatestLegislature: ${PARLIAMENT_OPEN_DATA_LATEST_LEGISLATURE:-XVII}
       ParliamentOpenData__DailyImport__Enabled: false
       ParliamentOpenData__DailyImport__RunSummaries: false
       ParliamentOpenData__DailyImport__TimeZoneId: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_TIME_ZONE_ID:-Europe/Lisbon}
       ParliamentOpenData__DailyImport__RunAt: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_AT:-00:00:00}
-      ParliamentOpenData__Legislatures__XV__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XV_INITIATIVES_URL}
-      ParliamentOpenData__Legislatures__XV__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XV_BASE_INFO_URL}
-      ParliamentOpenData__Legislatures__XVI__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVI_INITIATIVES_URL}
-      ParliamentOpenData__Legislatures__XVI__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVI_BASE_INFO_URL}
-      ParliamentOpenData__Legislatures__XVII__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVII_INITIATIVES_URL}
-      ParliamentOpenData__Legislatures__XVII__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVII_BASE_INFO_URL}
+      ParliamentOpenData__Legislatures__XV__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XV_INITIATIVES_URL:-}
+      ParliamentOpenData__Legislatures__XV__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XV_BASE_INFO_URL:-}
+      ParliamentOpenData__Legislatures__XVI__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVI_INITIATIVES_URL:-}
+      ParliamentOpenData__Legislatures__XVI__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVI_BASE_INFO_URL:-}
+      ParliamentOpenData__Legislatures__XVII__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVII_INITIATIVES_URL:-}
+      ParliamentOpenData__Legislatures__XVII__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVII_BASE_INFO_URL:-}
     volumes:
       - ./backend/src:/usr/src/app/src
       - ./backend/test:/usr/src/app/test
@@ -138,22 +173,47 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: Host=postgres-parlamento;Port=5432;Database=${PARLAMENTO_DB_NAME:-parlamento};Username=${PARLAMENTO_DB_USER:-parlamento};Password=${PARLAMENTO_DB_PASSWORD:-parlamento}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini-2024-07-18}
       ParliamentOpenData__LatestLegislature: ${PARLIAMENT_OPEN_DATA_LATEST_LEGISLATURE:-XVII}
       ParliamentOpenData__DailyImport__Enabled: false
       ParliamentOpenData__DailyImport__RunSummaries: false
       ParliamentOpenData__DailyImport__TimeZoneId: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_TIME_ZONE_ID:-Europe/Lisbon}
       ParliamentOpenData__DailyImport__RunAt: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_AT:-00:00:00}
-      ParliamentOpenData__Legislatures__XV__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XV_INITIATIVES_URL}
-      ParliamentOpenData__Legislatures__XV__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XV_BASE_INFO_URL}
-      ParliamentOpenData__Legislatures__XVI__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVI_INITIATIVES_URL}
-      ParliamentOpenData__Legislatures__XVI__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVI_BASE_INFO_URL}
-      ParliamentOpenData__Legislatures__XVII__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVII_INITIATIVES_URL}
-      ParliamentOpenData__Legislatures__XVII__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVII_BASE_INFO_URL}
+      ParliamentOpenData__Legislatures__XV__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XV_INITIATIVES_URL:-}
+      ParliamentOpenData__Legislatures__XV__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XV_BASE_INFO_URL:-}
+      ParliamentOpenData__Legislatures__XVI__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVI_INITIATIVES_URL:-}
+      ParliamentOpenData__Legislatures__XVI__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVI_BASE_INFO_URL:-}
+      ParliamentOpenData__Legislatures__XVII__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVII_INITIATIVES_URL:-}
+      ParliamentOpenData__Legislatures__XVII__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVII_BASE_INFO_URL:-}
     depends_on:
       postgres-parlamento:
         condition: service_healthy
+  db-parlamento-migrate-neon:
+    profiles: ["neon"]
+    build:
+      context: ./backend
+      dockerfile: ./Dockerfile.migrate
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: ${PARLAMENTO_NEON_CONNECTION_STRING:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini-2024-07-18}
+      ParliamentOpenData__LatestLegislature: ${PARLIAMENT_OPEN_DATA_LATEST_LEGISLATURE:-XVII}
+      ParliamentOpenData__DailyImport__Enabled: false
+      ParliamentOpenData__DailyImport__RunSummaries: false
+      ParliamentOpenData__DailyImport__TimeZoneId: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_TIME_ZONE_ID:-Europe/Lisbon}
+      ParliamentOpenData__DailyImport__RunAt: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_AT:-00:00:00}
+      ParliamentOpenData__Legislatures__XV__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XV_INITIATIVES_URL:-}
+      ParliamentOpenData__Legislatures__XV__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XV_BASE_INFO_URL:-}
+      ParliamentOpenData__Legislatures__XVI__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVI_INITIATIVES_URL:-}
+      ParliamentOpenData__Legislatures__XVI__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVI_BASE_INFO_URL:-}
+      ParliamentOpenData__Legislatures__XVII__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVII_INITIATIVES_URL:-}
+      ParliamentOpenData__Legislatures__XVII__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVII_BASE_INFO_URL:-}
+    command: >
+      sh -c 'test -n "$$ConnectionStrings__DefaultConnection" ||
+      (echo "Set PARLAMENTO_NEON_CONNECTION_STRING in the root .env file to use the Neon profile." >&2; exit 1);
+      dotnet ef database update --project . --startup-project . --runtime linux-x64'
 
 volumes:
   parlamento-postgres-data:

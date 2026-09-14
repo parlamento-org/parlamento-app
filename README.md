@@ -192,7 +192,7 @@ The journey page reconstructs a proposal lifecycle from imported events and vote
 
 ### Environment Variables
 
-Create a root `.env` file for Docker Compose overrides when needed:
+Copy `.env.example` to a root `.env` file for Docker Compose overrides when needed:
 
 ```bash
 PARLAMENTO_DB_NAME=parlamento
@@ -207,6 +207,12 @@ PARLIAMENT_OPEN_DATA_DAILY_IMPORT_ENABLED=false
 PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_SUMMARIES=true
 ```
 
+Leave `PARLAMENTO_NEON_CONNECTION_STRING` unset for the normal local Docker PostgreSQL database. To point the development backend at Neon instead, add the Neon connection string to `.env`:
+
+```bash
+PARLAMENTO_NEON_CONNECTION_STRING="Host=your-neon-pooler-host; Database=neondb; Username=neondb_owner; Password=your-password; SSL Mode=VerifyFull; Channel Binding=Require;"
+```
+
 For the Flutter app, create `frontend/.env`:
 
 ```bash
@@ -219,8 +225,16 @@ The frontend `.env` is bundled into the client and must only contain public clie
 
 ### Start With Docker
 
+Local PostgreSQL:
+
 ```bash
 docker compose up postgres-parlamento db-parlamento-migrate dev-parlamento-be dev-parlamento-fe
+```
+
+Neon PostgreSQL:
+
+```bash
+docker compose --profile neon up db-parlamento-migrate-neon dev-parlamento-be-neon dev-parlamento-fe
 ```
 
 Local URLs:
