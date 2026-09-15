@@ -54,12 +54,6 @@ services:
       ParliamentOpenData__DailyImport__RunSummaries: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_SUMMARIES:-true}
       ParliamentOpenData__DailyImport__TimeZoneId: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_TIME_ZONE_ID:-Europe/Lisbon}
       ParliamentOpenData__DailyImport__RunAt: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_AT:-00:00:00}
-      ParliamentOpenData__Legislatures__XV__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XV_INITIATIVES_URL:-}
-      ParliamentOpenData__Legislatures__XV__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XV_BASE_INFO_URL:-}
-      ParliamentOpenData__Legislatures__XVI__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVI_INITIATIVES_URL:-}
-      ParliamentOpenData__Legislatures__XVI__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVI_BASE_INFO_URL:-}
-      ParliamentOpenData__Legislatures__XVII__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVII_INITIATIVES_URL:-}
-      ParliamentOpenData__Legislatures__XVII__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVII_BASE_INFO_URL:-}
     volumes:
       - ./backend/src:/usr/src/app/src
       - ./backend/Domain:/usr/src/app/Domain
@@ -88,12 +82,6 @@ services:
       ParliamentOpenData__DailyImport__RunSummaries: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_SUMMARIES:-true}
       ParliamentOpenData__DailyImport__TimeZoneId: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_TIME_ZONE_ID:-Europe/Lisbon}
       ParliamentOpenData__DailyImport__RunAt: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_AT:-00:00:00}
-      ParliamentOpenData__Legislatures__XV__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XV_INITIATIVES_URL:-}
-      ParliamentOpenData__Legislatures__XV__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XV_BASE_INFO_URL:-}
-      ParliamentOpenData__Legislatures__XVI__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVI_INITIATIVES_URL:-}
-      ParliamentOpenData__Legislatures__XVI__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVI_BASE_INFO_URL:-}
-      ParliamentOpenData__Legislatures__XVII__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVII_INITIATIVES_URL:-}
-      ParliamentOpenData__Legislatures__XVII__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVII_BASE_INFO_URL:-}
     volumes:
       - ./backend/src:/usr/src/app/src
       - ./backend/Domain:/usr/src/app/Domain
@@ -123,12 +111,6 @@ services:
       ParliamentOpenData__DailyImport__RunSummaries: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_SUMMARIES:-true}
       ParliamentOpenData__DailyImport__TimeZoneId: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_TIME_ZONE_ID:-Europe/Lisbon}
       ParliamentOpenData__DailyImport__RunAt: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_AT:-00:00:00}
-      ParliamentOpenData__Legislatures__XV__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XV_INITIATIVES_URL:-}
-      ParliamentOpenData__Legislatures__XV__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XV_BASE_INFO_URL:-}
-      ParliamentOpenData__Legislatures__XVI__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVI_INITIATIVES_URL:-}
-      ParliamentOpenData__Legislatures__XVI__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVI_BASE_INFO_URL:-}
-      ParliamentOpenData__Legislatures__XVII__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVII_INITIATIVES_URL:-}
-      ParliamentOpenData__Legislatures__XVII__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVII_BASE_INFO_URL:-}
     depends_on:
       postgres-parlamento:
         condition: service_healthy
@@ -148,12 +130,6 @@ services:
       ParliamentOpenData__DailyImport__RunSummaries: false
       ParliamentOpenData__DailyImport__TimeZoneId: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_TIME_ZONE_ID:-Europe/Lisbon}
       ParliamentOpenData__DailyImport__RunAt: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_AT:-00:00:00}
-      ParliamentOpenData__Legislatures__XV__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XV_INITIATIVES_URL:-}
-      ParliamentOpenData__Legislatures__XV__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XV_BASE_INFO_URL:-}
-      ParliamentOpenData__Legislatures__XVI__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVI_INITIATIVES_URL:-}
-      ParliamentOpenData__Legislatures__XVI__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVI_BASE_INFO_URL:-}
-      ParliamentOpenData__Legislatures__XVII__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVII_INITIATIVES_URL:-}
-      ParliamentOpenData__Legislatures__XVII__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVII_BASE_INFO_URL:-}
     volumes:
       - ./backend/src:/usr/src/app/src
       - ./backend/test:/usr/src/app/test
@@ -180,12 +156,6 @@ services:
       ParliamentOpenData__DailyImport__RunSummaries: false
       ParliamentOpenData__DailyImport__TimeZoneId: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_TIME_ZONE_ID:-Europe/Lisbon}
       ParliamentOpenData__DailyImport__RunAt: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_AT:-00:00:00}
-      ParliamentOpenData__Legislatures__XV__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XV_INITIATIVES_URL:-}
-      ParliamentOpenData__Legislatures__XV__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XV_BASE_INFO_URL:-}
-      ParliamentOpenData__Legislatures__XVI__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVI_INITIATIVES_URL:-}
-      ParliamentOpenData__Legislatures__XVI__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVI_BASE_INFO_URL:-}
-      ParliamentOpenData__Legislatures__XVII__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVII_INITIATIVES_URL:-}
-      ParliamentOpenData__Legislatures__XVII__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVII_BASE_INFO_URL:-}
     depends_on:
       postgres-parlamento:
         condition: service_healthy
@@ -204,12 +174,6 @@ services:
       ParliamentOpenData__DailyImport__RunSummaries: false
       ParliamentOpenData__DailyImport__TimeZoneId: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_TIME_ZONE_ID:-Europe/Lisbon}
       ParliamentOpenData__DailyImport__RunAt: ${PARLIAMENT_OPEN_DATA_DAILY_IMPORT_RUN_AT:-00:00:00}
-      ParliamentOpenData__Legislatures__XV__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XV_INITIATIVES_URL:-}
-      ParliamentOpenData__Legislatures__XV__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XV_BASE_INFO_URL:-}
-      ParliamentOpenData__Legislatures__XVI__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVI_INITIATIVES_URL:-}
-      ParliamentOpenData__Legislatures__XVI__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVI_BASE_INFO_URL:-}
-      ParliamentOpenData__Legislatures__XVII__InitiativesUrl: ${PARLIAMENT_OPEN_DATA_XVII_INITIATIVES_URL:-}
-      ParliamentOpenData__Legislatures__XVII__BaseInfoUrl: ${PARLIAMENT_OPEN_DATA_XVII_BASE_INFO_URL:-}
     command: >
       sh -c 'test -n "$$ConnectionStrings__DefaultConnection" ||
       (echo "Set PARLAMENTO_NEON_CONNECTION_STRING in the root .env file to use the Neon profile." >&2; exit 1);

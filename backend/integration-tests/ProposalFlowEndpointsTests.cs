@@ -42,9 +42,6 @@ public sealed class ProposalFlowEndpointsFactory : TestingWebAppFactory
             Legislatura = "XV",
             InitiativeNumber = "10/XV/1",
             InitiativeTypeDescription = "Projeto de Lei",
-            Score = 100,
-            amountOfUsersInterested = 0,
-            totalAmountOfVotesFromUsers = 0,
             VoteDate = "2024-02-01",
             ProposingParty = ps,
             ProposalTitle = "Original title that may be less neutral",
@@ -96,9 +93,6 @@ public sealed class ProposalFlowEndpointsFactory : TestingWebAppFactory
             SourceId = 2002,
             Legislatura = "XV",
             InitiativeTypeDescription = "Projeto de Lei",
-            Score = 100,
-            amountOfUsersInterested = 0,
-            totalAmountOfVotesFromUsers = 0,
             VoteDate = "2024-02-02",
             ProposingParty = psd,
             ProposalTitle = "Already voted title",
@@ -162,6 +156,136 @@ public sealed class ProposalFlowEndpointsTests : IClassFixture<ProposalFlowEndpo
     }
 }
 
+public sealed class ProposalFeedRankingFactory : TestingWebAppFactory
+{
+    public int UserId { get; private set; }
+
+    public int HighSkipInitiativeId { get; private set; }
+
+    public int LowSkipInitiativeId { get; private set; }
+
+    protected override void SeedDbForTests(DatabaseContext db)
+    {
+        var ps = db.PoliticalParties.Single(party => party.partyAcronym == "PS");
+
+        var user = new User
+        {
+            ProfilePic = 1,
+            UserName = "proposal-feed-ranking-tester",
+            Email = "proposal-feed-ranking-tester@example.com",
+            Password = "hashed-password",
+            Votes = new List<Vote>()
+        };
+
+        var highSkipInitiative = CreateFeedCandidate(2101, "High skip candidate", ps);
+        var lowSkipInitiative = CreateFeedCandidate(2102, "Low skip candidate", ps);
+
+        db.Users.Add(user);
+        db.ProjectLaws.AddRange(highSkipInitiative, lowSkipInitiative);
+        db.SaveChanges();
+
+        db.ProjectLawInteractionStats.Add(new ProjectLawInteractionStats
+        {
+            ProjectLawId = highSkipInitiative.Id,
+            Skips = 100
+        });
+        db.SaveChanges();
+
+        UserId = user.Id;
+        HighSkipInitiativeId = highSkipInitiative.Id;
+        LowSkipInitiativeId = lowSkipInitiative.Id;
+    }
+
+    private static ProjectLaw CreateFeedCandidate(int sourceId, string title, PoliticalParty proposingParty)
+    {
+        return new ProjectLaw
+        {
+            SourceId = sourceId,
+            Legislatura = "XV",
+            InitiativeNumber = $"{sourceId}/XV/1",
+            InitiativeTypeDescription = "Projeto de Lei",
+            VoteDate = "2024-02-01",
+            ImportedAtUtc = new DateTime(2024, 02, 01, 0, 0, 0, DateTimeKind.Utc),
+            ProposingParty = proposingParty,
+            ProposalTitle = title,
+            FullProposalTextLink = $"https://example.com/proposals/{sourceId}",
+            ProposalResult = ProposalResult.ApprovedInGenerality,
+            ImportedDocuments = new List<ParliamentInitiativeDocument>
+            {
+                new()
+                {
+                    Scope = "Initiative",
+                    Name = "Introduced text",
+                    Content = new ParliamentDocumentContent
+                    {
+                        RedactionStatus = "Succeeded",
+                        ExtractionStatus = "Succeeded",
+                        RedactedContentText = $"Texto anonimo da iniciativa {sourceId}."
+                    }
+                }
+            },
+            Summaries = new List<ParliamentSummary>
+            {
+                new()
+                {
+                    GenerationStatus = "Succeeded",
+                    ModelName = "test-model",
+                    PromptVersion = "test-prompt",
+                    SourceDocumentHash = $"hash-{sourceId}",
+                    ShortTitle = title,
+                    SummaryText = $"Resumo seguro para {sourceId}.",
+                    GeneratedAtUtc = DateTime.UtcNow
+                }
+            }
+        };
+    }
+}
+
+public sealed class ProposalFeedRankingTests : IClassFixture<ProposalFeedRankingFactory>
+{
+    private readonly HttpClient _client;
+    private readonly ProposalFeedRankingFactory _factory;
+
+    public ProposalFeedRankingTests(ProposalFeedRankingFactory factory)
+    {
+        _client = factory.CreateClient();
+        _factory = factory;
+        _client.AuthenticateAsUser(_factory.UserId);
+    }
+
+    [Fact]
+    public async Task FeedServesHeavilySkippedInitiativesLessOften()
+    {
+        var highSkipSelections = 0;
+        var lowSkipSelections = 0;
+
+        for (var i = 0; i < 200; i++)
+        {
+            var response = await _client.PostAsJsonAsync("/proposal-flow/feed", new
+            {
+                legislatures = new[] { "XV" }
+            });
+
+            response.EnsureSuccessStatusCode();
+
+            using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+            var initiativeId = document.RootElement.GetProperty("initiativeId").GetInt32();
+            if (initiativeId == _factory.HighSkipInitiativeId)
+            {
+                highSkipSelections++;
+            }
+            else if (initiativeId == _factory.LowSkipInitiativeId)
+            {
+                lowSkipSelections++;
+            }
+        }
+
+        Assert.True(
+            highSkipSelections < lowSkipSelections,
+            $"Expected high-skip initiative to be selected less often. HighSkip={highSkipSelections}; LowSkip={lowSkipSelections}");
+    }
+}
+
 public sealed class ProposalInteractionEndpointsFactory : TestingWebAppFactory
 {
     public int UserId { get; private set; }
@@ -201,9 +325,6 @@ public sealed class ProposalInteractionEndpointsFactory : TestingWebAppFactory
             SourceId = sourceId,
             Legislatura = "XV",
             InitiativeTypeDescription = "Projeto de Lei",
-            Score = 100,
-            amountOfUsersInterested = 0,
-            totalAmountOfVotesFromUsers = 0,
             VoteDate = "2024-03-01",
             ProposingParty = proposingParty,
             ProposalTitle = title,
@@ -348,9 +469,6 @@ public sealed class ProposalHistoryEndpointsFactory : TestingWebAppFactory
             Legislatura = legislature,
             InitiativeNumber = $"{sourceId}/{legislature}/1",
             InitiativeTypeDescription = "Projeto de Lei",
-            Score = 100,
-            amountOfUsersInterested = 0,
-            totalAmountOfVotesFromUsers = 0,
             VoteDate = "2024-05-01",
             ProposingParty = proposingParty,
             ProposalTitle = title,
@@ -622,9 +740,6 @@ public sealed class ProposalRevealEndpointsFactory : TestingWebAppFactory
             Legislatura = "XV",
             InitiativeNumber = "40/XV/1",
             InitiativeTypeDescription = "Projeto de Lei",
-            Score = 100,
-            amountOfUsersInterested = 0,
-            totalAmountOfVotesFromUsers = 0,
             VoteDate = "2024-04-01",
             ProposingParty = ps,
             ProposalTitle = "Reveal candidate",

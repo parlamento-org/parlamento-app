@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 
 using Parlamento.Application.Abstractions;
 using Parlamento.Application.Users;
-using Parlamento.Application.Votes;
 using Parlamento.Domain.Entities;
 using Parlamento.Infrastructure.Persistence;
 
@@ -60,30 +59,6 @@ public class UserService : IUserService
         await _context.SaveChangesAsync(cancellationToken);
 
         return ServiceResult<User>.Success(newUser);
-    }
-
-    public async Task<ServiceResult<User>> AddVoteAsync(VoteRequest request, CancellationToken cancellationToken = default)
-    {
-        var user = await _context.Users
-            .Include(x => x.Votes)
-            .FirstOrDefaultAsync(x => x.Id == request.UserId, cancellationToken);
-
-        if (user == null)
-        {
-            return ServiceResult<User>.Failure(404, "There is no User with this ID!");
-        }
-
-        var newVote = new Vote
-        {
-            VoteDate = DateTime.Now,
-            ProjectLawID = request.ProjectLawId,
-            VotingOrientation = request.VotingOrientation
-        };
-
-        user.Votes.Add(newVote);
-
-        await _context.SaveChangesAsync(cancellationToken);
-        return ServiceResult<User>.Success(user);
     }
 
     public async Task<ServiceResult<User>> DeleteAsync(int id, CancellationToken cancellationToken = default)

@@ -3,12 +3,9 @@ import 'package:frontend/auth/token_storage.dart';
 import 'package:frontend/controllers/auth_controller.dart';
 import 'package:frontend/controllers/user_controller.dart';
 import 'package:frontend/fetcher/repository.dart';
-import 'package:frontend/models/proposal.dart';
-import 'package:frontend/models/proposal_criteria.dart';
 import 'package:frontend/models/proposal_flow.dart';
 import 'package:frontend/models/profile.dart';
 import 'package:frontend/models/user.dart';
-import 'package:frontend/models/vote_model.dart';
 
 void main() {
   setUp(() {
@@ -103,9 +100,6 @@ class _FakeRepository implements Repository {
   }
 
   @override
-  Future<void> castUserVote(UserVote userVote) async {}
-
-  @override
   Future<UserSession> facebookSignInRequest(
     String accessToken,
     String email,
@@ -113,11 +107,6 @@ class _FakeRepository implements Repository {
     int profilePicId,
   ) async {
     return userSession;
-  }
-
-  @override
-  Future<Proposal> getProposal(ProposalCriteria proposalCriteria) {
-    throw UnimplementedError();
   }
 
   @override

@@ -15,7 +15,11 @@ namespace Parlamento.Infrastructure.Services;
 
 public sealed class ProposalFlowService : IProposalFlowService
 {
+    private const int CandidatePoolSize = 30;
     private const int ExcerptLength = 900;
+    private const double MinimumServingWeight = 0.05;
+    private const double SkipRatePriorEngagement = 4;
+    private const double SkipRatePriorInteractions = 4;
     private static readonly TimeSpan SkipExclusionWindow = TimeSpan.FromDays(14);
 
     private static readonly Regex WhitespaceRegex = new(@"\s+", RegexOptions.Compiled);
@@ -78,9 +82,8 @@ public sealed class ProposalFlowService : IProposalFlowService
                 initiative.Summaries.Any(summary =>
                     summary.GenerationStatus == "Succeeded" &&
                     summary.SummaryText != null))
-            .ThenByDescending(initiative => initiative.Score)
             .ThenByDescending(initiative => initiative.ImportedAtUtc)
-            .Take(30)
+            .Take(CandidatePoolSize)
             .ToListAsync(cancellationToken);
 
         if (candidates.Count == 0)
@@ -90,7 +93,23 @@ public sealed class ProposalFlowService : IProposalFlowService
                 "Não foram encontradas iniciativas elegíveis para este utilizador.");
         }
 
-        var selected = candidates[Random.Shared.Next(candidates.Count)];
+        var candidateIds = candidates.Select(initiative => initiative.Id).ToList();
+        var statsByInitiativeId = await _context.ProjectLawInteractionStats
+            .AsNoTracking()
+            .Where(stats => candidateIds.Contains(stats.ProjectLawId))
+            .ToDictionaryAsync(stats => stats.ProjectLawId, cancellationToken);
+
+        var weightedCandidates = candidates
+            .Select(initiative =>
+            {
+                statsByInitiativeId.TryGetValue(initiative.Id, out var stats);
+                return new FeedCandidate(
+                    initiative,
+                    CalculateServingWeight(stats));
+            })
+            .ToList();
+
+        var selected = SelectWeightedCandidate(weightedCandidates);
         return ServiceResult<InitiativeFeedCardResponse>.Success(MapFeedCard(selected));
     }
 
@@ -397,6 +416,48 @@ public sealed class ProposalFlowService : IProposalFlowService
             Legislature = initiative.Legislatura,
             Date = FirstNonEmpty(initiative.VoteDate, initiative.ImportedAtUtc?.ToString("yyyy-MM-dd"))
         };
+    }
+
+    private static ProjectLaw SelectWeightedCandidate(IReadOnlyList<FeedCandidate> candidates)
+    {
+        var totalWeight = candidates.Sum(candidate => candidate.ServingWeight);
+        if (totalWeight <= 0)
+        {
+            return candidates[Random.Shared.Next(candidates.Count)].Initiative;
+        }
+
+        var threshold = Random.Shared.NextDouble() * totalWeight;
+        var currentWeight = 0d;
+
+        foreach (var candidate in candidates)
+        {
+            currentWeight += candidate.ServingWeight;
+            if (currentWeight >= threshold)
+            {
+                return candidate.Initiative;
+            }
+        }
+
+        return candidates[^1].Initiative;
+    }
+
+    private static double CalculateServingWeight(ProjectLawInteractionStats? stats)
+    {
+        if (stats == null)
+        {
+            return 1;
+        }
+
+        var engagedInteractions = stats.SupportVotes + stats.OpposeVotes + stats.AbstainVotes;
+        var terminalInteractions = engagedInteractions + stats.Skips;
+        if (terminalInteractions <= 0)
+        {
+            return 1;
+        }
+
+        var engagementRate = (engagedInteractions + SkipRatePriorEngagement) /
+            (double)(terminalInteractions + SkipRatePriorInteractions);
+        return Math.Max(MinimumServingWeight, engagementRate);
     }
 
     private static ProposalRevealResponse MapReveal(
@@ -1166,4 +1227,8 @@ public sealed class ProposalFlowService : IProposalFlowService
         ProposalInteractionType.Oppose,
         ProposalInteractionType.Abstain
     ];
+
+    private sealed record FeedCandidate(
+        ProjectLaw Initiative,
+        double ServingWeight);
 }

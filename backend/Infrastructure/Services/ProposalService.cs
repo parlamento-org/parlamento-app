@@ -87,9 +87,6 @@ public class ProposalService : IProposalService
 
         var newProjectLaw = new ProjectLaw
         {
-            Score = 100,
-            amountOfUsersInterested = 0,
-            totalAmountOfVotesFromUsers = 0,
             ProposalTitle = request.ProposalTitle,
             FullProposalTextLink = request.FullProposalTextLink,
             ProposingParty = proposingParty,
@@ -124,11 +121,6 @@ public class ProposalService : IProposalService
         if (projectLaw == null)
         {
             return ServiceResult<ProjectLaw>.Failure(404, "No Proposal found with the given id.");
-        }
-
-        if (request.Score.HasValue)
-        {
-            projectLaw.Score = request.Score.Value;
         }
 
         if (request.ProposalTitle != null)
