@@ -21,7 +21,7 @@ public partial class DocumentModelRedactor : IDocumentModelRedactor
         @"(?<![\w@])(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+(?:pt|com|org|net|eu)(?:/[^\s<>'"")\]]*)?",
         RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
-    public string PolicyVersion => "party-deputy-email-link-redaction-v7";
+    public string PolicyVersion => "party-deputy-email-link-redaction-v8";
 
     public ParliamentDocumentModel Redact(
         ParliamentDocumentModel document,
@@ -41,6 +41,8 @@ public partial class DocumentModelRedactor : IDocumentModelRedactor
         List<ParliamentDocumentBlock> blocks,
         IReadOnlyList<string> terms)
     {
+        RedactTermsAcrossBlocks(blocks, terms);
+
         foreach (var block in blocks)
         {
             if (block.Runs.Count > 0)
@@ -80,6 +82,13 @@ public partial class DocumentModelRedactor : IDocumentModelRedactor
         for (var runIndex = 0; runIndex < runs.Count; runIndex++)
         {
             var run = runs[runIndex];
+            if (run.Kind == ParliamentDocumentRunKind.LineBreak)
+            {
+                flatText.Append('\n');
+                map.Add(new RunCharacterMap(runIndex, -1));
+                continue;
+            }
+
             if (run.Kind != ParliamentDocumentRunKind.Text || string.IsNullOrEmpty(run.Text))
             {
                 continue;
@@ -99,12 +108,9 @@ public partial class DocumentModelRedactor : IDocumentModelRedactor
         }
 
         var runMatches = matches
-            .Select(match => new RunMatch(
-                map[match.Start].RunIndex,
-                map[match.Start].CharIndex,
-                map[match.Start + match.Length - 1].RunIndex,
-                map[match.Start + match.Length - 1].CharIndex,
-                match.Length))
+            .Select(match => ToRunMatch(match, map))
+            .Where(match => match != null)
+            .Select(match => match!)
             .OrderBy(x => x.StartRunIndex)
             .ThenBy(x => x.StartCharIndex)
             .ToList();
@@ -161,6 +167,200 @@ public partial class DocumentModelRedactor : IDocumentModelRedactor
         }
 
         return output;
+    }
+
+    private static void RedactTermsAcrossBlocks(
+        List<ParliamentDocumentBlock> blocks,
+        IReadOnlyList<string> terms)
+    {
+        if (blocks.Count < 2 || terms.Count == 0)
+        {
+            return;
+        }
+
+        for (var blockIndex = 0; blockIndex < blocks.Count; blockIndex++)
+        {
+            if (blocks[blockIndex].Runs.Count > 0)
+            {
+                blocks[blockIndex].Runs = NormalizeTextRuns(blocks[blockIndex].Runs).ToList();
+            }
+        }
+
+        var flatText = new StringBuilder();
+        var map = new List<BlockCharacterMap>();
+        for (var blockIndex = 0; blockIndex < blocks.Count; blockIndex++)
+        {
+            var block = blocks[blockIndex];
+            if (block.Runs.Count == 0)
+            {
+                continue;
+            }
+
+            if (flatText.Length > 0)
+            {
+                flatText.Append('\n');
+                map.Add(new BlockCharacterMap(-1, -1, -1));
+            }
+
+            AppendBlockRuns(flatText, map, block.Runs, blockIndex);
+        }
+
+        if (flatText.Length == 0)
+        {
+            return;
+        }
+
+        var text = flatText.ToString();
+        var occupied = new bool[text.Length];
+        var matches = new List<TextMatch>();
+        foreach (var term in terms)
+        {
+            var pattern = BuildMatchPattern(term);
+            var regexOptions = RegexOptions.CultureInvariant;
+            if (!IsAcronymTerm(term))
+            {
+                regexOptions |= RegexOptions.IgnoreCase;
+            }
+
+            foreach (Match match in Regex.Matches(text, pattern, regexOptions))
+            {
+                if (match.Length == 0 ||
+                    IsOccupied(occupied, match.Index, match.Length) ||
+                    !MatchSpansMultipleBlocks(match.Index, match.Length, map))
+                {
+                    continue;
+                }
+
+                AddMatch(matches, occupied, match.Index, match.Length);
+            }
+        }
+
+        var blockMatches = matches
+            .Select(match => ToBlockRunMatch(match, map))
+            .Where(match => match != null)
+            .Select(match => match!)
+            .OrderBy(match => match.StartBlockIndex)
+            .ThenBy(match => match.StartRunIndex)
+            .ThenBy(match => match.StartCharIndex)
+            .ToList();
+
+        if (blockMatches.Count == 0)
+        {
+            return;
+        }
+
+        ApplyBlockRunMatches(blocks, blockMatches);
+    }
+
+    private static void AppendBlockRuns(
+        StringBuilder flatText,
+        List<BlockCharacterMap> map,
+        IReadOnlyList<ParliamentDocumentRun> runs,
+        int blockIndex)
+    {
+        for (var runIndex = 0; runIndex < runs.Count; runIndex++)
+        {
+            var run = runs[runIndex];
+            if (run.Kind == ParliamentDocumentRunKind.LineBreak)
+            {
+                flatText.Append('\n');
+                map.Add(new BlockCharacterMap(blockIndex, runIndex, -1));
+                continue;
+            }
+
+            if (run.Kind != ParliamentDocumentRunKind.Text || string.IsNullOrEmpty(run.Text))
+            {
+                continue;
+            }
+
+            for (var charIndex = 0; charIndex < run.Text.Length; charIndex++)
+            {
+                flatText.Append(run.Text[charIndex]);
+                map.Add(new BlockCharacterMap(blockIndex, runIndex, charIndex));
+            }
+        }
+    }
+
+    private static bool MatchSpansMultipleBlocks(
+        int start,
+        int length,
+        IReadOnlyList<BlockCharacterMap> map)
+    {
+        var first = FirstTextMap(map, start, length);
+        var last = LastTextMap(map, start, length);
+        return first != null &&
+               last != null &&
+               first.BlockIndex != last.BlockIndex;
+    }
+
+    private static void ApplyBlockRunMatches(
+        List<ParliamentDocumentBlock> blocks,
+        IReadOnlyList<BlockRunMatch> matches)
+    {
+        for (var blockIndex = 0; blockIndex < blocks.Count; blockIndex++)
+        {
+            var block = blocks[blockIndex];
+            if (block.Runs.Count == 0)
+            {
+                continue;
+            }
+
+            var output = new List<ParliamentDocumentRun>();
+            for (var runIndex = 0; runIndex < block.Runs.Count; runIndex++)
+            {
+                var run = block.Runs[runIndex];
+                if (run.Kind != ParliamentDocumentRunKind.Text || string.IsNullOrEmpty(run.Text))
+                {
+                    output.Add(run);
+                    continue;
+                }
+
+                var matchesCoveringRun = matches
+                    .Where(match => CoversRun(match, blockIndex, runIndex))
+                    .ToList();
+                if (matchesCoveringRun.Count == 0)
+                {
+                    output.Add(run);
+                    continue;
+                }
+
+                var cursor = 0;
+                foreach (var match in matchesCoveringRun)
+                {
+                    var startInRun = match.StartBlockIndex == blockIndex && match.StartRunIndex == runIndex
+                        ? match.StartCharIndex
+                        : 0;
+                    var endInRun = match.EndBlockIndex == blockIndex && match.EndRunIndex == runIndex
+                        ? match.EndCharIndex
+                        : run.Text.Length - 1;
+
+                    if (startInRun > cursor)
+                    {
+                        output.Add(CloneTextSlice(run, cursor, startInRun - cursor));
+                    }
+
+                    if (match.StartBlockIndex == blockIndex && match.StartRunIndex == runIndex)
+                    {
+                        output.Add(new ParliamentDocumentRun
+                        {
+                            Kind = ParliamentDocumentRunKind.Redacted,
+                            OriginalLength = match.Length,
+                            WidthEm = EstimateWidthEm(match.Length),
+                            RedactionKind = "term"
+                        });
+                    }
+
+                    cursor = Math.Max(cursor, endInRun + 1);
+                }
+
+                if (cursor < run.Text.Length)
+                {
+                    output.Add(CloneTextSlice(run, cursor, run.Text.Length - cursor));
+                }
+            }
+
+            block.Runs = output;
+        }
     }
 
     private static List<string> NormalizeTerms(IEnumerable<string> terms)
@@ -330,6 +530,107 @@ public partial class DocumentModelRedactor : IDocumentModelRedactor
         return occupied.Skip(start).Take(length).Any(x => x);
     }
 
+    private static RunMatch? ToRunMatch(
+        TextMatch match,
+        IReadOnlyList<RunCharacterMap> map)
+    {
+        var first = FirstTextMap(map, match.Start, match.Length);
+        var last = LastTextMap(map, match.Start, match.Length);
+        return first == null || last == null
+            ? null
+            : new RunMatch(
+                first.RunIndex,
+                first.CharIndex,
+                last.RunIndex,
+                last.CharIndex,
+                match.Length);
+    }
+
+    private static BlockRunMatch? ToBlockRunMatch(
+        TextMatch match,
+        IReadOnlyList<BlockCharacterMap> map)
+    {
+        var first = FirstTextMap(map, match.Start, match.Length);
+        var last = LastTextMap(map, match.Start, match.Length);
+        return first == null || last == null
+            ? null
+            : new BlockRunMatch(
+                first.BlockIndex,
+                first.RunIndex,
+                first.CharIndex,
+                last.BlockIndex,
+                last.RunIndex,
+                last.CharIndex,
+                match.Length);
+    }
+
+    private static RunCharacterMap? FirstTextMap(
+        IReadOnlyList<RunCharacterMap> map,
+        int start,
+        int length)
+    {
+        return map
+            .Skip(start)
+            .Take(length)
+            .FirstOrDefault(entry => entry.CharIndex >= 0);
+    }
+
+    private static RunCharacterMap? LastTextMap(
+        IReadOnlyList<RunCharacterMap> map,
+        int start,
+        int length)
+    {
+        return map
+            .Skip(start)
+            .Take(length)
+            .LastOrDefault(entry => entry.CharIndex >= 0);
+    }
+
+    private static BlockCharacterMap? FirstTextMap(
+        IReadOnlyList<BlockCharacterMap> map,
+        int start,
+        int length)
+    {
+        return map
+            .Skip(start)
+            .Take(length)
+            .FirstOrDefault(entry => entry.BlockIndex >= 0 && entry.CharIndex >= 0);
+    }
+
+    private static BlockCharacterMap? LastTextMap(
+        IReadOnlyList<BlockCharacterMap> map,
+        int start,
+        int length)
+    {
+        return map
+            .Skip(start)
+            .Take(length)
+            .LastOrDefault(entry => entry.BlockIndex >= 0 && entry.CharIndex >= 0);
+    }
+
+    private static bool CoversRun(
+        BlockRunMatch match,
+        int blockIndex,
+        int runIndex)
+    {
+        if (blockIndex < match.StartBlockIndex || blockIndex > match.EndBlockIndex)
+        {
+            return false;
+        }
+
+        if (blockIndex == match.StartBlockIndex && runIndex < match.StartRunIndex)
+        {
+            return false;
+        }
+
+        if (blockIndex == match.EndBlockIndex && runIndex > match.EndRunIndex)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     private static string TrimTrailingPunctuation(string value)
     {
         return value.TrimEnd('.', ',', ';', ':', '!', '?');
@@ -447,11 +748,25 @@ public partial class DocumentModelRedactor : IDocumentModelRedactor
 
     private record RunCharacterMap(int RunIndex, int CharIndex);
 
+    private record BlockCharacterMap(
+        int BlockIndex,
+        int RunIndex,
+        int CharIndex);
+
     private record TextMatch(int Start, int Length);
 
     private record RunMatch(
         int StartRunIndex,
         int StartCharIndex,
+        int EndRunIndex,
+        int EndCharIndex,
+        int Length);
+
+    private record BlockRunMatch(
+        int StartBlockIndex,
+        int StartRunIndex,
+        int StartCharIndex,
+        int EndBlockIndex,
         int EndRunIndex,
         int EndCharIndex,
         int Length);

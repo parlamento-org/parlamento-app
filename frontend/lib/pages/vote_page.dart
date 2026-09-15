@@ -111,7 +111,6 @@ class _VotePageState extends State<VotePage>
       );
 
       if (!mounted) return;
-      _showInteractionMessage(action);
 
       if (action == ProposalInteractionAction.skip) {
         _clearCachedCard();
@@ -145,20 +144,6 @@ class _VotePageState extends State<VotePage>
         setState(() => _isSubmitting = false);
       }
     }
-  }
-
-  void _showInteractionMessage(ProposalInteractionAction action) {
-    final message = switch (action) {
-      ProposalInteractionAction.support => 'Apoio registado.',
-      ProposalInteractionAction.oppose => 'Oposição registada.',
-      ProposalInteractionAction.abstain => 'Abstenção registada.',
-      ProposalInteractionAction.skip => 'Iniciativa saltada.',
-      ProposalInteractionAction.unknown => 'Escolha registada.',
-    };
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), duration: const Duration(seconds: 1)),
-    );
   }
 
   @override
