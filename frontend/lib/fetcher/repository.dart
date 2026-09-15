@@ -1,10 +1,7 @@
-import 'package:frontend/models/proposal.dart';
 import 'package:frontend/models/proposal_flow.dart';
 import 'package:frontend/models/profile.dart';
 
-import '../models/proposal_criteria.dart';
 import '../models/user.dart';
-import '../models/vote_model.dart';
 
 abstract class Repository {
   Future<UserSession> loginRequest(String email, String password);
@@ -31,10 +28,6 @@ abstract class Repository {
     String name,
     int profilePicId,
   );
-
-  Future<Proposal> getProposal(ProposalCriteria proposalCriteria);
-
-  Future<void> castUserVote(UserVote userVote);
 
   Future<InitiativeFeedCard> getInitiativeFeedCard(
     ProposalFlowFeedRequest request,

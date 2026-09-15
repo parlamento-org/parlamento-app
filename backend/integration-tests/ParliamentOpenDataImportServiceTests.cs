@@ -189,9 +189,6 @@ public class ParliamentOpenDataImportServiceTests
             SourceId = 2000,
             SourceIdText = "2000",
             Legislatura = "XVII",
-            Score = 100,
-            amountOfUsersInterested = 0,
-            totalAmountOfVotesFromUsers = 0,
             VoteDate = "2026-01-01",
             ProposingParty = party,
             ProposalTitle = "Teste resumo",
@@ -273,9 +270,6 @@ public class ParliamentOpenDataImportServiceTests
             SourceId = 2001,
             SourceIdText = "2001",
             Legislatura = "XVII",
-            Score = 100,
-            amountOfUsersInterested = 0,
-            totalAmountOfVotesFromUsers = 0,
             VoteDate = "2026-01-01",
             ProposingParty = party,
             ProposalTitle = "Teste resumo curto",
@@ -570,6 +564,183 @@ public class ParliamentOpenDataImportServiceTests
     }
 
     [Fact]
+    public void Redactor_MatchesAccentedTermsAcrossUnicodeForms()
+    {
+        var document = new ParliamentDocumentModel
+        {
+            Pages =
+            [
+                new ParliamentDocumentPage
+                {
+                    PageNumber = 1,
+                    Blocks =
+                    [
+                        new ParliamentDocumentBlock
+                        {
+                            Kind = ParliamentDocumentBlockKind.Paragraph,
+                            Runs =
+                            [
+                                new ParliamentDocumentRun
+                                {
+                                    Kind = ParliamentDocumentRunKind.Text,
+                                    Text = "Projeto apresentado por Jose\u0301 Lu\u0069\u0301s Ferreira."
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        var redacted = new DocumentModelRedactor().Redact(document, ["José Luís Ferreira"]);
+        var runs = redacted.Pages[0].Blocks[0].Runs;
+        var visibleText = string.Concat(runs.Where(x => x.Kind == ParliamentDocumentRunKind.Text).Select(x => x.Text));
+
+        Assert.Single(runs.Where(x => x.Kind == ParliamentDocumentRunKind.Redacted));
+        Assert.DoesNotContain("José", visibleText);
+        Assert.DoesNotContain("Jose", visibleText);
+        Assert.Contains("Projeto apresentado por ", visibleText);
+    }
+
+    [Fact]
+    public void Redactor_MatchesUnaccentedExtractorTextForAccentedTerms()
+    {
+        var document = new ParliamentDocumentModel
+        {
+            Pages =
+            [
+                new ParliamentDocumentPage
+                {
+                    PageNumber = 1,
+                    Blocks =
+                    [
+                        new ParliamentDocumentBlock
+                        {
+                            Kind = ParliamentDocumentBlockKind.Paragraph,
+                            Runs =
+                            [
+                                new ParliamentDocumentRun
+                                {
+                                    Kind = ParliamentDocumentRunKind.Text,
+                                    Text = "Projeto apresentado por Jose Luis Ferreira."
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        var redacted = new DocumentModelRedactor().Redact(document, ["José Luís Ferreira"]);
+        var runs = redacted.Pages[0].Blocks[0].Runs;
+        var visibleText = string.Concat(runs.Where(x => x.Kind == ParliamentDocumentRunKind.Text).Select(x => x.Text));
+
+        Assert.Single(runs.Where(x => x.Kind == ParliamentDocumentRunKind.Redacted));
+        Assert.DoesNotContain("Jose Luis Ferreira", visibleText);
+    }
+
+    [Fact]
+    public void Redactor_MatchesDeputyNamesSplitByLineBreakRuns()
+    {
+        var document = new ParliamentDocumentModel
+        {
+            Pages =
+            [
+                new ParliamentDocumentPage
+                {
+                    PageNumber = 1,
+                    Blocks =
+                    [
+                        new ParliamentDocumentBlock
+                        {
+                            Kind = ParliamentDocumentBlockKind.Paragraph,
+                            Runs =
+                            [
+                                new ParliamentDocumentRun
+                                {
+                                    Kind = ParliamentDocumentRunKind.Text,
+                                    Text = "Os Deputados Gabriel Mithá"
+                                },
+                                new ParliamentDocumentRun
+                                {
+                                    Kind = ParliamentDocumentRunKind.LineBreak
+                                },
+                                new ParliamentDocumentRun
+                                {
+                                    Kind = ParliamentDocumentRunKind.Text,
+                                    Text = "Ribeiro e outra Deputada"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        var redacted = new DocumentModelRedactor().Redact(document, ["Gabriel Mithá Ribeiro"]);
+        var runs = redacted.Pages[0].Blocks[0].Runs;
+        var visibleText = string.Concat(runs.Where(x => x.Kind == ParliamentDocumentRunKind.Text).Select(x => x.Text));
+
+        Assert.Single(runs.Where(x => x.Kind == ParliamentDocumentRunKind.Redacted));
+        Assert.DoesNotContain("Gabriel", visibleText);
+        Assert.DoesNotContain("Ribeiro", visibleText);
+    }
+
+    [Fact]
+    public void Redactor_MatchesDeputyNamesSplitAcrossAdjacentBlocks()
+    {
+        var document = new ParliamentDocumentModel
+        {
+            Pages =
+            [
+                new ParliamentDocumentPage
+                {
+                    PageNumber = 1,
+                    Blocks =
+                    [
+                        new ParliamentDocumentBlock
+                        {
+                            Kind = ParliamentDocumentBlockKind.Paragraph,
+                            Runs =
+                            [
+                                new ParliamentDocumentRun
+                                {
+                                    Kind = ParliamentDocumentRunKind.Text,
+                                    Text = "Os Deputados Gabriel Mithá"
+                                }
+                            ]
+                        },
+                        new ParliamentDocumentBlock
+                        {
+                            Kind = ParliamentDocumentBlockKind.Paragraph,
+                            Runs =
+                            [
+                                new ParliamentDocumentRun
+                                {
+                                    Kind = ParliamentDocumentRunKind.Text,
+                                    Text = "Ribeiro e Pedro Frazão"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        var redacted = new DocumentModelRedactor().Redact(document, ["Gabriel Mithá Ribeiro"]);
+        var visibleText = string.Concat(
+            redacted.Pages[0].Blocks
+                .SelectMany(block => block.Runs)
+                .Where(run => run.Kind == ParliamentDocumentRunKind.Text)
+                .Select(run => run.Text));
+
+        Assert.Single(redacted.Pages[0].Blocks.SelectMany(block => block.Runs).Where(run => run.Kind == ParliamentDocumentRunKind.Redacted));
+        Assert.DoesNotContain("Gabriel", visibleText);
+        Assert.DoesNotContain("Ribeiro", visibleText);
+        Assert.Contains("Pedro Frazão", visibleText);
+    }
+
+    [Fact]
     public void Redactor_MatchesPartyAcronymsOnlyWhenActuallyUppercase()
     {
         var document = new ParliamentDocumentModel
@@ -623,9 +794,6 @@ public class ParliamentOpenDataImportServiceTests
             SourceId = 1000,
             SourceIdText = "1000",
             Legislatura = "XVII",
-            Score = 100,
-            amountOfUsersInterested = 0,
-            totalAmountOfVotesFromUsers = 0,
             VoteDate = "2026-01-01",
             ProposingParty = party,
             ProposalTitle = "Teste",
@@ -735,9 +903,6 @@ public class ParliamentOpenDataImportServiceTests
             SourceId = 999,
             SourceIdText = "999",
             Legislatura = "XVII",
-            Score = 100,
-            amountOfUsersInterested = 0,
-            totalAmountOfVotesFromUsers = 0,
             VoteDate = "2026-01-01",
             ProposingParty = party,
             ProposalTitle = "Teste",
@@ -841,9 +1006,6 @@ public class ParliamentOpenDataImportServiceTests
             SourceId = 1002,
             SourceIdText = "1002",
             Legislatura = "XVII",
-            Score = 100,
-            amountOfUsersInterested = 0,
-            totalAmountOfVotesFromUsers = 0,
             VoteDate = "2026-01-01",
             ProposingParty = government,
             ProposalTitle = "Teste Governo",

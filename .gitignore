@@ -1,3 +1,5 @@
 frontend/macos/Flutter/GeneratedPluginRegistrant.swift
 /.vscode
 .env
+.env.*
+!.env.example

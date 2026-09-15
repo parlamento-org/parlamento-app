@@ -7,6 +7,5 @@ public class UpdateProposalRequestValidator : AbstractValidator<UpdateProposalRe
     public UpdateProposalRequestValidator()
     {
         RuleFor(x => x.SourceId).GreaterThan(0).When(x => x.SourceId.HasValue);
-        RuleFor(x => x.Score).GreaterThanOrEqualTo(0).When(x => x.Score.HasValue);
     }
 }

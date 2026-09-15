@@ -4,14 +4,10 @@ import 'package:frontend/exceptions/invalid_credentials.dart';
 import 'package:frontend/exceptions/username_already_exists.dart';
 import 'package:frontend/fetcher/api_client.dart';
 import 'package:frontend/fetcher/repository.dart';
-import 'package:frontend/models/proposal_criteria.dart';
 import 'package:frontend/models/proposal_flow.dart';
 import 'package:frontend/models/profile.dart';
 import 'package:frontend/models/user.dart';
-import 'package:frontend/models/vote_model.dart';
 import 'package:http/http.dart' as http;
-
-import '../models/proposal.dart';
 
 class APIRepository implements Repository {
   APIRepository({ApiClient? apiClient})
@@ -130,20 +126,6 @@ class APIRepository implements Repository {
   }
 
   @override
-  Future<Proposal> getProposal(ProposalCriteria criteria) async {
-    final response = await _apiClient.putJson('/vote', criteria.toJson());
-
-    if (response.statusCode == 200) {
-      return Proposal.fromJson(response.jsonObject());
-    }
-
-    throw ApiException(
-      'Failed to load proposal',
-      statusCode: response.statusCode,
-    );
-  }
-
-  @override
   Future<UserSession> facebookSignInRequest(
     String accessToken,
     String email,
@@ -251,14 +233,4 @@ class APIRepository implements Repository {
     return false;
   }
 
-  @override
-  Future<void> castUserVote(UserVote userVote) async {
-    final response = await _apiClient.postJson('/vote', userVote.toJson());
-
-    if (response.statusCode == 200) {
-      return;
-    }
-
-    throw ApiException('Failed to cast vote', statusCode: response.statusCode);
-  }
 }

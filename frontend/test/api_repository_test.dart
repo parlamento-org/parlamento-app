@@ -4,7 +4,7 @@ import 'package:frontend/exceptions/invalid_credentials.dart';
 import 'package:frontend/exceptions/username_already_exists.dart';
 import 'package:frontend/fetcher/api_client.dart';
 import 'package:frontend/fetcher/api_repository.dart';
-import 'package:frontend/models/proposal_criteria.dart';
+import 'package:frontend/models/proposal_flow.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
@@ -47,13 +47,11 @@ void main() {
       );
     });
 
-    test('throws typed API exception for proposal feed failures', () async {
+    test('throws typed API exception for proposal flow feed failures', () async {
       final repository = _repositoryWithResponse(statusCode: 500);
 
       expect(
-        () => repository.getProposal(
-          ProposalCriteria(userID: 1, lowestScoreAllowed: 0),
-        ),
+        () => repository.getInitiativeFeedCard(ProposalFlowFeedRequest()),
         throwsA(isA<ApiException>()),
       );
     });

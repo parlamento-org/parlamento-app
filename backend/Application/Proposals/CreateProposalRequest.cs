@@ -37,9 +37,6 @@ public class CreateProposalRequest
     [JsonPropertyName("initiativeTextSubstitutionField")]
     public string? InitiativeTextSubstitutionField { get; set; }
 
-    [JsonPropertyName("score")]
-    public int? Score { get; set; }
-
     [JsonPropertyName("voteDate")]
     public string? VoteDate { get; set; }
 

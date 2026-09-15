@@ -45,7 +45,6 @@ public static class DependencyInjection
         services.AddScoped<IProposalFlowService, ProposalFlowService>();
         services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<IUserService, UserService>();
-        services.AddScoped<IVotingService, VotingService>();
         services.Configure<OpenAiSummaryOptions>(options =>
         {
             var section = configuration.GetSection(OpenAiSummaryOptions.SectionName);

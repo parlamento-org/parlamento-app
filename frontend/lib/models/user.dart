@@ -39,9 +39,8 @@ class UserSession {
     required this.accessToken,
     required this.expiresAtUtc,
   }) : proposalCriteria = ProposalCriteria(
-         userID: userId,
-         lowestScoreAllowed: 0,
-       );
+         legislaturas: null,
+        );
 
   bool get hasValidToken =>
       accessToken.isNotEmpty && expiresAtUtc.isAfter(DateTime.now().toUtc());

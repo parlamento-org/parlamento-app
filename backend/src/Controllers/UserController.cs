@@ -5,7 +5,6 @@ using backend.Extensions;
 
 using Parlamento.Application.Abstractions;
 using Parlamento.Application.Users;
-using Parlamento.Application.Votes;
 using Parlamento.Domain.Entities;
 
 namespace backend.Controllers;
@@ -37,20 +36,6 @@ public class UserController : ControllerBase
     public async Task<IActionResult> Create(CreateUserRequest request, CancellationToken cancellationToken)
     {
         var result = await _userService.CreateAsync(request, cancellationToken);
-        return this.ToActionResult(result);
-    }
-
-    [HttpPut(Name = "AddUserVote")]
-    public async Task<IActionResult> Vote(VoteRequest request, CancellationToken cancellationToken)
-    {
-        var userId = User.GetUserId();
-        if (userId == null)
-        {
-            return Unauthorized();
-        }
-
-        request.UserId = userId.Value;
-        var result = await _userService.AddVoteAsync(request, cancellationToken);
         return this.ToActionResult(result);
     }
 

@@ -47,15 +47,6 @@ public class ProjectLaw
     public string? InitiativeTextSubstitutionField { get; set; }
 
     [Required]
-    public int Score { get; set; }
-
-    [Required]
-    public int amountOfUsersInterested { get; set; }
-
-    [Required]
-    public int totalAmountOfVotesFromUsers { get; set; }
-
-    [Required]
     public string? VoteDate { get; set; }
 
     [Required]

@@ -248,10 +248,7 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
         var inserted = existing is null;
         var projectLaw = existing ?? new ProjectLaw
         {
-            SourceId = sourceId,
-            Score = 100,
-            amountOfUsersInterested = 0,
-            totalAmountOfVotesFromUsers = 0
+            SourceId = sourceId
         };
 
         if (inserted)
