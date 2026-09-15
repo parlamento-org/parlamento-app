@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -20,19 +21,13 @@ public partial class DocumentModelRedactor : IDocumentModelRedactor
         @"(?<![\w@])(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+(?:pt|com|org|net|eu)(?:/[^\s<>'"")\]]*)?",
         RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
-    public string PolicyVersion => "party-deputy-email-link-redaction-v6";
+    public string PolicyVersion => "party-deputy-email-link-redaction-v7";
 
     public ParliamentDocumentModel Redact(
         ParliamentDocumentModel document,
         IEnumerable<string> terms)
     {
-        var normalizedTerms = terms
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Select(x => x.Trim())
-            .Where(x => x.Length >= 2)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderByDescending(x => x.Length)
-            .ToList();
+        var normalizedTerms = NormalizeTerms(terms);
 
         foreach (var page in document.Pages)
         {
@@ -72,6 +67,8 @@ public partial class DocumentModelRedactor : IDocumentModelRedactor
         IReadOnlyList<ParliamentDocumentRun> runs,
         IReadOnlyList<string> terms)
     {
+        runs = NormalizeTextRuns(runs);
+
         if (runs.All(x => x.Kind != ParliamentDocumentRunKind.Text))
         {
             return runs.ToList();
@@ -164,6 +161,48 @@ public partial class DocumentModelRedactor : IDocumentModelRedactor
         }
 
         return output;
+    }
+
+    private static List<string> NormalizeTerms(IEnumerable<string> terms)
+    {
+        return terms
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .SelectMany(CreateTermVariants)
+            .Where(x => x.Length >= 2)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderByDescending(x => x.Length)
+            .ToList();
+    }
+
+    private static IEnumerable<string> CreateTermVariants(string term)
+    {
+        var normalized = NormalizeUnicode(term.Trim());
+        yield return normalized;
+
+        var withoutDiacritics = RemoveDiacritics(normalized);
+        if (!string.Equals(normalized, withoutDiacritics, StringComparison.Ordinal))
+        {
+            yield return withoutDiacritics;
+        }
+    }
+
+    private static IReadOnlyList<ParliamentDocumentRun> NormalizeTextRuns(
+        IReadOnlyList<ParliamentDocumentRun> runs)
+    {
+        return runs
+            .Select(run =>
+            {
+                if (run.Kind != ParliamentDocumentRunKind.Text || string.IsNullOrEmpty(run.Text))
+                {
+                    return run;
+                }
+
+                var normalizedText = NormalizeUnicode(run.Text);
+                return string.Equals(run.Text, normalizedText, StringComparison.Ordinal)
+                    ? run
+                    : CloneTextRun(run, normalizedText);
+            })
+            .ToList();
     }
 
     private static List<TextMatch> FindMatches(
@@ -343,6 +382,43 @@ public partial class DocumentModelRedactor : IDocumentModelRedactor
         }
 
         return builder.ToString();
+    }
+
+    private static string NormalizeUnicode(string value)
+    {
+        return value.Normalize(NormalizationForm.FormC);
+    }
+
+    private static string RemoveDiacritics(string value)
+    {
+        var normalized = value.Normalize(NormalizationForm.FormD);
+        var builder = new StringBuilder(normalized.Length);
+
+        foreach (var character in normalized)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(character) != UnicodeCategory.NonSpacingMark)
+            {
+                builder.Append(character);
+            }
+        }
+
+        return builder.ToString().Normalize(NormalizationForm.FormC);
+    }
+
+    private static ParliamentDocumentRun CloneTextRun(
+        ParliamentDocumentRun source,
+        string text)
+    {
+        return new ParliamentDocumentRun
+        {
+            Kind = ParliamentDocumentRunKind.Text,
+            Text = text,
+            Bold = source.Bold,
+            Italic = source.Italic,
+            Underline = source.Underline,
+            Href = source.Href,
+            WidthEm = source.WidthEm
+        };
     }
 
     private static ParliamentDocumentRun CloneTextSlice(

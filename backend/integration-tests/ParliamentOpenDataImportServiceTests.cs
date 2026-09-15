@@ -564,6 +564,82 @@ public class ParliamentOpenDataImportServiceTests
     }
 
     [Fact]
+    public void Redactor_MatchesAccentedTermsAcrossUnicodeForms()
+    {
+        var document = new ParliamentDocumentModel
+        {
+            Pages =
+            [
+                new ParliamentDocumentPage
+                {
+                    PageNumber = 1,
+                    Blocks =
+                    [
+                        new ParliamentDocumentBlock
+                        {
+                            Kind = ParliamentDocumentBlockKind.Paragraph,
+                            Runs =
+                            [
+                                new ParliamentDocumentRun
+                                {
+                                    Kind = ParliamentDocumentRunKind.Text,
+                                    Text = "Projeto apresentado por Jose\u0301 Lu\u0069\u0301s Ferreira."
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        var redacted = new DocumentModelRedactor().Redact(document, ["José Luís Ferreira"]);
+        var runs = redacted.Pages[0].Blocks[0].Runs;
+        var visibleText = string.Concat(runs.Where(x => x.Kind == ParliamentDocumentRunKind.Text).Select(x => x.Text));
+
+        Assert.Single(runs.Where(x => x.Kind == ParliamentDocumentRunKind.Redacted));
+        Assert.DoesNotContain("José", visibleText);
+        Assert.DoesNotContain("Jose", visibleText);
+        Assert.Contains("Projeto apresentado por ", visibleText);
+    }
+
+    [Fact]
+    public void Redactor_MatchesUnaccentedExtractorTextForAccentedTerms()
+    {
+        var document = new ParliamentDocumentModel
+        {
+            Pages =
+            [
+                new ParliamentDocumentPage
+                {
+                    PageNumber = 1,
+                    Blocks =
+                    [
+                        new ParliamentDocumentBlock
+                        {
+                            Kind = ParliamentDocumentBlockKind.Paragraph,
+                            Runs =
+                            [
+                                new ParliamentDocumentRun
+                                {
+                                    Kind = ParliamentDocumentRunKind.Text,
+                                    Text = "Projeto apresentado por Jose Luis Ferreira."
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        var redacted = new DocumentModelRedactor().Redact(document, ["José Luís Ferreira"]);
+        var runs = redacted.Pages[0].Blocks[0].Runs;
+        var visibleText = string.Concat(runs.Where(x => x.Kind == ParliamentDocumentRunKind.Text).Select(x => x.Text));
+
+        Assert.Single(runs.Where(x => x.Kind == ParliamentDocumentRunKind.Redacted));
+        Assert.DoesNotContain("Jose Luis Ferreira", visibleText);
+    }
+
+    [Fact]
     public void Redactor_MatchesPartyAcronymsOnlyWhenActuallyUppercase()
     {
         var document = new ParliamentDocumentModel
