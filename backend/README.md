@@ -237,9 +237,10 @@ Configure OpenAI with environment variables:
 ```text
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-4o-mini-2024-07-18
+OPENAI_LONG_CONTEXT_FALLBACK_MODEL=gpt-4.1
 ```
 
-`OPENAI_API_KEY` is required for real summary generation and must not be committed with a value. `OPENAI_MODEL` defaults to `gpt-4o-mini-2024-07-18` and can be changed later without code changes. The configured temperature is `0.1`, chosen for low-variance factual summaries while still allowing natural phrasing.
+`OPENAI_API_KEY` is required for real summary generation and must not be committed with a value. `OPENAI_MODEL` defaults to `gpt-4o-mini-2024-07-18` and can be changed later without code changes. If the primary model rejects a document because the prompt exceeds its context window, the summary client retries once with `OPENAI_LONG_CONTEXT_FALLBACK_MODEL`, which defaults to `gpt-4.1`. The configured temperature is `0.1`, chosen for low-variance factual summaries while still allowing natural phrasing.
 
 Run summaries manually:
 

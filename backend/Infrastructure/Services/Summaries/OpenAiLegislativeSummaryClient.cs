@@ -30,6 +30,20 @@ public class OpenAiLegislativeSummaryClient : ILegislativeSummaryClient
 
     public string ModelName => _options.Model;
 
+    public IReadOnlyList<string> ModelNames
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_options.LongContextFallbackModel) ||
+                string.Equals(_options.Model, _options.LongContextFallbackModel, StringComparison.OrdinalIgnoreCase))
+            {
+                return [_options.Model];
+            }
+
+            return [_options.Model, _options.LongContextFallbackModel];
+        }
+    }
+
     public string PromptVersion => LegislativeSummaryPrompt.Version;
 
     public async Task<GeneratedParliamentSummary> GenerateSummaryAsync(
@@ -41,10 +55,36 @@ public class OpenAiLegislativeSummaryClient : ILegislativeSummaryClient
             throw new InvalidOperationException("OpenAI API key is not configured. Set OPENAI_API_KEY.");
         }
 
+        var model = _options.Model;
+        string content;
+        try
+        {
+            content = await RequestSummaryContentAsync(model, redactedPlainText, cancellationToken);
+        }
+        catch (OpenAiSummaryRequestException ex) when (ex.IsContextLengthExceeded && TryGetLongContextFallbackModel(model, out var fallbackModel))
+        {
+            _logger.LogWarning(
+                ex,
+                "OpenAI summary request exceeded the context window for model {Model}. Retrying with long-context model {FallbackModel}.",
+                model,
+                fallbackModel);
+
+            model = fallbackModel;
+            content = await RequestSummaryContentAsync(model, redactedPlainText, cancellationToken);
+        }
+
+        return ParseSummaryContent(content, model);
+    }
+
+    private async Task<string> RequestSummaryContentAsync(
+        string model,
+        string redactedPlainText,
+        CancellationToken cancellationToken)
+    {
         using var request = new HttpRequestMessage(HttpMethod.Post, ChatCompletionsUri)
         {
             Content = JsonContent.Create(new ChatCompletionRequest(
-                _options.Model,
+                model,
                 _options.Temperature,
                 _options.MaxOutputTokens,
                 [
@@ -61,8 +101,9 @@ public class OpenAiLegislativeSummaryClient : ILegislativeSummaryClient
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            throw new InvalidOperationException(
-                $"OpenAI Chat Completions request failed with status {(int)response.StatusCode}: {body}");
+            throw new OpenAiSummaryRequestException(
+                $"OpenAI Chat Completions request failed with status {(int)response.StatusCode}: {body}",
+                body);
         }
 
         var completion = JsonSerializer.Deserialize<ChatCompletionResponse>(body, JsonOptions)
@@ -73,6 +114,11 @@ public class OpenAiLegislativeSummaryClient : ILegislativeSummaryClient
             throw new InvalidOperationException("OpenAI response did not contain summary content.");
         }
 
+        return content;
+    }
+
+    private GeneratedParliamentSummary ParseSummaryContent(string content, string model)
+    {
         try
         {
             var payload = JsonSerializer.Deserialize<SummaryPayload>(content, JsonOptions)
@@ -85,6 +131,7 @@ public class OpenAiLegislativeSummaryClient : ILegislativeSummaryClient
             }
 
             return new GeneratedParliamentSummary(
+                model,
                 string.IsNullOrWhiteSpace(payload.Title) ? null : payload.Title.Trim(),
                 summary,
                 payload.BulletPoints?
@@ -96,6 +143,35 @@ public class OpenAiLegislativeSummaryClient : ILegislativeSummaryClient
         {
             _logger.LogError(ex, "OpenAI returned non-parseable summary JSON: {Content}", content);
             throw new InvalidOperationException("OpenAI returned non-parseable summary JSON.", ex);
+        }
+    }
+
+    private bool TryGetLongContextFallbackModel(string primaryModel, out string fallbackModel)
+    {
+        fallbackModel = _options.LongContextFallbackModel?.Trim() ?? string.Empty;
+        return !string.IsNullOrWhiteSpace(fallbackModel) &&
+               !string.Equals(primaryModel, fallbackModel, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private sealed class OpenAiSummaryRequestException : InvalidOperationException
+    {
+        public OpenAiSummaryRequestException(string message, string responseBody)
+            : base(message)
+        {
+            ResponseBody = responseBody;
+        }
+
+        public string ResponseBody { get; }
+
+        public bool IsContextLengthExceeded
+        {
+            get
+            {
+                return ResponseBody.Contains("context_length_exceeded", StringComparison.OrdinalIgnoreCase) ||
+                       ResponseBody.Contains("maximum context length", StringComparison.OrdinalIgnoreCase) ||
+                       ResponseBody.Contains("context window", StringComparison.OrdinalIgnoreCase) ||
+                       ResponseBody.Contains("too many tokens", StringComparison.OrdinalIgnoreCase);
+            }
         }
     }
 

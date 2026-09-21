@@ -86,10 +86,14 @@ public partial class ParliamentDocumentRedactionService : IParliamentDocumentRed
                     skipped++;
                 }
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 failed++;
-                await MarkFailedAsync(document, ex.Message, cancellationToken);
+                await TryMarkFailedAsync(document, ex, cancellationToken);
                 _logger.LogError(
                     ex,
                     "Failed to extract/redact document {DocumentId} for ProjectLaw {ProjectLawId}.",
@@ -113,6 +117,7 @@ public partial class ParliamentDocumentRedactionService : IParliamentDocumentRed
 
         var bytes = await ReadDocumentBytesAsync(document.Url, cancellationToken);
         var sourceHash = ComputeSha256(bytes);
+        var contentExists = document.Content is not null;
         var content = document.Content ?? new ParliamentDocumentContent
         {
             ProjectLawId = document.ProjectLawId,
@@ -120,7 +125,10 @@ public partial class ParliamentDocumentRedactionService : IParliamentDocumentRed
             SourceUrl = document.Url
         };
 
-        if (document.Content is null)
+        document.Content = content;
+        content.ParliamentInitiativeDocument = document;
+
+        if (!contentExists)
         {
             _context.ParliamentDocumentContents.Add(content);
         }
@@ -257,6 +265,7 @@ public partial class ParliamentDocumentRedactionService : IParliamentDocumentRed
         string errorMessage,
         CancellationToken cancellationToken)
     {
+        var contentExists = document.Content is not null;
         var content = document.Content ?? new ParliamentDocumentContent
         {
             ProjectLawId = document.ProjectLawId,
@@ -264,7 +273,10 @@ public partial class ParliamentDocumentRedactionService : IParliamentDocumentRed
             SourceUrl = document.Url
         };
 
-        if (document.Content is null)
+        document.Content = content;
+        content.ParliamentInitiativeDocument = document;
+
+        if (!contentExists)
         {
             _context.ParliamentDocumentContents.Add(content);
         }
@@ -273,6 +285,45 @@ public partial class ParliamentDocumentRedactionService : IParliamentDocumentRed
         content.RedactionStatus = "Failed";
         content.ErrorMessage = errorMessage;
         await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task TryMarkFailedAsync(
+        ParliamentInitiativeDocument document,
+        Exception originalException,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await MarkFailedAsync(document, originalException.Message, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception failurePersistenceException)
+        {
+            DetachDocumentContent(document);
+            _logger.LogError(
+                failurePersistenceException,
+                "Failed to persist redaction failure status for document {DocumentId} after error: {OriginalError}",
+                document.Id,
+                originalException.Message);
+        }
+    }
+
+    private void DetachDocumentContent(ParliamentInitiativeDocument document)
+    {
+        var entries = _context.ChangeTracker
+            .Entries<ParliamentDocumentContent>()
+            .Where(x => x.Entity.ParliamentInitiativeDocumentId == document.Id)
+            .ToList();
+
+        foreach (var entry in entries)
+        {
+            entry.State = EntityState.Detached;
+        }
+
+        document.Content = null;
     }
 
     private static string TryGetFileName(string sourceUrl)

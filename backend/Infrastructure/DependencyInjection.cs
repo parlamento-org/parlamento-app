@@ -50,6 +50,10 @@ public static class DependencyInjection
             var section = configuration.GetSection(OpenAiSummaryOptions.SectionName);
             options.ApiKey = configuration["OPENAI_API_KEY"] ?? section["ApiKey"];
             options.Model = configuration["OPENAI_MODEL"] ?? section["Model"] ?? "gpt-4o-mini-2024-07-18";
+            options.LongContextFallbackModel =
+                configuration["OPENAI_LONG_CONTEXT_FALLBACK_MODEL"] ??
+                section["LongContextFallbackModel"] ??
+                "gpt-4.1";
             options.Temperature = double.TryParse(section["Temperature"], out var temperature)
                 ? temperature
                 : 0.1;
