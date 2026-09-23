@@ -56,29 +56,9 @@ class _ProfilePageState extends State<ProfilePage> {
               );
             }
 
-            return RefreshIndicator(
+            return _ProfileStatsPager(
+              profile: profile,
               onRefresh: () async => _reload(),
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
-                children: [
-                  Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1180),
-                      child: Column(
-                        children: [
-                          const _ProfileHeader(),
-                          const SizedBox(height: 18),
-                          _OverviewSection(overview: profile.overview),
-                          const SizedBox(height: 14),
-                          _PartyAlignmentSection(
-                            alignment: profile.partyAlignment,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             );
           },
         ),
@@ -90,6 +70,232 @@ class _ProfilePageState extends State<ProfilePage> {
     setState(() {
       _profileFuture = _profileController.getProfileStats();
     });
+  }
+}
+
+class _ProfileStatsPager extends StatefulWidget {
+  const _ProfileStatsPager({required this.profile, required this.onRefresh});
+
+  final ProfileStats profile;
+  final Future<void> Function() onRefresh;
+
+  @override
+  State<_ProfileStatsPager> createState() => _ProfileStatsPagerState();
+}
+
+class _ProfileStatsPagerState extends State<_ProfileStatsPager> {
+  late final PageController _pageController = PageController();
+  int _selectedIndex = 0;
+
+  List<TopicPartyAlignment> get _topicBreakdowns =>
+      widget.profile.partyAlignment.topicBreakdowns;
+
+  int get _pageCount => 1 + _topicBreakdowns.length;
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 0),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1180),
+              child: const _ProfileHeader(),
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        _StatsPageTabs(
+          selectedIndex: _selectedIndex,
+          labels: [
+            'Geral',
+            ..._topicBreakdowns.map((topic) => topic.parentTopicLabel),
+          ],
+          onSelected: _animateToPage,
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: _pageCount,
+            onPageChanged: (index) {
+              setState(() => _selectedIndex = index);
+            },
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return _ProfileStatsPage(
+                  onRefresh: widget.onRefresh,
+                  child: _GeneralStatsPage(profile: widget.profile),
+                );
+              }
+
+              final topic = _topicBreakdowns[index - 1];
+              return _ProfileStatsPage(
+                onRefresh: widget.onRefresh,
+                child: _TopicStatsPage(
+                  topic: topic,
+                  minimumComparableVotes:
+                      widget.profile.partyAlignment.minimumTopicComparableVotes,
+                ),
+              );
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(18, 8, 18, 14),
+          child: _StatsPageDots(
+            count: _pageCount,
+            selectedIndex: _selectedIndex,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _animateToPage(int index) {
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 240),
+      curve: Curves.easeOutCubic,
+    );
+  }
+}
+
+class _ProfileStatsPage extends StatelessWidget {
+  const _ProfileStatsPage({required this.child, required this.onRefresh});
+
+  final Widget child;
+  final Future<void> Function() onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(18, 8, 18, 24),
+        children: [
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1180),
+              child: child,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GeneralStatsPage extends StatelessWidget {
+  const _GeneralStatsPage({required this.profile});
+
+  final ProfileStats profile;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _OverviewSection(overview: profile.overview),
+        const SizedBox(height: 14),
+        _OverallPartyAlignmentSection(alignment: profile.partyAlignment),
+      ],
+    );
+  }
+}
+
+class _StatsPageTabs extends StatelessWidget {
+  const _StatsPageTabs({
+    required this.labels,
+    required this.selectedIndex,
+    required this.onSelected,
+  });
+
+  final List<String> labels;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      type: MaterialType.transparency,
+      child: SizedBox(
+        height: 42,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          itemCount: labels.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 8),
+          itemBuilder: (context, index) {
+            final selected = index == selectedIndex;
+            return ChoiceChip(
+              selected: selected,
+              showCheckmark: false,
+              label: Text(
+                labels[index],
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              labelStyle: TextStyle(
+                color: selected ? Colors.white : baseTheme.colorScheme.primary,
+                fontWeight: FontWeight.w900,
+                fontSize: 12,
+              ),
+              selectedColor: baseTheme.colorScheme.primary,
+              backgroundColor: Colors.white,
+              side: BorderSide(
+                color: baseTheme.colorScheme.primary.withValues(alpha: 0.42),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              onSelected: (_) => onSelected(index),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _StatsPageDots extends StatelessWidget {
+  const _StatsPageDots({required this.count, required this.selectedIndex});
+
+  final int count;
+  final int selectedIndex;
+
+  @override
+  Widget build(BuildContext context) {
+    if (count <= 1) {
+      return const SizedBox(height: 8);
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(count, (index) {
+        final selected = index == selectedIndex;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: selected ? 22 : 8,
+          height: 8,
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          decoration: BoxDecoration(
+            color:
+                selected
+                    ? baseTheme.colorScheme.primary
+                    : baseTheme.colorScheme.primary.withValues(alpha: 0.24),
+            borderRadius: BorderRadius.circular(99),
+          ),
+        );
+      }),
+    );
   }
 }
 
@@ -274,8 +480,8 @@ class _OverviewStat extends StatelessWidget {
   }
 }
 
-class _PartyAlignmentSection extends StatelessWidget {
-  const _PartyAlignmentSection({required this.alignment});
+class _OverallPartyAlignmentSection extends StatelessWidget {
+  const _OverallPartyAlignmentSection({required this.alignment});
 
   final PartyAlignmentSection alignment;
 
@@ -291,7 +497,7 @@ class _PartyAlignmentSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Percentagens de concordancia entre as tuas escolhas e os votos dos partidos na generalidade.',
+            'Percentagens de concordância entre as tuas escolhas e os votos dos partidos na generalidade.',
             style: TextStyle(
               color: baseTheme.colorScheme.primary.withValues(alpha: 0.76),
               fontWeight: FontWeight.w700,
@@ -306,20 +512,13 @@ class _PartyAlignmentSection extends StatelessWidget {
               icon: Icons.insights_outlined,
               message: 'Ainda nao ha votos parlamentares comparaveis.',
             )
-          else ...[
-            if (alignment.topicBreakdowns.isNotEmpty) ...[
-              _TopicAlignmentBreakdown(alignment: alignment),
-              const Divider(height: 28),
-              const _AlignmentSubheading('Geral'),
-              const SizedBox(height: 12),
-            ],
+          else
             ...visibleParties.map(
               (party) => Padding(
                 padding: const EdgeInsets.only(bottom: 14),
                 child: _PartyAlignmentRow(party: party),
               ),
             ),
-          ],
         ],
       ),
     );
@@ -376,66 +575,8 @@ class _AlignmentLockedState extends StatelessWidget {
   }
 }
 
-class _AlignmentSubheading extends StatelessWidget {
-  const _AlignmentSubheading(this.label);
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      label,
-      style: TextStyle(
-        color: baseTheme.colorScheme.primary,
-        fontWeight: FontWeight.w900,
-      ),
-    );
-  }
-}
-
-class _TopicAlignmentBreakdown extends StatelessWidget {
-  const _TopicAlignmentBreakdown({required this.alignment});
-
-  final PartyAlignmentSection alignment;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(
-              Icons.topic_outlined,
-              color: baseTheme.colorScheme.primary,
-              size: 20,
-            ),
-            const SizedBox(width: 7),
-            Expanded(
-              child: Text(
-                'Por tópico principal',
-                style: TextStyle(
-                  color: baseTheme.colorScheme.primary,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        ...alignment.topicBreakdowns.map(
-          (topic) => _TopicAlignmentBlock(
-            topic: topic,
-            minimumComparableVotes: alignment.minimumTopicComparableVotes,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _TopicAlignmentBlock extends StatelessWidget {
-  const _TopicAlignmentBlock({
+class _TopicStatsPage extends StatelessWidget {
+  const _TopicStatsPage({
     required this.topic,
     required this.minimumComparableVotes,
   });
@@ -445,59 +586,94 @@ class _TopicAlignmentBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
+    return _ProfileSectionCard(
+      title: topic.parentTopicLabel,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Expanded(
-                child: Text(
-                  topic.parentTopicLabel,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: baseTheme.colorScheme.primary,
-                    fontWeight: FontWeight.w900,
-                    height: 1.15,
-                  ),
-                ),
+              Icon(
+                Icons.topic_outlined,
+                color: baseTheme.colorScheme.primary,
+                size: 20,
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 7),
               Text(
-                '${topic.totalComparableVotes} votos',
-                style: const TextStyle(
-                  color: Colors.black54,
+                '${topic.totalComparableVotes} votos comparáveis',
+                style: TextStyle(
+                  color: baseTheme.colorScheme.primary,
                   fontSize: 12,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
           if (topic.isLowData)
-            Text(
-              'Dados baixos neste tópico. Precisas de $minimumComparableVotes votos comparáveis para ver a distribuição.',
-              style: const TextStyle(
-                color: Colors.black54,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                height: 1.3,
-              ),
-            )
+            _TopicLowDataState(minimumComparableVotes: minimumComparableVotes)
           else
             Column(
               children:
                   topic.parties
                       .map(
                         (party) => Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.only(bottom: 12),
                           child: _CompactPartyAlignmentRow(party: party),
                         ),
                       )
                       .toList(),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TopicLowDataState extends StatelessWidget {
+  const _TopicLowDataState({required this.minimumComparableVotes});
+
+  final int minimumComparableVotes;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: baseTheme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: baseTheme.colorScheme.primary.withValues(alpha: 0.20),
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.insights_outlined,
+            color: baseTheme.colorScheme.primary,
+            size: 32,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Poucos dados neste tópico',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: baseTheme.colorScheme.primary,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Precisas de $minimumComparableVotes votos comparáveis para ver a distribuição partidária.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.black54,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              height: 1.3,
+            ),
+          ),
         ],
       ),
     );
@@ -517,51 +693,65 @@ class _CompactPartyAlignmentRow extends StatelessWidget {
       children: [
         ParliamentaryPartyLogo(
           acronym: party.partyAcronym,
-          size: 38,
+          size: 44,
           fallbackLabel: party.partyAcronym,
         ),
         const SizedBox(width: 10),
-        SizedBox(
-          width: 46,
-          child: Text(
-            party.partyAcronym,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: baseTheme.colorScheme.primary,
-              fontSize: 12,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
         Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: Container(
-              height: 10,
-              color: baseTheme.colorScheme.primary.withValues(alpha: 0.12),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: FractionallySizedBox(
-                  widthFactor: percentage / 100,
-                  child: Container(color: baseTheme.colorScheme.primary),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      party.partyAcronym,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: baseTheme.colorScheme.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    _formatPercentage(percentage),
+                    style: TextStyle(
+                      color: baseTheme.colorScheme.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: Container(
+                  height: 10,
+                  color: baseTheme.colorScheme.primary.withValues(alpha: 0.12),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: FractionallySizedBox(
+                      widthFactor: percentage / 100,
+                      child: Container(color: baseTheme.colorScheme.primary),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 48,
-          child: Text(
-            _formatPercentage(percentage),
-            textAlign: TextAlign.end,
-            style: TextStyle(
-              color: baseTheme.colorScheme.primary,
-              fontSize: 12,
-              fontWeight: FontWeight.w900,
-            ),
+              const SizedBox(height: 4),
+              Text(
+                '${party.alignedCount}/${party.comparableCount} votos comparáveis',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.black54,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
         ),
       ],
