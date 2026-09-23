@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -133,6 +134,12 @@ public partial class ParliamentDocumentRedactionService : IParliamentDocumentRed
             _context.ParliamentDocumentContents.Add(content);
         }
 
+        if (LooksLikeUnavailableDocument(bytes))
+        {
+            throw new InvalidOperationException(
+                "Document source returned an unavailable-resource message instead of proposal content.");
+        }
+
         var sourceName = TryGetFileName(document.Url);
         var extractor = ResolveExtractor(bytes, sourceName);
 
@@ -164,6 +171,12 @@ public partial class ParliamentDocumentRedactionService : IParliamentDocumentRed
         var redactedModel = _redactor.Redact(extracted.Document, terms);
         var redactedModelJson = JsonSerializer.Serialize(redactedModel, JsonOptions);
         var rendered = _renderer.Render(redactedModel);
+        if (LooksLikeUnavailableDocument(rendered.PlainText) ||
+            LooksLikeUnavailableDocument(rendered.Html))
+        {
+            throw new InvalidOperationException(
+                "Extracted document text is an unavailable-resource message instead of proposal content.");
+        }
 
         content.SourceUrl = document.Url;
         content.SourceContentHash = sourceHash;
@@ -281,6 +294,13 @@ public partial class ParliamentDocumentRedactionService : IParliamentDocumentRed
             _context.ParliamentDocumentContents.Add(content);
         }
 
+        if (HasSucceededRedaction(content))
+        {
+            content.ErrorMessage = $"Latest redaction refresh failed; preserved previous successful content. {TruncateError(errorMessage)}";
+            await _context.SaveChangesAsync(cancellationToken);
+            return;
+        }
+
         content.ExtractionStatus = "Failed";
         content.RedactionStatus = "Failed";
         content.ErrorMessage = errorMessage;
@@ -363,6 +383,80 @@ public partial class ParliamentDocumentRedactionService : IParliamentDocumentRed
     private static string ComputeSha256(string value)
     {
         return ComputeSha256(Encoding.UTF8.GetBytes(value));
+    }
+
+    private static bool HasSucceededRedaction(ParliamentDocumentContent content)
+    {
+        return string.Equals(content.ExtractionStatus, "Succeeded", StringComparison.OrdinalIgnoreCase) &&
+               string.Equals(content.RedactionStatus, "Succeeded", StringComparison.OrdinalIgnoreCase) &&
+               !string.IsNullOrWhiteSpace(content.RedactedContentText) &&
+               !string.IsNullOrWhiteSpace(content.RedactedContentHash);
+    }
+
+    private static bool LooksLikeUnavailableDocument(byte[] bytes)
+    {
+        if (bytes.Length == 0)
+        {
+            return false;
+        }
+
+        return LooksLikeUnavailableDocument(Encoding.UTF8.GetString(bytes));
+    }
+
+    private static bool LooksLikeUnavailableDocument(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        var normalized = NormalizeAvailabilityText(value);
+        return normalized.Contains("recurso ao qual tentou aceder", StringComparison.Ordinal) &&
+               (normalized.Contains("existe", StringComparison.Ordinal) ||
+                normalized.Contains("dispon", StringComparison.Ordinal) ||
+                normalized.Contains("tente mais tarde", StringComparison.Ordinal));
+    }
+
+    private static string NormalizeAvailabilityText(string value)
+    {
+        var decomposed = value.Normalize(NormalizationForm.FormD);
+        var builder = new StringBuilder(decomposed.Length);
+        var previousWasWhitespace = false;
+
+        foreach (var character in decomposed)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(character) == UnicodeCategory.NonSpacingMark)
+            {
+                continue;
+            }
+
+            if (char.IsWhiteSpace(character))
+            {
+                if (!previousWasWhitespace)
+                {
+                    builder.Append(' ');
+                    previousWasWhitespace = true;
+                }
+
+                continue;
+            }
+
+            builder.Append(char.ToLowerInvariant(character));
+            previousWasWhitespace = false;
+        }
+
+        return builder.ToString().Normalize(NormalizationForm.FormC);
+    }
+
+    private static string TruncateError(string errorMessage)
+    {
+        const int maxLength = 900;
+        if (errorMessage.Length <= maxLength)
+        {
+            return errorMessage;
+        }
+
+        return errorMessage[..maxLength];
     }
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)

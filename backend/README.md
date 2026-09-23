@@ -201,6 +201,8 @@ dotnet run --project backend/src -- parliament-seed --force-topic-assignments
 
 `parliament-seed` runs the full backend data pipeline: Open Data import, base-info preflight, document extraction/redaction for `ProjectLaw.FullProposalTextLink`, reviewed proposal topic taxonomy import, historical topic assignment seed import, automatic topic assignment for newly redacted documents when embeddings are configured, then AI summaries from the stored redacted plain text. If no legislature is supplied, it processes every configured legislature under `ParliamentOpenData:Legislatures`. Each phase remains idempotent: unchanged Open Data rows are skipped by source hash, current redacted documents are skipped by source/extractor/redaction/renderer versions, reviewed topic assignments are preserved, automatic topic assignments are skipped when current for the redacted source hash, and current summaries are skipped by source hash/model/prompt version. Use `--no-summary` to stop before summaries, `--force-import` to rebuild existing imported initiative rows, `--force-redaction` to rewrite document content, `--force-summary` to regenerate summaries, `--force-topic-assignments` to regenerate automatic topic assignments that are not reviewed/seeded, or `--force` for all forced phases.
 
+Open Data refreshes preserve the existing primary `InitiativeText` document row for each proposal, so a changed initiative payload does not cascade-delete the last successful redaction or summary. If a current document URL returns the Parliament unavailable-resource message instead of proposal content, redaction records a failed refresh but keeps the previous successful redacted text, hash, and status available to the app.
+
 The topic taxonomy import runs even when OpenAI is not configured. Automatic topic assignment requires `OPENAI_API_KEY` or `ProposalTopics:ApiKey`; when neither is present, `parliament-seed` logs and prints that automatic topic assignment was skipped.
 
 Seed only the reviewed topic taxonomy and historical reviewed assignments from the bundled taxonomy artifacts:
@@ -235,6 +237,8 @@ Before redacting a legislature, the command checks whether `ParliamentDeputies`,
 
 Repeated redaction commands are idempotent by default. If the source hash, extractor version, renderer version, and redaction policy version are unchanged and the previous run succeeded, the document is skipped. Use `--force-upsert` or `--force` to rewrite the stored redacted model, HTML, and plain text anyway.
 
+If a refresh fails after a document already has successful redacted content, the command preserves that last-good content and stores the latest error message on the row. This includes Parliament unavailable-resource responses such as "O recurso ao qual tentou aceder..." that can be returned from official document URLs while the original proposal document is temporarily unavailable.
+
 Changing the production PDF extractor or extractor version intentionally makes existing PDF document content stale. Re-run the redaction command for the affected initiatives or legislature to regenerate the stored redacted model, HTML, and plain text from the new extractor output.
 
 Do not run this as a second `dotnet run` inside the same live `dev-parlamento-be` container while `dotnet watch` is running. The dev container watches mounted project directories, and a second `dotnet run` can mutate `obj/` while the watcher scans it. Prefer a one-shot container command or run the compiled application directly in a shell where `dotnet watch` is not active.
@@ -263,7 +267,7 @@ dotnet run --project backend/src -- parliament-summary --force
 dotnet run --project backend/src -- parliament-summary --legislature XVII --max-documents 25
 ```
 
-The summary command is idempotent. It skips already succeeded summaries when the source document hash, model name, and prompt version match. Use `--force` to regenerate matching summaries. Failed generations are logged and stored with status/error details, but they do not stop the batch. Empty and extremely short redacted texts are skipped.
+The summary command is idempotent. It skips already succeeded summaries when the source document hash, model name, and prompt version match. Use `--force` to regenerate matching summaries. Failed generations are logged and stored with status/error details, but they do not stop the batch. Empty and extremely short redacted texts are skipped. If a forced refresh fails or becomes skipped for a document that already has a successful summary for the same source hash/model/prompt version, the successful summary remains visible and the latest refresh error is stored without downgrading its status.
 
 Summaries are stored in `ParliamentSummaries` with:
 

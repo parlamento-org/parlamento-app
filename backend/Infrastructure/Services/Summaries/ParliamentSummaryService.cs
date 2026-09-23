@@ -204,6 +204,20 @@ public class ParliamentSummaryService : IParliamentSummaryService
             _context.ParliamentSummaries.Add(summary);
         }
 
+        if (IsSucceededSummary(summary))
+        {
+            summary.ErrorMessage = $"Latest summary refresh skipped; preserved previous successful summary. {reason}";
+            summary.ErrorDetails = null;
+            summary.UpdatedAtUtc = DateTime.UtcNow;
+            await _context.SaveChangesAsync(cancellationToken);
+
+            _logger.LogWarning(
+                "Preserved existing successful AI summary for ProjectLaw {ProjectLawId} after skipped refresh: {Reason}",
+                document.ProjectLawId,
+                reason);
+            return;
+        }
+
         summary.GenerationStatus = "Skipped";
         summary.ErrorMessage = reason;
         summary.ErrorDetails = null;
@@ -242,6 +256,15 @@ public class ParliamentSummaryService : IParliamentSummaryService
         if (summary.Id == 0)
         {
             _context.ParliamentSummaries.Add(summary);
+        }
+
+        if (IsSucceededSummary(summary))
+        {
+            summary.ErrorMessage = $"Latest summary refresh failed; preserved previous successful summary. {errorMessage}";
+            summary.ErrorDetails = errorDetails;
+            summary.UpdatedAtUtc = DateTime.UtcNow;
+            await _context.SaveChangesAsync(cancellationToken);
+            return;
         }
 
         summary.GenerationStatus = "Failed";
@@ -313,6 +336,12 @@ public class ParliamentSummaryService : IParliamentSummaryService
     private static int CountNonWhitespace(string value)
     {
         return value.Count(x => !char.IsWhiteSpace(x));
+    }
+
+    private static bool IsSucceededSummary(ParliamentSummary summary)
+    {
+        return string.Equals(summary.GenerationStatus, "Succeeded", StringComparison.OrdinalIgnoreCase) &&
+               !string.IsNullOrWhiteSpace(summary.SummaryText);
     }
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);

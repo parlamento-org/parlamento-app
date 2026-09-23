@@ -324,6 +324,7 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
             .Include(x => x.ImportedVotes)
                 .ThenInclude(x => x.Blocks)
             .Include(x => x.ImportedDocuments)
+                .ThenInclude(x => x.Content)
             .Include(x => x.ImportedPublications)
             .Include(x => x.ImportedInterventions)
             .FirstOrDefaultAsync(
@@ -499,18 +500,32 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
     private static void MapPrimaryDocument(ProjectLaw projectLaw, JsonElement initiative)
     {
         var url = initiative.GetStringOrNull("IniLinkTexto");
+        var primaryDocument = projectLaw.ImportedDocuments
+            .FirstOrDefault(IsPrimaryInitiativeTextDocument);
+
         if (string.IsNullOrWhiteSpace(url))
         {
             return;
         }
 
-        projectLaw.ImportedDocuments.Add(new ParliamentInitiativeDocument
+        if (primaryDocument is null)
         {
-            ProjectLaw = projectLaw,
-            Scope = "InitiativeText",
-            Name = "Texto da iniciativa",
-            Url = url
-        });
+            projectLaw.ImportedDocuments.Add(new ParliamentInitiativeDocument
+            {
+                ProjectLaw = projectLaw,
+                Scope = "InitiativeText",
+                Name = "Texto da iniciativa",
+                Url = url
+            });
+            return;
+        }
+
+        primaryDocument.ProjectLaw = projectLaw;
+        primaryDocument.ParliamentInitiativeEvent = null;
+        primaryDocument.ParliamentInitiativeEventId = null;
+        primaryDocument.Scope = "InitiativeText";
+        primaryDocument.Name = "Texto da iniciativa";
+        primaryDocument.Url = url;
     }
 
     private static void MapAttachments(
@@ -695,10 +710,19 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
 
     private void ClearImportedGraph(ProjectLaw projectLaw)
     {
+        var preservedPrimaryDocument = projectLaw.ImportedDocuments
+            .Where(IsPrimaryInitiativeTextDocument)
+            .OrderByDescending(x => HasSucceededContent(x.Content))
+            .ThenByDescending(x => x.Id)
+            .FirstOrDefault();
+        var importedDocumentsToRemove = projectLaw.ImportedDocuments
+            .Where(x => !ReferenceEquals(x, preservedPrimaryDocument))
+            .ToList();
+
         _context.ParliamentInitiativeAuthors.RemoveRange(projectLaw.ImportedAuthors);
         _context.ParliamentInitiativeVoteBlocks.RemoveRange(projectLaw.ImportedVotes.SelectMany(x => x.Blocks));
         _context.ParliamentInitiativeVotes.RemoveRange(projectLaw.ImportedVotes);
-        _context.ParliamentInitiativeDocuments.RemoveRange(projectLaw.ImportedDocuments);
+        _context.ParliamentInitiativeDocuments.RemoveRange(importedDocumentsToRemove);
         _context.ParliamentInitiativePublications.RemoveRange(projectLaw.ImportedPublications);
         _context.ParliamentInitiativeInterventions.RemoveRange(projectLaw.ImportedInterventions);
         _context.ParliamentInitiativeEvents.RemoveRange(projectLaw.ImportedEvents);
@@ -706,9 +730,27 @@ public class ParliamentOpenDataImportService : IParliamentOpenDataImportService
         projectLaw.ImportedAuthors.Clear();
         projectLaw.ImportedVotes.Clear();
         projectLaw.ImportedDocuments.Clear();
+        if (preservedPrimaryDocument is not null)
+        {
+            projectLaw.ImportedDocuments.Add(preservedPrimaryDocument);
+        }
+
         projectLaw.ImportedPublications.Clear();
         projectLaw.ImportedInterventions.Clear();
         projectLaw.ImportedEvents.Clear();
+    }
+
+    private static bool IsPrimaryInitiativeTextDocument(ParliamentInitiativeDocument document)
+    {
+        return string.Equals(document.Scope, "InitiativeText", StringComparison.OrdinalIgnoreCase) &&
+               document.ParliamentInitiativeEventId is null;
+    }
+
+    private static bool HasSucceededContent(ParliamentDocumentContent? content)
+    {
+        return content is not null &&
+               string.Equals(content.RedactionStatus, "Succeeded", StringComparison.OrdinalIgnoreCase) &&
+               !string.IsNullOrWhiteSpace(content.RedactedContentText);
     }
 
     private void ClearVotingResult(VotingResult? votingResult, bool removeResult)
