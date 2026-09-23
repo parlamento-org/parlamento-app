@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/controllers/profile_controller.dart';
 import 'package:frontend/models/profile.dart';
@@ -85,6 +86,8 @@ class _ProfileStatsPager extends StatefulWidget {
 
 class _ProfileStatsPagerState extends State<_ProfileStatsPager> {
   late final PageController _pageController = PageController();
+  late final ScrollController _tabScrollController = ScrollController();
+  late List<_StatsPageTabItem> _tabItems = _createTabItems();
   int _selectedIndex = 0;
 
   List<TopicPartyAlignment> get _topicBreakdowns =>
@@ -92,8 +95,42 @@ class _ProfileStatsPagerState extends State<_ProfileStatsPager> {
 
   int get _pageCount => 1 + _topicBreakdowns.length;
 
+  List<String> get _tabLabels => [
+    'Geral',
+    ..._topicBreakdowns.map((topic) => topic.parentTopicLabel),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _centerSelectedTab(_selectedIndex, duration: Duration.zero);
+  }
+
+  @override
+  void didUpdateWidget(covariant _ProfileStatsPager oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_tabItemsMatchLabels()) {
+      _tabItems = _createTabItems(previousItems: _tabItems);
+    }
+
+    if (_selectedIndex >= _pageCount) {
+      _selectedIndex = _pageCount - 1;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+
+        if (_pageController.hasClients) {
+          _pageController.jumpToPage(_selectedIndex);
+        }
+        _centerSelectedTab(_selectedIndex, duration: Duration.zero);
+      });
+    }
+  }
+
   @override
   void dispose() {
+    _tabScrollController.dispose();
     _pageController.dispose();
     super.dispose();
   }
@@ -114,38 +151,49 @@ class _ProfileStatsPagerState extends State<_ProfileStatsPager> {
         const SizedBox(height: 14),
         _StatsPageTabs(
           selectedIndex: _selectedIndex,
-          labels: [
-            'Geral',
-            ..._topicBreakdowns.map((topic) => topic.parentTopicLabel),
-          ],
+          items: _tabItems,
+          scrollController: _tabScrollController,
           onSelected: _animateToPage,
+          onPrevious: () => _moveBy(-1),
+          onNext: () => _moveBy(1),
+          canGoPrevious: _selectedIndex > 0,
+          canGoNext: _selectedIndex < _pageCount - 1,
         ),
         const SizedBox(height: 8),
         Expanded(
-          child: PageView.builder(
-            controller: _pageController,
-            itemCount: _pageCount,
-            onPageChanged: (index) {
-              setState(() => _selectedIndex = index);
+          child: NotificationListener<ScrollEndNotification>(
+            onNotification: (notification) {
+              if (notification.metrics.axis == Axis.horizontal) {
+                _centerSelectedTab(_selectedIndex);
+              }
+              return false;
             },
-            itemBuilder: (context, index) {
-              if (index == 0) {
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: _pageCount,
+              onPageChanged: _handlePageChanged,
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  return _ProfileStatsPage(
+                    onRefresh: widget.onRefresh,
+                    child: _GeneralStatsPage(profile: widget.profile),
+                  );
+                }
+
+                final topic = _topicBreakdowns[index - 1];
                 return _ProfileStatsPage(
                   onRefresh: widget.onRefresh,
-                  child: _GeneralStatsPage(profile: widget.profile),
+                  child: _TopicStatsPage(
+                    topic: topic,
+                    minimumComparableVotes:
+                        widget
+                            .profile
+                            .partyAlignment
+                            .minimumTopicComparableVotes,
+                  ),
                 );
-              }
-
-              final topic = _topicBreakdowns[index - 1];
-              return _ProfileStatsPage(
-                onRefresh: widget.onRefresh,
-                child: _TopicStatsPage(
-                  topic: topic,
-                  minimumComparableVotes:
-                      widget.profile.partyAlignment.minimumTopicComparableVotes,
-                ),
-              );
-            },
+              },
+            ),
           ),
         ),
         Padding(
@@ -160,11 +208,98 @@ class _ProfileStatsPagerState extends State<_ProfileStatsPager> {
   }
 
   void _animateToPage(int index) {
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 240),
-      curve: Curves.easeOutCubic,
-    );
+    if (index < 0 || index >= _pageCount) {
+      return;
+    }
+
+    if (index == _selectedIndex) {
+      _centerSelectedTab(index);
+      return;
+    }
+
+    if (!_pageController.hasClients) {
+      _handlePageChanged(index);
+      _centerSelectedTab(index);
+      return;
+    }
+
+    _pageController
+        .animateToPage(
+          index,
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeOutCubic,
+        )
+        .then((_) {
+          if (!mounted) {
+            return;
+          }
+
+          _centerSelectedTab(_selectedIndex);
+        });
+  }
+
+  void _handlePageChanged(int index) {
+    if (_selectedIndex != index) {
+      setState(() => _selectedIndex = index);
+    }
+  }
+
+  void _moveBy(int delta) {
+    final nextIndex = (_selectedIndex + delta).clamp(0, _pageCount - 1);
+    _animateToPage(nextIndex);
+  }
+
+  void _centerSelectedTab(
+    int index, {
+    Duration duration = const Duration(milliseconds: 220),
+  }) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || index < 0 || index >= _tabItems.length) {
+        return;
+      }
+
+      final selectedTabContext = _tabItems[index].key.currentContext;
+      if (selectedTabContext == null) {
+        return;
+      }
+
+      Scrollable.ensureVisible(
+        selectedTabContext,
+        alignment: 0.5,
+        alignmentPolicy: ScrollPositionAlignmentPolicy.explicit,
+        duration: duration,
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
+  List<_StatsPageTabItem> _createTabItems({
+    List<_StatsPageTabItem> previousItems = const [],
+  }) {
+    final labels = _tabLabels;
+    return List.generate(labels.length, (index) {
+      if (index < previousItems.length &&
+          previousItems[index].label == labels[index]) {
+        return previousItems[index];
+      }
+
+      return _StatsPageTabItem(label: labels[index], key: GlobalKey());
+    });
+  }
+
+  bool _tabItemsMatchLabels() {
+    final labels = _tabLabels;
+    if (_tabItems.length != labels.length) {
+      return false;
+    }
+
+    for (var index = 0; index < labels.length; index++) {
+      if (_tabItems[index].label != labels[index]) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }
 
@@ -213,52 +348,195 @@ class _GeneralStatsPage extends StatelessWidget {
 
 class _StatsPageTabs extends StatelessWidget {
   const _StatsPageTabs({
-    required this.labels,
+    required this.items,
+    required this.scrollController,
     required this.selectedIndex,
     required this.onSelected,
+    required this.onPrevious,
+    required this.onNext,
+    required this.canGoPrevious,
+    required this.canGoNext,
   });
 
-  final List<String> labels;
+  final List<_StatsPageTabItem> items;
+  final ScrollController scrollController;
   final int selectedIndex;
   final ValueChanged<int> onSelected;
+  final VoidCallback onPrevious;
+  final VoidCallback onNext;
+  final bool canGoPrevious;
+  final bool canGoNext;
 
   @override
   Widget build(BuildContext context) {
     return Material(
       type: MaterialType.transparency,
-      child: SizedBox(
-        height: 42,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 18),
-          itemCount: labels.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 8),
-          itemBuilder: (context, index) {
-            final selected = index == selectedIndex;
-            return ChoiceChip(
-              selected: selected,
-              showCheckmark: false,
-              label: Text(
-                labels[index],
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final showArrowControls =
+              constraints.maxWidth >= 720 && items.length > 1;
+
+          return SizedBox(
+            height: 42,
+            child: Row(
+              children: [
+                if (showArrowControls) ...[
+                  _StatsPageArrowButton(
+                    tooltip: 'Tópico anterior',
+                    icon: Icons.chevron_left,
+                    onPressed: canGoPrevious ? onPrevious : null,
+                  ),
+                  const SizedBox(width: 4),
+                ],
+                Expanded(
+                  child: _StatsPageTabStrip(
+                    items: items,
+                    scrollController: scrollController,
+                    selectedIndex: selectedIndex,
+                    onSelected: onSelected,
+                    horizontalPadding: showArrowControls ? 8 : 18,
+                  ),
+                ),
+                if (showArrowControls) ...[
+                  const SizedBox(width: 4),
+                  _StatsPageArrowButton(
+                    tooltip: 'Próximo tópico',
+                    icon: Icons.chevron_right,
+                    onPressed: canGoNext ? onNext : null,
+                  ),
+                ],
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _StatsPageTabStrip extends StatelessWidget {
+  const _StatsPageTabStrip({
+    required this.items,
+    required this.scrollController,
+    required this.selectedIndex,
+    required this.onSelected,
+    required this.horizontalPadding,
+  });
+
+  final List<_StatsPageTabItem> items;
+  final ScrollController scrollController;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+  final double horizontalPadding;
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      behavior: HitTestBehavior.opaque,
+      onPointerSignal: _handlePointerSignal,
+      child: SingleChildScrollView(
+        controller: scrollController,
+        scrollDirection: Axis.horizontal,
+        physics: const ClampingScrollPhysics(),
+        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+        child: Row(
+          children: [
+            for (var index = 0; index < items.length; index++) ...[
+              ChoiceChip(
+                key: items[index].key,
+                selected: index == selectedIndex,
+                showCheckmark: false,
+                label: Text(
+                  items[index].label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                labelStyle: TextStyle(
+                  color:
+                      index == selectedIndex
+                          ? Colors.white
+                          : baseTheme.colorScheme.primary,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 12,
+                ),
+                selectedColor: baseTheme.colorScheme.primary,
+                backgroundColor: Colors.white,
+                side: BorderSide(
+                  color: baseTheme.colorScheme.primary.withValues(alpha: 0.42),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                onSelected: (_) => onSelected(index),
               ),
-              labelStyle: TextStyle(
-                color: selected ? Colors.white : baseTheme.colorScheme.primary,
-                fontWeight: FontWeight.w900,
-                fontSize: 12,
-              ),
-              selectedColor: baseTheme.colorScheme.primary,
-              backgroundColor: Colors.white,
-              side: BorderSide(
-                color: baseTheme.colorScheme.primary.withValues(alpha: 0.42),
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              onSelected: (_) => onSelected(index),
-            );
-          },
+              if (index < items.length - 1) const SizedBox(width: 8),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _handlePointerSignal(PointerSignalEvent event) {
+    if (event is! PointerScrollEvent || !scrollController.hasClients) {
+      return;
+    }
+
+    final scrollDelta =
+        event.scrollDelta.dx.abs() > event.scrollDelta.dy.abs()
+            ? event.scrollDelta.dx
+            : event.scrollDelta.dy;
+    if (scrollDelta == 0) {
+      return;
+    }
+
+    final position = scrollController.position;
+    final nextOffset =
+        (scrollController.offset + scrollDelta)
+            .clamp(position.minScrollExtent, position.maxScrollExtent)
+            .toDouble();
+    scrollController.jumpTo(nextOffset);
+  }
+}
+
+class _StatsPageTabItem {
+  const _StatsPageTabItem({required this.label, required this.key});
+
+  final String label;
+  final GlobalKey key;
+}
+
+class _StatsPageArrowButton extends StatelessWidget {
+  const _StatsPageArrowButton({
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 42,
+      height: 42,
+      child: IconButton(
+        tooltip: tooltip,
+        onPressed: onPressed,
+        icon: Icon(icon, size: 22),
+        color: baseTheme.colorScheme.primary,
+        disabledColor: baseTheme.colorScheme.primary.withValues(alpha: 0.28),
+        style: IconButton.styleFrom(
+          backgroundColor: Colors.white,
+          disabledBackgroundColor: Colors.white.withValues(alpha: 0.72),
+          side: BorderSide(
+            color: baseTheme.colorScheme.primary.withValues(
+              alpha: onPressed == null ? 0.18 : 0.42,
+            ),
+          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
     );
