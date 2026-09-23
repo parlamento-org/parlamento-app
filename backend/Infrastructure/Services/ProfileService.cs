@@ -10,8 +10,16 @@ namespace Parlamento.Infrastructure.Services;
 public sealed class ProfileService : IProfileService
 {
     private const int MinimumComparableVotes = 10;
+    private const int MinimumTopicComparableVotes = 2;
     private const string GeneralityStage = "Generality";
     private const string GovernmentAcronym = "Governo";
+    private static readonly string[] DisplayableTopicAssignmentStatuses =
+    [
+        "accepted_cluster",
+        "manual_reviewed_assigned",
+        "auto_assigned",
+        "assigned"
+    ];
 
     private static readonly ProposalInteractionType[] TerminalActions =
     [
@@ -170,30 +178,55 @@ public sealed class ProfileService : IProfileService
             .GroupBy(row => row.PartyAcronym, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(
                 group => group.Key,
-                group =>
-                {
-                    var comparableCount = 0;
-                    var alignedCount = 0;
-
-                    foreach (var row in group)
-                    {
-                        if (!comparableUserVotes.TryGetValue(row.ProjectLawId, out var userOrientation))
-                        {
-                            continue;
-                        }
-
-                        comparableCount += 1;
-                        if (userOrientation == row.PartyOrientation)
-                        {
-                            alignedCount += 1;
-                        }
-                    }
-
-                    return new PartyAlignmentCounts(alignedCount, comparableCount);
-                },
+                group => CountPartyAlignment(group, comparableUserVotes),
                 StringComparer.OrdinalIgnoreCase);
 
-        var parties = partyAcronyms
+        var parties = BuildPartyAlignmentResponses(
+            partyAcronyms,
+            statsByParty,
+            knownPartyByAcronym);
+
+        var topicRows = comparableUserVotes.Count == 0
+            ? []
+            : await _context.ProjectLawTopicAssignments
+                .AsNoTracking()
+                .Where(assignment =>
+                    assignment.IsCurrent &&
+                    assignment.SubtopicId != null &&
+                    DisplayableTopicAssignmentStatuses.Contains(assignment.AssignmentStatus) &&
+                    comparableProjectLawIds.Contains(assignment.ProjectLawId) &&
+                    assignment.Subtopic != null &&
+                    assignment.Subtopic.ParentTopic != null)
+                .Select(assignment => new ProjectLawTopicRow(
+                    assignment.ProjectLawId,
+                    assignment.Subtopic!.ParentTopic!.Slug,
+                    assignment.Subtopic.ParentTopic.Label,
+                    assignment.Subtopic.ParentTopic.DisplayOrder))
+                .ToListAsync(cancellationToken);
+
+        var topicBreakdowns = BuildTopicBreakdowns(
+            topicRows,
+            alignmentRows,
+            comparableUserVotes,
+            knownPartyByAcronym);
+
+        return new PartyAlignmentSectionResponse
+        {
+            IsUnlocked = totalComparableVotes >= MinimumComparableVotes,
+            MinimumComparableVotes = MinimumComparableVotes,
+            MinimumTopicComparableVotes = MinimumTopicComparableVotes,
+            TotalComparableVotes = totalComparableVotes,
+            Parties = parties,
+            TopicBreakdowns = topicBreakdowns
+        };
+    }
+
+    private static List<PartyAlignmentResponse> BuildPartyAlignmentResponses(
+        IEnumerable<string> partyAcronyms,
+        IReadOnlyDictionary<string, PartyAlignmentCounts> statsByParty,
+        IReadOnlyDictionary<string, PartyMetadataRow> knownPartyByAcronym)
+    {
+        return partyAcronyms
             .Select(acronym =>
             {
                 statsByParty.TryGetValue(acronym, out var stats);
@@ -218,14 +251,96 @@ public sealed class ProfileService : IProfileService
             .ThenByDescending(party => party.ComparableCount)
             .ThenBy(party => party.PartyAcronym)
             .ToList();
+    }
 
-        return new PartyAlignmentSectionResponse
+    private static List<TopicPartyAlignmentResponse> BuildTopicBreakdowns(
+        IReadOnlyCollection<ProjectLawTopicRow> topicRows,
+        IReadOnlyCollection<AlignmentVoteRow> alignmentRows,
+        IReadOnlyDictionary<int, VotingOrientation> comparableUserVotes,
+        IReadOnlyDictionary<string, PartyMetadataRow> knownPartyByAcronym)
+    {
+        var alignmentRowsByProjectLaw = alignmentRows
+            .GroupBy(row => row.ProjectLawId)
+            .ToDictionary(group => group.Key, group => group.ToList());
+
+        return topicRows
+            .GroupBy(row => new { row.ProjectLawId, row.ParentTopicSlug })
+            .Select(group => group
+                .OrderBy(row => row.ParentTopicDisplayOrder)
+                .ThenBy(row => row.ParentTopicLabel)
+                .First())
+            .GroupBy(row => row.ParentTopicSlug, StringComparer.OrdinalIgnoreCase)
+            .Select(group =>
+            {
+                var topic = group
+                    .OrderBy(row => row.ParentTopicDisplayOrder)
+                    .ThenBy(row => row.ParentTopicLabel)
+                    .First();
+                var rowsForTopic = group
+                    .SelectMany(row =>
+                        alignmentRowsByProjectLaw.TryGetValue(row.ProjectLawId, out var projectRows)
+                            ? projectRows
+                            : [])
+                    .ToList();
+                var totalComparableVotes = rowsForTopic
+                    .Select(row => row.ProjectLawId)
+                    .Distinct()
+                    .Count();
+                var isLowData = totalComparableVotes < MinimumTopicComparableVotes;
+                var partyAcronyms = rowsForTopic
+                    .Select(row => row.PartyAcronym)
+                    .Where(acronym => !string.IsNullOrWhiteSpace(acronym))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+                var statsByParty = rowsForTopic
+                    .GroupBy(row => row.PartyAcronym, StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(
+                        partyGroup => partyGroup.Key,
+                        partyGroup => CountPartyAlignment(partyGroup, comparableUserVotes),
+                        StringComparer.OrdinalIgnoreCase);
+
+                return new TopicPartyAlignmentResponse
+                {
+                    ParentTopicSlug = topic.ParentTopicSlug,
+                    ParentTopicLabel = topic.ParentTopicLabel,
+                    TotalComparableVotes = totalComparableVotes,
+                    IsLowData = isLowData,
+                    Parties = isLowData
+                        ? []
+                        : BuildPartyAlignmentResponses(
+                            partyAcronyms,
+                            statsByParty,
+                            knownPartyByAcronym)
+                };
+            })
+            .OrderBy(topic => topic.IsLowData)
+            .ThenByDescending(topic => topic.TotalComparableVotes)
+            .ThenBy(topic => topic.ParentTopicLabel)
+            .ToList();
+    }
+
+    private static PartyAlignmentCounts CountPartyAlignment(
+        IEnumerable<AlignmentVoteRow> rows,
+        IReadOnlyDictionary<int, VotingOrientation> comparableUserVotes)
+    {
+        var comparableCount = 0;
+        var alignedCount = 0;
+
+        foreach (var row in rows)
         {
-            IsUnlocked = totalComparableVotes >= MinimumComparableVotes,
-            MinimumComparableVotes = MinimumComparableVotes,
-            TotalComparableVotes = totalComparableVotes,
-            Parties = parties
-        };
+            if (!comparableUserVotes.TryGetValue(row.ProjectLawId, out var userOrientation))
+            {
+                continue;
+            }
+
+            comparableCount += 1;
+            if (userOrientation == row.PartyOrientation)
+            {
+                alignedCount += 1;
+            }
+        }
+
+        return new PartyAlignmentCounts(alignedCount, comparableCount);
     }
 
     private static VotingOrientation ToPartyOrientation(ProposalInteractionType interactionType)
@@ -259,6 +374,12 @@ public sealed class ProfileService : IProfileService
         string Acronym,
         string Name,
         string? Logo);
+
+    private sealed record ProjectLawTopicRow(
+        int ProjectLawId,
+        string ParentTopicSlug,
+        string ParentTopicLabel,
+        int ParentTopicDisplayOrder);
 
     private sealed record PartyAlignmentCounts(
         int AlignedCount,

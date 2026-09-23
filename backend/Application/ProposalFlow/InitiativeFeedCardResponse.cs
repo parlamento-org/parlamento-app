@@ -25,6 +25,9 @@ public sealed class InitiativeFeedCardResponse
     [JsonPropertyName("summaryGeneratedAtUtc")]
     public DateTime? SummaryGeneratedAtUtc { get; set; }
 
+    [JsonPropertyName("topicAssignments")]
+    public List<ProposalTopicAssignmentResponse> TopicAssignments { get; set; } = [];
+
     [JsonPropertyName("redactedExcerpt")]
     public string? RedactedExcerpt { get; set; }
 

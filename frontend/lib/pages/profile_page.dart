@@ -281,10 +281,9 @@ class _PartyAlignmentSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final visibleParties =
-        alignment.parties
-            .where((party) => party.comparableCount > 0)
-            .toList(growable: false);
+    final visibleParties = alignment.parties
+        .where((party) => party.comparableCount > 0)
+        .toList(growable: false);
 
     return _ProfileSectionCard(
       title: 'Alinhamento com votos dos partidos',
@@ -307,13 +306,20 @@ class _PartyAlignmentSection extends StatelessWidget {
               icon: Icons.insights_outlined,
               message: 'Ainda nao ha votos parlamentares comparaveis.',
             )
-          else
+          else ...[
+            if (alignment.topicBreakdowns.isNotEmpty) ...[
+              _TopicAlignmentBreakdown(alignment: alignment),
+              const Divider(height: 28),
+              const _AlignmentSubheading('Geral'),
+              const SizedBox(height: 12),
+            ],
             ...visibleParties.map(
               (party) => Padding(
                 padding: const EdgeInsets.only(bottom: 14),
                 child: _PartyAlignmentRow(party: party),
               ),
             ),
+          ],
         ],
       ),
     );
@@ -366,6 +372,199 @@ class _AlignmentLockedState extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _AlignmentSubheading extends StatelessWidget {
+  const _AlignmentSubheading(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: TextStyle(
+        color: baseTheme.colorScheme.primary,
+        fontWeight: FontWeight.w900,
+      ),
+    );
+  }
+}
+
+class _TopicAlignmentBreakdown extends StatelessWidget {
+  const _TopicAlignmentBreakdown({required this.alignment});
+
+  final PartyAlignmentSection alignment;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              Icons.topic_outlined,
+              color: baseTheme.colorScheme.primary,
+              size: 20,
+            ),
+            const SizedBox(width: 7),
+            Expanded(
+              child: Text(
+                'Por tópico principal',
+                style: TextStyle(
+                  color: baseTheme.colorScheme.primary,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        ...alignment.topicBreakdowns.map(
+          (topic) => _TopicAlignmentBlock(
+            topic: topic,
+            minimumComparableVotes: alignment.minimumTopicComparableVotes,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TopicAlignmentBlock extends StatelessWidget {
+  const _TopicAlignmentBlock({
+    required this.topic,
+    required this.minimumComparableVotes,
+  });
+
+  final TopicPartyAlignment topic;
+  final int minimumComparableVotes;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  topic.parentTopicLabel,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: baseTheme.colorScheme.primary,
+                    fontWeight: FontWeight.w900,
+                    height: 1.15,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                '${topic.totalComparableVotes} votos',
+                style: const TextStyle(
+                  color: Colors.black54,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (topic.isLowData)
+            Text(
+              'Dados baixos neste tópico. Precisas de $minimumComparableVotes votos comparáveis para ver a distribuição.',
+              style: const TextStyle(
+                color: Colors.black54,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                height: 1.3,
+              ),
+            )
+          else
+            Column(
+              children:
+                  topic.parties
+                      .map(
+                        (party) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _CompactPartyAlignmentRow(party: party),
+                        ),
+                      )
+                      .toList(),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompactPartyAlignmentRow extends StatelessWidget {
+  const _CompactPartyAlignmentRow({required this.party});
+
+  final PartyAlignment party;
+
+  @override
+  Widget build(BuildContext context) {
+    final percentage = party.alignmentPercentage.clamp(0, 100).toDouble();
+
+    return Row(
+      children: [
+        ParliamentaryPartyLogo(
+          acronym: party.partyAcronym,
+          size: 38,
+          fallbackLabel: party.partyAcronym,
+        ),
+        const SizedBox(width: 10),
+        SizedBox(
+          width: 46,
+          child: Text(
+            party.partyAcronym,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: baseTheme.colorScheme.primary,
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: Container(
+              height: 10,
+              color: baseTheme.colorScheme.primary.withValues(alpha: 0.12),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: FractionallySizedBox(
+                  widthFactor: percentage / 100,
+                  child: Container(color: baseTheme.colorScheme.primary),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 48,
+          child: Text(
+            _formatPercentage(percentage),
+            textAlign: TextAlign.end,
+            style: TextStyle(
+              color: baseTheme.colorScheme.primary,
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

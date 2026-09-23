@@ -5,6 +5,7 @@ import 'package:frontend/models/proposal_flow.dart';
 import 'package:frontend/pages/proposal_reveal_page.dart';
 import 'package:frontend/pages/redacted_text_reader_page.dart';
 import 'package:frontend/themes/base_theme.dart';
+import 'package:frontend/widgets/proposal_topic_chips.dart';
 import 'package:provider/provider.dart';
 
 class VotePage extends StatefulWidget {
@@ -248,6 +249,10 @@ class _AnonymizedProposalCard extends StatelessWidget {
                       _Badge(label: 'Legislatura ${card.legislature}'),
                   ],
                 ),
+                if (card.topicAssignments.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  ProposalTopicChips(topics: card.topicAssignments),
+                ],
                 const SizedBox(height: 18),
                 Text(
                   card.neutralTitle,

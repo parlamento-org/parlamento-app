@@ -58,6 +58,7 @@ class InitiativeFeedCard {
     this.summary,
     this.summaryBulletPoints = const [],
     this.summaryGeneratedAtUtc,
+    this.topicAssignments = const [],
     this.redactedExcerpt,
     this.redactedText,
     this.redactedHtml,
@@ -72,6 +73,7 @@ class InitiativeFeedCard {
   final String? summary;
   final List<String> summaryBulletPoints;
   final String? summaryGeneratedAtUtc;
+  final List<ProposalTopicAssignment> topicAssignments;
   final String? redactedExcerpt;
   final String? redactedText;
   final String? redactedHtml;
@@ -93,11 +95,44 @@ class InitiativeFeedCard {
       summary: _stringOrNull(json['summary']),
       summaryBulletPoints: _stringList(json['summaryBulletPoints']),
       summaryGeneratedAtUtc: _stringOrNull(json['summaryGeneratedAtUtc']),
+      topicAssignments: _objectList(
+        json['topicAssignments'],
+        ProposalTopicAssignment.fromJson,
+      ),
       redactedExcerpt: _stringOrNull(json['redactedExcerpt']),
       redactedText: _stringOrNull(json['redactedText']),
       redactedHtml: _stringOrNull(json['redactedHtml']),
       legislature: _stringOrNull(json['legislature']),
       date: _stringOrNull(json['date']),
+    );
+  }
+}
+
+class ProposalTopicAssignment {
+  ProposalTopicAssignment({
+    required this.parentTopicSlug,
+    required this.parentTopicLabel,
+    required this.subtopicSlug,
+    required this.subtopicLabel,
+    required this.assignmentStatus,
+    this.assignmentConfidence,
+  });
+
+  final String parentTopicSlug;
+  final String parentTopicLabel;
+  final String subtopicSlug;
+  final String subtopicLabel;
+  final String assignmentStatus;
+  final double? assignmentConfidence;
+
+  factory ProposalTopicAssignment.fromJson(Map<String, dynamic> json) {
+    return ProposalTopicAssignment(
+      parentTopicSlug: _stringOrFallback(json['parentTopicSlug'], ''),
+      parentTopicLabel: _stringOrFallback(json['parentTopicLabel'], ''),
+      subtopicSlug: _stringOrFallback(json['subtopicSlug'], ''),
+      subtopicLabel: _stringOrFallback(json['subtopicLabel'], ''),
+      assignmentStatus: _stringOrFallback(json['assignmentStatus'], ''),
+      assignmentConfidence: _doubleOrNull(json['assignmentConfidence']),
     );
   }
 }
@@ -244,6 +279,7 @@ class ProposalReveal {
     required this.title,
     required this.userVote,
     required this.proposers,
+    this.topicAssignments = const [],
     this.generalityVote,
     required this.officialSources,
     required this.journey,
@@ -255,6 +291,7 @@ class ProposalReveal {
   final String title;
   final ProposalInteractionAction userVote;
   final List<ProposalProposer> proposers;
+  final List<ProposalTopicAssignment> topicAssignments;
   final ParliamentaryVoteSummary? generalityVote;
   final List<OfficialSourceLink> officialSources;
   final ProposalJourneyAction journey;
@@ -275,6 +312,10 @@ class ProposalReveal {
         _stringOrNull(json['userVote']),
       ),
       proposers: _objectList(json['proposers'], ProposalProposer.fromJson),
+      topicAssignments: _objectList(
+        json['topicAssignments'],
+        ProposalTopicAssignment.fromJson,
+      ),
       generalityVote:
           json['generalityVote'] is Map<String, dynamic>
               ? ParliamentaryVoteSummary.fromJson(json['generalityVote'])
@@ -676,4 +717,10 @@ bool? _boolOrNull(dynamic value) {
 
 bool _boolOrFalse(dynamic value) {
   return _boolOrNull(value) ?? false;
+}
+
+double? _doubleOrNull(dynamic value) {
+  if (value is num) return value.toDouble();
+  if (value is String) return double.tryParse(value);
+  return null;
 }

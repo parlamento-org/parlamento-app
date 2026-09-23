@@ -76,6 +76,121 @@ public sealed class ProfileEndpointsFactory : TestingWebAppFactory
         db.ProjectLaws.Add(skippedInitiative);
         db.SaveChanges();
 
+        var taxonomyVersion = new ProposalTopicTaxonomyVersion
+        {
+            Version = "taxonomy_v2",
+            EmbeddingProvider = "test-provider",
+            EmbeddingModel = "test-model"
+        };
+        var educationParent = new ProposalTopicParent
+        {
+            TaxonomyVersion = taxonomyVersion,
+            Slug = "educacao",
+            Label = "Educação",
+            DisplayOrder = 1
+        };
+        var mobilityParent = new ProposalTopicParent
+        {
+            TaxonomyVersion = taxonomyVersion,
+            Slug = "mobilidade",
+            Label = "Mobilidade",
+            DisplayOrder = 2
+        };
+        var healthParent = new ProposalTopicParent
+        {
+            TaxonomyVersion = taxonomyVersion,
+            Slug = "saude",
+            Label = "Saúde",
+            DisplayOrder = 3
+        };
+        var educationSubtopic = new ProposalSubtopic
+        {
+            TaxonomyVersion = taxonomyVersion,
+            ParentTopic = educationParent,
+            Slug = "escolas",
+            Label = "Escolas",
+            DisplayOrder = 1
+        };
+        var mobilitySubtopic = new ProposalSubtopic
+        {
+            TaxonomyVersion = taxonomyVersion,
+            ParentTopic = mobilityParent,
+            Slug = "transportes",
+            Label = "Transportes",
+            DisplayOrder = 1
+        };
+        var healthSubtopic = new ProposalSubtopic
+        {
+            TaxonomyVersion = taxonomyVersion,
+            ParentTopic = healthParent,
+            Slug = "sns",
+            Label = "SNS",
+            DisplayOrder = 1
+        };
+
+        db.ProposalTopicTaxonomyVersions.Add(taxonomyVersion);
+        db.ProposalTopicParents.AddRange(educationParent, mobilityParent, healthParent);
+        db.ProposalSubtopics.AddRange(educationSubtopic, mobilitySubtopic, healthSubtopic);
+        db.SaveChanges();
+
+        for (var i = 0; i < initiatives.Count; i++)
+        {
+            var subtopic = i switch
+            {
+                < 3 => educationSubtopic,
+                3 => mobilitySubtopic,
+                _ => healthSubtopic
+            };
+
+            db.ProjectLawTopicAssignments.Add(new ProjectLawTopicAssignment
+            {
+                ProjectLawId = initiatives[i].Id,
+                TaxonomyVersionId = taxonomyVersion.Id,
+                SubtopicId = subtopic.Id,
+                BestSubtopicId = subtopic.Id,
+                AssignmentMethod = "seeded_reviewed",
+                AssignmentStatus = "assigned",
+                AssignmentConfidence = 0.9,
+                EmbeddingProvider = "test-provider",
+                EmbeddingModel = "test-model",
+                IsCurrent = true
+            });
+        }
+
+        var candidateParent = new ProposalTopicParent
+        {
+            TaxonomyVersion = taxonomyVersion,
+            Slug = "candidato",
+            Label = "Candidato",
+            DisplayOrder = 4
+        };
+        var candidateSubtopic = new ProposalSubtopic
+        {
+            TaxonomyVersion = taxonomyVersion,
+            ParentTopic = candidateParent,
+            Slug = "por_confirmar",
+            Label = "Por confirmar",
+            DisplayOrder = 1
+        };
+        db.ProposalTopicParents.Add(candidateParent);
+        db.ProposalSubtopics.Add(candidateSubtopic);
+        db.SaveChanges();
+
+        db.ProjectLawTopicAssignments.Add(new ProjectLawTopicAssignment
+        {
+            ProjectLawId = initiatives[0].Id,
+            TaxonomyVersionId = taxonomyVersion.Id,
+            SubtopicId = candidateSubtopic.Id,
+            BestSubtopicId = candidateSubtopic.Id,
+            AssignmentMethod = "centroid_needs_review",
+            AssignmentStatus = "needs_review",
+            AssignmentConfidence = 0.72,
+            EmbeddingProvider = "test-provider",
+            EmbeddingModel = "test-model",
+            IsCurrent = true
+        });
+        db.SaveChanges();
+
         var now = DateTime.UtcNow;
         for (var i = 0; i < initiatives.Count; i++)
         {
@@ -221,6 +336,27 @@ public sealed class ProfileEndpointsTests : IClassFixture<ProfileEndpointsFactor
         var psd = parties.Single(party => party.GetProperty("partyAcronym").GetString() == "PSD");
         Assert.Equal(0, psd.GetProperty("alignedCount").GetInt32());
         Assert.Equal(10, psd.GetProperty("comparableCount").GetInt32());
+
+        Assert.Equal(2, partyAlignment.GetProperty("minimumTopicComparableVotes").GetInt32());
+        var topicBreakdowns = partyAlignment.GetProperty("topicBreakdowns").EnumerateArray().ToList();
+        Assert.DoesNotContain(
+            topicBreakdowns,
+            topic => topic.GetProperty("parentTopicSlug").GetString() == "candidato");
+        var education = topicBreakdowns.Single(topic =>
+            topic.GetProperty("parentTopicSlug").GetString() == "educacao");
+        Assert.Equal("Educação", education.GetProperty("parentTopicLabel").GetString());
+        Assert.Equal(3, education.GetProperty("totalComparableVotes").GetInt32());
+        Assert.False(education.GetProperty("isLowData").GetBoolean());
+        var educationParties = education.GetProperty("parties").EnumerateArray().ToList();
+        var educationPs = educationParties.Single(party => party.GetProperty("partyAcronym").GetString() == "PS");
+        Assert.Equal(3, educationPs.GetProperty("alignedCount").GetInt32());
+        Assert.Equal(3, educationPs.GetProperty("comparableCount").GetInt32());
+
+        var mobility = topicBreakdowns.Single(topic =>
+            topic.GetProperty("parentTopicSlug").GetString() == "mobilidade");
+        Assert.True(mobility.GetProperty("isLowData").GetBoolean());
+        Assert.Equal(1, mobility.GetProperty("totalComparableVotes").GetInt32());
+        Assert.Empty(mobility.GetProperty("parties").EnumerateArray());
     }
 
     [Fact]

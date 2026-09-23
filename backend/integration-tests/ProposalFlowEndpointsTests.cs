@@ -104,6 +104,42 @@ public sealed class ProposalFlowEndpointsFactory : TestingWebAppFactory
         db.ProjectLaws.AddRange(eligibleInitiative, excludedInitiative);
         db.SaveChanges();
 
+        var topic = CreateTopicAssignmentSeed(db, "ambiente", "Ambiente", "energia", "Energia");
+        db.ProjectLawTopicAssignments.Add(new ProjectLawTopicAssignment
+        {
+            ProjectLawId = eligibleInitiative.Id,
+            TaxonomyVersionId = topic.TaxonomyVersionId,
+            SubtopicId = topic.SubtopicId,
+            BestSubtopicId = topic.SubtopicId,
+            AssignmentMethod = "seeded_reviewed",
+            AssignmentStatus = "assigned",
+            AssignmentConfidence = 0.93,
+            EmbeddingProvider = "test-provider",
+            EmbeddingModel = "test-model",
+            IsCurrent = true
+        });
+
+        var candidateTopic = CreateTopicAssignmentSeed(
+            db,
+            "candidato",
+            "Candidato",
+            "por_confirmar",
+            "Por confirmar");
+        db.ProjectLawTopicAssignments.Add(new ProjectLawTopicAssignment
+        {
+            ProjectLawId = eligibleInitiative.Id,
+            TaxonomyVersionId = candidateTopic.TaxonomyVersionId,
+            SubtopicId = candidateTopic.SubtopicId,
+            BestSubtopicId = candidateTopic.SubtopicId,
+            AssignmentMethod = "centroid_needs_review",
+            AssignmentStatus = "needs_review",
+            AssignmentConfidence = 0.72,
+            EmbeddingProvider = "test-provider",
+            EmbeddingModel = "test-model",
+            IsCurrent = true
+        });
+        db.SaveChanges();
+
         user.Votes.Add(new Vote
         {
             ProjectLawID = excludedInitiative.Id,
@@ -114,6 +150,43 @@ public sealed class ProposalFlowEndpointsFactory : TestingWebAppFactory
 
         UserId = user.Id;
         EligibleInitiativeId = eligibleInitiative.Id;
+    }
+
+    private static (int TaxonomyVersionId, int SubtopicId) CreateTopicAssignmentSeed(
+        DatabaseContext db,
+        string parentSlug,
+        string parentLabel,
+        string subtopicSlug,
+        string subtopicLabel)
+    {
+        var taxonomyVersion = new ProposalTopicTaxonomyVersion
+        {
+            Version = "taxonomy_v2",
+            EmbeddingProvider = "test-provider",
+            EmbeddingModel = "test-model"
+        };
+        var parentTopic = new ProposalTopicParent
+        {
+            TaxonomyVersion = taxonomyVersion,
+            Slug = parentSlug,
+            Label = parentLabel,
+            DisplayOrder = 1
+        };
+        var subtopic = new ProposalSubtopic
+        {
+            TaxonomyVersion = taxonomyVersion,
+            ParentTopic = parentTopic,
+            Slug = subtopicSlug,
+            Label = subtopicLabel,
+            DisplayOrder = 1
+        };
+
+        db.ProposalTopicTaxonomyVersions.Add(taxonomyVersion);
+        db.ProposalTopicParents.Add(parentTopic);
+        db.ProposalSubtopics.Add(subtopic);
+        db.SaveChanges();
+
+        return (taxonomyVersion.Id, subtopic.Id);
     }
 }
 
@@ -153,6 +226,14 @@ public sealed class ProposalFlowEndpointsTests : IClassFixture<ProposalFlowEndpo
         Assert.DoesNotContain("proposalResult", body);
         Assert.DoesNotContain("votingResult", body);
         Assert.DoesNotContain("PS", body);
+
+        var topics = root.GetProperty("topicAssignments").EnumerateArray().ToList();
+        var topic = topics.Single();
+        Assert.Equal("ambiente", topic.GetProperty("parentTopicSlug").GetString());
+        Assert.Equal("Ambiente", topic.GetProperty("parentTopicLabel").GetString());
+        Assert.Equal("energia", topic.GetProperty("subtopicSlug").GetString());
+        Assert.Equal("Energia", topic.GetProperty("subtopicLabel").GetString());
+        Assert.Equal("assigned", topic.GetProperty("assignmentStatus").GetString());
     }
 }
 
@@ -818,6 +899,46 @@ public sealed class ProposalRevealEndpointsFactory : TestingWebAppFactory
         db.ProjectLaws.Add(initiative);
         db.SaveChanges();
 
+        var taxonomyVersion = new ProposalTopicTaxonomyVersion
+        {
+            Version = "taxonomy_v2",
+            EmbeddingProvider = "test-provider",
+            EmbeddingModel = "test-model"
+        };
+        var parentTopic = new ProposalTopicParent
+        {
+            TaxonomyVersion = taxonomyVersion,
+            Slug = "educacao",
+            Label = "Educação",
+            DisplayOrder = 1
+        };
+        var subtopic = new ProposalSubtopic
+        {
+            TaxonomyVersion = taxonomyVersion,
+            ParentTopic = parentTopic,
+            Slug = "escolas",
+            Label = "Escolas",
+            DisplayOrder = 1
+        };
+        db.ProposalTopicTaxonomyVersions.Add(taxonomyVersion);
+        db.ProposalTopicParents.Add(parentTopic);
+        db.ProposalSubtopics.Add(subtopic);
+        db.SaveChanges();
+
+        db.ProjectLawTopicAssignments.Add(new ProjectLawTopicAssignment
+        {
+            ProjectLawId = initiative.Id,
+            TaxonomyVersionId = taxonomyVersion.Id,
+            SubtopicId = subtopic.Id,
+            BestSubtopicId = subtopic.Id,
+            AssignmentMethod = "seeded_reviewed",
+            AssignmentStatus = "assigned",
+            AssignmentConfidence = 0.97,
+            EmbeddingProvider = "test-provider",
+            EmbeddingModel = "test-model",
+            IsCurrent = true
+        });
+
         db.ProposalInteractionEvents.Add(new ProposalInteractionEvent
         {
             UserId = user.Id,
@@ -880,6 +1001,12 @@ public sealed class ProposalRevealEndpointsTests : IClassFixture<ProposalRevealE
         Assert.Equal(
             $"/proposal-flow/initiatives/{_factory.InitiativeId}/journey",
             root.GetProperty("journey").GetProperty("endpoint").GetString());
+
+        var topic = root.GetProperty("topicAssignments").EnumerateArray().Single();
+        Assert.Equal("educacao", topic.GetProperty("parentTopicSlug").GetString());
+        Assert.Equal("Educação", topic.GetProperty("parentTopicLabel").GetString());
+        Assert.Equal("escolas", topic.GetProperty("subtopicSlug").GetString());
+        Assert.Equal("Escolas", topic.GetProperty("subtopicLabel").GetString());
     }
 
     [Fact]

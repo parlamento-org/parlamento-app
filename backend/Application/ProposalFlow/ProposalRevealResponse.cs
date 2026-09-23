@@ -24,6 +24,9 @@ public sealed class ProposalRevealResponse
     [JsonPropertyName("proposers")]
     public List<ProposalProposerResponse> Proposers { get; set; } = [];
 
+    [JsonPropertyName("topicAssignments")]
+    public List<ProposalTopicAssignmentResponse> TopicAssignments { get; set; } = [];
+
     [JsonPropertyName("generalityVote")]
     public ParliamentaryVoteSummaryResponse? GeneralityVote { get; set; }
 

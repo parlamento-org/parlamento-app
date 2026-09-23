@@ -20,6 +20,13 @@ public sealed class ProposalFlowService : IProposalFlowService
     private const double MinimumServingWeight = 0.05;
     private const double SkipRatePriorEngagement = 4;
     private const double SkipRatePriorInteractions = 4;
+    private static readonly string[] DisplayableTopicAssignmentStatuses =
+    [
+        "accepted_cluster",
+        "manual_reviewed_assigned",
+        "auto_assigned",
+        "assigned"
+    ];
     private static readonly TimeSpan SkipExclusionWindow = TimeSpan.FromDays(14);
 
     private static readonly Regex WhitespaceRegex = new(@"\s+", RegexOptions.Compiled);
@@ -63,6 +70,9 @@ public sealed class ProposalFlowService : IProposalFlowService
             .Include(initiative => initiative.Summaries)
             .Include(initiative => initiative.ImportedDocuments)
                 .ThenInclude(document => document.Content)
+            .Include(initiative => initiative.TopicAssignments)
+                .ThenInclude(assignment => assignment.Subtopic)
+                    .ThenInclude(subtopic => subtopic!.ParentTopic)
             .Where(initiative => !excludedInitiativeIds.Contains(initiative.Id));
 
         if (request.Legislatures is { Count: > 0 })
@@ -193,6 +203,9 @@ public sealed class ProposalFlowService : IProposalFlowService
             .Include(item => item.ImportedDocuments)
             .Include(item => item.ImportedPublications)
             .Include(item => item.Summaries)
+            .Include(item => item.TopicAssignments)
+                .ThenInclude(assignment => assignment.Subtopic)
+                    .ThenInclude(subtopic => subtopic!.ParentTopic)
             .FirstOrDefaultAsync(item => item.Id == initiativeId, cancellationToken);
 
         if (initiative == null)
@@ -410,6 +423,7 @@ public sealed class ProposalFlowService : IProposalFlowService
             Summary = summary?.SummaryText,
             SummaryBulletPoints = ParseSummaryBulletPoints(summary?.BulletPointsJson),
             SummaryGeneratedAtUtc = summary?.GeneratedAtUtc,
+            TopicAssignments = MapTopicAssignments(initiative),
             RedactedExcerpt = CreateExcerpt(redactedText),
             RedactedText = redactedText,
             RedactedHtml = redactedContent?.RedactedContentHtml,
@@ -478,6 +492,7 @@ public sealed class ProposalFlowService : IProposalFlowService
             Title = title ?? initiative.ProposalTitle ?? "Iniciativa sem título disponível",
             UserVote = userVote,
             Proposers = MapProposers(initiative),
+            TopicAssignments = MapTopicAssignments(initiative),
             GeneralityVote = MapGeneralityVote(initiative),
             OfficialSources = MapOfficialSources(initiative),
             Journey = new ProposalJourneyActionResponse
@@ -500,6 +515,42 @@ public sealed class ProposalFlowService : IProposalFlowService
                 : initiative.FullProposalTextLink,
             Phases = BuildJourneyPhases(initiative)
         };
+    }
+
+    private static List<ProposalTopicAssignmentResponse> MapTopicAssignments(ProjectLaw initiative)
+    {
+        return initiative.TopicAssignments
+            .Where(assignment =>
+                assignment.IsCurrent &&
+                DisplayableTopicAssignmentStatuses.Contains(assignment.AssignmentStatus) &&
+                assignment.Subtopic != null &&
+                assignment.Subtopic.ParentTopic != null)
+            .Select(assignment => new
+            {
+                Assignment = assignment,
+                Subtopic = assignment.Subtopic!,
+                ParentTopic = assignment.Subtopic!.ParentTopic!
+            })
+            .OrderBy(row => row.ParentTopic.DisplayOrder)
+            .ThenBy(row => row.Subtopic.DisplayOrder)
+            .ThenBy(row => row.ParentTopic.Label)
+            .ThenBy(row => row.Subtopic.Label)
+            .GroupBy(row => new
+            {
+                ParentTopicSlug = row.ParentTopic.Slug,
+                SubtopicSlug = row.Subtopic.Slug
+            })
+            .Select(group => group.First())
+            .Select(row => new ProposalTopicAssignmentResponse
+            {
+                ParentTopicSlug = row.ParentTopic.Slug,
+                ParentTopicLabel = row.ParentTopic.Label,
+                SubtopicSlug = row.Subtopic.Slug,
+                SubtopicLabel = row.Subtopic.Label,
+                AssignmentStatus = row.Assignment.AssignmentStatus,
+                AssignmentConfidence = row.Assignment.AssignmentConfidence
+            })
+            .ToList();
     }
 
     private static List<ProposalJourneyPhaseResponse> BuildJourneyPhases(ProjectLaw initiative)

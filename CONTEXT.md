@@ -27,3 +27,7 @@ _Avoid_: Cluster, label
 **Topic Assignment**:
 The current or historical association between a Project Law and a Subtopic for a specific Proposal Topic Taxonomy version.
 _Avoid_: Classification row, topic tag
+
+**Topic Party Alignment**:
+A user's party-alignment breakdown calculated within a Parent Topic, using the user's comparable Project Law choices and the parliamentary party votes for Project Laws assigned to that Parent Topic.
+_Avoid_: Category affinity, tag stats

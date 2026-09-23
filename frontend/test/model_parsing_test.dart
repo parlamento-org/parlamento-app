@@ -133,6 +133,54 @@ void main() {
       expect(withoutLink.phases, isEmpty);
     });
 
+    test('parses proposal topic assignments on feed and reveal responses', () {
+      final feedCard = InitiativeFeedCard.fromJson({
+        'initiativeId': 10,
+        'initiativeType': 'Projeto de Lei',
+        'neutralTitle': 'Titulo neutro',
+        'topicAssignments': [
+          {
+            'parentTopicSlug': 'ambiente',
+            'parentTopicLabel': 'Ambiente',
+            'subtopicSlug': 'energia',
+            'subtopicLabel': 'Energia',
+            'assignmentStatus': 'assigned',
+            'assignmentConfidence': 92.4,
+          },
+        ],
+      });
+
+      expect(feedCard.topicAssignments, hasLength(1));
+      expect(feedCard.topicAssignments.single.parentTopicLabel, 'Ambiente');
+      expect(feedCard.topicAssignments.single.subtopicLabel, 'Energia');
+      expect(feedCard.topicAssignments.single.assignmentConfidence, 92.4);
+
+      final reveal = ProposalReveal.fromJson({
+        'initiativeId': 10,
+        'initiativeType': 'Projeto de Lei',
+        'title': 'Titulo revelado',
+        'userVote': 'Support',
+        'proposers': [],
+        'officialSources': [],
+        'journey': {'label': 'Percurso', 'endpoint': '/journey'},
+        'topicAssignments': [
+          {
+            'parentTopicSlug': 'educacao',
+            'parentTopicLabel': 'Educação',
+            'subtopicSlug': 'escolas',
+            'subtopicLabel': 'Escolas',
+            'assignmentStatus': 'accepted_cluster',
+          },
+        ],
+      });
+
+      expect(reveal.topicAssignments.single.parentTopicSlug, 'educacao');
+      expect(
+        reveal.topicAssignments.single.assignmentStatus,
+        'accepted_cluster',
+      );
+    });
+
     test('parses profile overview and party alignment metadata', () {
       final profile = ProfileStats.fromJson({
         'overview': {
@@ -147,6 +195,7 @@ void main() {
         'partyAlignment': {
           'isUnlocked': true,
           'minimumComparableVotes': 10,
+          'minimumTopicComparableVotes': 2,
           'totalComparableVotes': 11,
           'parties': [
             {
@@ -159,6 +208,31 @@ void main() {
               'alignmentPercentage': 81.8,
             },
           ],
+          'topicBreakdowns': [
+            {
+              'parentTopicSlug': 'educacao',
+              'parentTopicLabel': 'Educação',
+              'totalComparableVotes': 3,
+              'isLowData': false,
+              'parties': [
+                {
+                  'partyId': 'PS',
+                  'partyAcronym': 'PS',
+                  'partyName': 'Partido Socialista',
+                  'alignedCount': 3,
+                  'comparableCount': 3,
+                  'alignmentPercentage': 100,
+                },
+              ],
+            },
+            {
+              'parentTopicSlug': 'mobilidade',
+              'parentTopicLabel': 'Mobilidade',
+              'totalComparableVotes': 1,
+              'isLowData': true,
+              'parties': [],
+            },
+          ],
         },
       });
 
@@ -169,6 +243,23 @@ void main() {
       expect(profile.partyAlignment.parties.single.partyAcronym, 'PS');
       expect(profile.partyAlignment.parties.single.alignedCount, 9);
       expect(profile.partyAlignment.parties.single.alignmentPercentage, 81.8);
+      expect(profile.partyAlignment.minimumTopicComparableVotes, 2);
+      expect(profile.partyAlignment.topicBreakdowns, hasLength(2));
+      expect(
+        profile.partyAlignment.topicBreakdowns.first.parentTopicLabel,
+        'Educação',
+      );
+      expect(
+        profile
+            .partyAlignment
+            .topicBreakdowns
+            .first
+            .parties
+            .single
+            .alignedCount,
+        3,
+      );
+      expect(profile.partyAlignment.topicBreakdowns.last.isLowData, isTrue);
     });
   });
 }
