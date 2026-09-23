@@ -103,7 +103,7 @@ public class ProposalTopicTaxonomyImportService : IProposalTopicTaxonomyImportSe
         ProposalTopicClassifierArtifact classifier,
         DateTime now)
     {
-        taxonomyVersion.GeneratedAtUtc = taxonomy.GeneratedAtUtc;
+        taxonomyVersion.GeneratedAtUtc = taxonomy.GeneratedAtUtc?.UtcDateTime;
         taxonomyVersion.EmbeddingProvider = classifier.Embedding.Provider;
         taxonomyVersion.EmbeddingModel = classifier.Embedding.Model;
         taxonomyVersion.EmbeddingDimensions = classifier.Embedding.Dimensions;
@@ -329,7 +329,13 @@ public class ProposalTopicTaxonomyImportService : IProposalTopicTaxonomyImportSe
         changed |= SetIfChanged(parent.DisplayOrder, topic.DisplayOrder, value => parent.DisplayOrder = value);
         changed |= SetIfChanged(
             parent.SourceClusterIdsJson,
-            JsonSerializer.Serialize(topic.Subtopics.SelectMany(x => x.SourceClusterIds).Distinct().OrderBy(x => x), JsonOptions),
+            JsonSerializer.Serialize(
+                topic.Subtopics
+                    .SelectMany(x => x.SourceClusterIds)
+                    .Select(ReadSourceClusterId)
+                    .Distinct(StringComparer.Ordinal)
+                    .OrderBy(x => x, StringComparer.Ordinal),
+                JsonOptions),
             value => parent.SourceClusterIdsJson = value);
         return changed;
     }
@@ -348,7 +354,11 @@ public class ProposalTopicTaxonomyImportService : IProposalTopicTaxonomyImportSe
         changed |= SetIfChanged(subtopic.DisplayOrder, displayOrder, value => subtopic.DisplayOrder = value);
         changed |= SetIfChanged(
             subtopic.SourceClusterIdsJson,
-            JsonSerializer.Serialize(artifact.SourceClusterIds.OrderBy(x => x), JsonOptions),
+            JsonSerializer.Serialize(
+                artifact.SourceClusterIds
+                    .Select(ReadSourceClusterId)
+                    .OrderBy(x => x, StringComparer.Ordinal),
+                JsonOptions),
             value => subtopic.SourceClusterIdsJson = value);
 
         if (classifierSubtopic is not null)
@@ -457,6 +467,19 @@ public class ProposalTopicTaxonomyImportService : IProposalTopicTaxonomyImportSe
     private static string? NullIfWhiteSpace(string? value)
     {
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    private static string ReadSourceClusterId(JsonElement value)
+    {
+        return value.ValueKind switch
+        {
+            JsonValueKind.String => value.GetString() ?? string.Empty,
+            JsonValueKind.Number => value.GetRawText(),
+            JsonValueKind.True => "true",
+            JsonValueKind.False => "false",
+            JsonValueKind.Null => string.Empty,
+            _ => value.GetRawText()
+        };
     }
 
     private static bool SetIfChanged<T>(T current, T next, Action<T> setter)

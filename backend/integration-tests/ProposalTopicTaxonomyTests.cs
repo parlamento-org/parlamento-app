@@ -41,6 +41,9 @@ public class ProposalTopicTaxonomyTests
         Assert.Equal(1, await context.ProposalTopicParents.CountAsync());
         Assert.Equal(2, await context.ProposalSubtopics.CountAsync());
 
+        var taxonomyVersion = await context.ProposalTopicTaxonomyVersions.SingleAsync();
+        Assert.Equal(DateTimeKind.Utc, taxonomyVersion.GeneratedAtUtc!.Value.Kind);
+
         var subtopic = await context.ProposalSubtopics.SingleAsync(x => x.Slug == "topic_a");
         Assert.Equal(0, subtopic.CentroidIndex);
         Assert.Equal("strong", subtopic.SupportQuality);
@@ -330,7 +333,7 @@ public class ProposalTopicTaxonomyTests
                             slug = "topic_a",
                             label = "Topic A",
                             description = "Topic A description",
-                            sourceClusterIds = new[] { 1 }
+                            sourceClusterIds = new object[] { 1, "manual_final_review" }
                         },
                         new
                         {

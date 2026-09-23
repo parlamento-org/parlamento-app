@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Parlamento.Infrastructure.Services.ProposalTopics;
@@ -6,7 +7,7 @@ internal sealed class ProposalTopicTaxonomyArtifact
 {
     public string Version { get; set; } = string.Empty;
 
-    public DateTime? GeneratedAtUtc { get; set; }
+    public DateTimeOffset? GeneratedAtUtc { get; set; }
 
     public List<ProposalTopicArtifactParent> Topics { get; set; } = [];
 }
@@ -32,7 +33,7 @@ internal sealed class ProposalTopicArtifactSubtopic
 
     public string? Description { get; set; }
 
-    public List<int> SourceClusterIds { get; set; } = [];
+    public List<JsonElement> SourceClusterIds { get; set; } = [];
 }
 
 internal sealed class ProposalTopicClassifierArtifact
