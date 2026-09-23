@@ -110,6 +110,11 @@ if (await ParliamentDocumentCommand.TryRunAsync(app, args))
     return;
 }
 
+if (await ParliamentTopicsCommand.TryRunAsync(app, args))
+{
+    return;
+}
+
 if (await ParliamentSummaryCommand.TryRunAsync(app, args))
 {
     return;

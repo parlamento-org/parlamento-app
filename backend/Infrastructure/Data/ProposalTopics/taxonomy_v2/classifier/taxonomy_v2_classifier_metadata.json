@@ -1,0 +1,27 @@
+{
+  "generated_at_utc": "2026-09-23T13:35:36Z",
+  "taxonomy_version": "taxonomy_v2",
+  "source_run_name": "openai",
+  "embedding_provider": "openai",
+  "embedding_model": "text-embedding-3-large",
+  "embedding_dimensions": 3072,
+  "assignment_count": 4239,
+  "parent_count": 12,
+  "subtopic_count": 126,
+  "classification_policy": {
+    "auto_similarity_threshold": 0.74,
+    "review_similarity_threshold": 0.7,
+    "min_similarity_margin": 0.03,
+    "low_support_min_examples": 5,
+    "low_support_auto_threshold": 0.82
+  },
+  "source_files": {
+    "assignments": "taxonomy\\exports\\taxonomy_v2\\taxonomy_v2_proposal_topic_assignments_final_reviewed.parquet",
+    "topics": "taxonomy\\exports\\taxonomy_v2\\taxonomy_v2_topics.csv",
+    "embeddings": "outputs\\runs\\openai\\embeddings.npy",
+    "embedding_metadata": "outputs\\runs\\openai\\embedding_metadata.parquet",
+    "assignments_sha256": "b1210efb81f2f285fd51a29e3d2b2ef869192a8366c564b91a29ada69c545f0c",
+    "topics_sha256": "6d11d4825360bf46c2bf86d5549ca02669dd57bd9ee78c7839d4650ebfa0d39e",
+    "embedding_metadata_sha256": "ae1c1632b8b3d3ecf47114bdae11f5a0f79c342fa9cf88e64f674ffbe3d31d98"
+  }
+}

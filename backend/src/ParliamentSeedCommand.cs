@@ -16,17 +16,18 @@ internal static class ParliamentSeedCommand
         var seedService = scope.ServiceProvider.GetRequiredService<IParliamentDataSeedService>();
 
         app.Logger.LogInformation(
-            "Running parliament seed command. Legislatures={Legislatures} IncludeSummaries={IncludeSummaries} MaxDocuments={MaxDocuments} ForceImport={ForceImport} ForceRedaction={ForceRedaction} ForceSummaries={ForceSummaries}",
+            "Running parliament seed command. Legislatures={Legislatures} IncludeSummaries={IncludeSummaries} MaxDocuments={MaxDocuments} ForceImport={ForceImport} ForceRedaction={ForceRedaction} ForceSummaries={ForceSummaries} ForceTopicAssignments={ForceTopicAssignments}",
             command.Legislatures.Count == 0 ? "<all configured>" : string.Join(", ", command.Legislatures),
             command.IncludeSummaries,
             command.MaxDocuments,
             command.ForceImport,
             command.ForceRedaction,
-            command.ForceSummaries);
+            command.ForceSummaries,
+            command.ForceTopicAssignments);
 
         var result = await seedService.SeedAsync(command);
         app.Logger.LogInformation(
-            "Parliament seed command result. Legislatures={Legislatures} Succeeded={Succeeded} Failed={Failed} ImportRead={ImportRead} ImportInserted={ImportInserted} ImportUpdated={ImportUpdated} ImportSkipped={ImportSkipped} ImportFailed={ImportFailed} DocumentsRead={DocumentsRead} DocumentsProcessed={DocumentsProcessed} DocumentsSkipped={DocumentsSkipped} DocumentsFailed={DocumentsFailed} SummaryDocumentsRead={SummaryDocumentsRead} SummariesGenerated={SummariesGenerated} SummariesSkipped={SummariesSkipped} SummariesFailed={SummariesFailed}",
+            "Parliament seed command result. Legislatures={Legislatures} Succeeded={Succeeded} Failed={Failed} ImportRead={ImportRead} ImportInserted={ImportInserted} ImportUpdated={ImportUpdated} ImportSkipped={ImportSkipped} ImportFailed={ImportFailed} DocumentsRead={DocumentsRead} DocumentsProcessed={DocumentsProcessed} DocumentsSkipped={DocumentsSkipped} DocumentsFailed={DocumentsFailed} TopicAssignmentsCreated={TopicAssignmentsCreated} TopicAssignmentsFailed={TopicAssignmentsFailed} SummaryDocumentsRead={SummaryDocumentsRead} SummariesGenerated={SummariesGenerated} SummariesSkipped={SummariesSkipped} SummariesFailed={SummariesFailed}",
             string.Join(", ", result.Legislatures),
             result.LegislaturesSucceeded,
             result.LegislaturesFailed,
@@ -39,6 +40,8 @@ internal static class ParliamentSeedCommand
             result.DocumentsProcessed,
             result.DocumentsSkipped,
             result.DocumentsFailed,
+            result.TopicAssignmentsCreated,
+            result.TopicAssignmentsFailed,
             result.SummaryDocumentsRead,
             result.SummariesGenerated,
             result.SummariesSkipped,
@@ -49,6 +52,17 @@ internal static class ParliamentSeedCommand
         Console.WriteLine($"Succeeded: {result.LegislaturesSucceeded}; failed: {result.LegislaturesFailed}");
         Console.WriteLine($"Import: read={result.ImportRecordsRead}, inserted={result.ImportRecordsInserted}, updated={result.ImportRecordsUpdated}, skipped={result.ImportRecordsSkipped}, failed={result.ImportRecordsFailed}");
         Console.WriteLine($"Documents: read={result.DocumentsRead}, processed={result.DocumentsProcessed}, skipped={result.DocumentsSkipped}, failed={result.DocumentsFailed}");
+        Console.WriteLine($"Topics taxonomy: parents read={result.TopicParentTopicsRead}, inserted={result.TopicParentTopicsInserted}, updated={result.TopicParentTopicsUpdated}; subtopics read={result.TopicSubtopicsRead}, inserted={result.TopicSubtopicsInserted}, updated={result.TopicSubtopicsUpdated}");
+        Console.WriteLine($"Topics seed assignments: read={result.TopicSeedAssignmentsRead}, inserted={result.TopicSeedAssignmentsInserted}, updated={result.TopicSeedAssignmentsUpdated}, skipped={result.TopicSeedAssignmentsSkipped}, missingProjectLaws={result.TopicSeedAssignmentsMissingProjectLaws}, missingSubtopics={result.TopicSeedAssignmentsMissingSubtopics}");
+        if (result.TopicAssignmentsSkippedBecauseOpenAiIsNotConfigured)
+        {
+            Console.WriteLine("Topics automatic assignment: skipped because OPENAI_API_KEY/ProposalTopics:ApiKey is not configured.");
+        }
+        else
+        {
+            Console.WriteLine($"Topics automatic assignment: read={result.TopicAssignmentDocumentsRead}, created={result.TopicAssignmentsCreated}, skipped={result.TopicAssignmentsSkipped}, failed={result.TopicAssignmentsFailed}, auto={result.TopicAutoAssigned}, needsReview={result.TopicNeedsReview}, unassigned={result.TopicUnassigned}, missingText={result.TopicMissingRedactedText}, preservedReviewed={result.TopicPreservedReviewedAssignments}");
+        }
+
         if (result.SummariesSkippedBecauseOpenAiIsNotConfigured)
         {
             Console.WriteLine("Summaries: skipped because OPENAI_API_KEY/OpenAI:ApiKey is not configured.");
@@ -112,11 +126,21 @@ internal static class ParliamentSeedCommand
                 continue;
             }
 
+            if (string.Equals(arg, "--force-topic", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(arg, "--force-topics", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(arg, "--force-topic-assignment", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(arg, "--force-topic-assignments", StringComparison.OrdinalIgnoreCase))
+            {
+                options.ForceTopicAssignments = true;
+                continue;
+            }
+
             if (string.Equals(arg, "--force", StringComparison.OrdinalIgnoreCase))
             {
                 options.ForceImport = true;
                 options.ForceRedaction = true;
                 options.ForceSummaries = true;
+                options.ForceTopicAssignments = true;
                 continue;
             }
 

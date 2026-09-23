@@ -12,5 +12,7 @@ public class ParliamentDataSeedRequest
 
     public bool ForceSummaries { get; set; }
 
+    public bool ForceTopicAssignments { get; set; }
+
     public int? MaxDocuments { get; set; }
 }

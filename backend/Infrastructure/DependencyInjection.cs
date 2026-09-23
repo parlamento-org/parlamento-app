@@ -7,6 +7,7 @@ using Parlamento.Infrastructure.Persistence;
 using Parlamento.Infrastructure.Services;
 using Parlamento.Infrastructure.Services.Documents;
 using Parlamento.Infrastructure.Services.ParliamentOpenData;
+using Parlamento.Infrastructure.Services.ProposalTopics;
 using Parlamento.Infrastructure.Services.Summaries;
 
 namespace Parlamento.Infrastructure;
@@ -60,6 +61,29 @@ public static class DependencyInjection
             options.MaxOutputTokens = int.TryParse(section["MaxOutputTokens"], out var maxOutputTokens)
                 ? maxOutputTokens
                 : 700;
+        });
+        services.Configure<ProposalTopicOptions>(options =>
+        {
+            var section = configuration.GetSection(ProposalTopicOptions.SectionName);
+            options.TaxonomyVersion = section["TaxonomyVersion"] ?? options.TaxonomyVersion;
+            options.ArtifactDirectory = section["ArtifactDirectory"] ?? options.ArtifactDirectory;
+            options.TaxonomyFileName = section["TaxonomyFileName"] ?? options.TaxonomyFileName;
+            options.ClassifierFileName = section["ClassifierFileName"] ?? options.ClassifierFileName;
+            options.SeedAssignmentsFileName = section["SeedAssignmentsFileName"] ?? options.SeedAssignmentsFileName;
+            options.ApiKey = configuration["OPENAI_API_KEY"] ?? section["ApiKey"] ?? configuration["OpenAI:ApiKey"];
+            options.EmbeddingModel =
+                configuration["OPENAI_EMBEDDING_MODEL"] ??
+                section["EmbeddingModel"] ??
+                options.EmbeddingModel;
+            options.ChunkWordCount = int.TryParse(section["ChunkWordCount"], out var chunkWordCount)
+                ? chunkWordCount
+                : options.ChunkWordCount;
+            options.ChunkOverlapWordCount = int.TryParse(section["ChunkOverlapWordCount"], out var chunkOverlapWordCount)
+                ? chunkOverlapWordCount
+                : options.ChunkOverlapWordCount;
+            options.MinimumRedactedWordCount = int.TryParse(section["MinimumRedactedWordCount"], out var minimumRedactedWordCount)
+                ? minimumRedactedWordCount
+                : options.MinimumRedactedWordCount;
         });
         services.Configure<AppJwtOptions>(options =>
         {
@@ -126,6 +150,12 @@ public static class DependencyInjection
                 provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<OpenAiSummaryOptions>>(),
                 provider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OpenAiLegislativeSummaryClient>>()));
         services.AddScoped<IParliamentSummaryService, ParliamentSummaryService>();
+        services.AddScoped<IProposalTopicTaxonomyImportService, ProposalTopicTaxonomyImportService>();
+        services.AddScoped<ITopicEmbeddingClient>(provider =>
+            new OpenAiTopicEmbeddingClient(
+                new HttpClient(),
+                provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<ProposalTopicOptions>>()));
+        services.AddScoped<IProjectLawTopicAssignmentService, ProjectLawTopicAssignmentService>();
         services.AddScoped<IParliamentDataSeedService, ParliamentDataSeedService>();
         services.AddHostedService<DailyParliamentImportHostedService>();
 
