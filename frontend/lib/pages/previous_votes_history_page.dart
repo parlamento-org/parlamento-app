@@ -175,7 +175,7 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
                   ],
                   const SizedBox(height: 12),
                   _HistoryFilterSection(
-                    title: 'Voto',
+                    title: 'Meu Voto',
                     child: _HistoryFilterChips(
                       selectedFilter: _filter,
                       onSelected: _changeInteractionFilter,
@@ -474,7 +474,7 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
         ),
       if (_filter != _HistoryFilter.all)
         _HistoryActiveFilter(
-          label: 'Voto: ${_filter.label}',
+          label: 'Meu Voto: ${_filter.label}',
           onRemove: () => _changeInteractionFilter(_HistoryFilter.all),
         ),
       if ((_filters.parentTopicSlug ?? '').trim().isNotEmpty)
@@ -484,7 +484,7 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
         ),
       if ((_filters.legislature ?? '').trim().isNotEmpty)
         _HistoryActiveFilter(
-          label: 'Legislatura ${_filters.legislature!.trim()}',
+          label: 'Legislatura: ${_filters.legislature!.trim()}',
           onRemove: () => _changeLegislature(null),
         ),
       if ((_filters.proposingParty ?? '').trim().isNotEmpty)
