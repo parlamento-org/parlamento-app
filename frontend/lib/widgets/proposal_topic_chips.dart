@@ -41,61 +41,115 @@ class _ProposalTopicChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final swatch = _topicColor(topic.parentTopicSlug);
+    final chevronColor =
+        onDark
+            ? Colors.white.withValues(alpha: 0.68)
+            : baseTheme.colorScheme.primary.withValues(alpha: 0.56);
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 520),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Flexible(
+            flex: 9,
+            child: _TopicPill(
+              label: topic.parentTopicLabel,
+              swatch: swatch,
+              onDark: onDark,
+              prominence: _TopicPillProminence.parent,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 5),
+            child: Icon(Icons.chevron_right, size: 16, color: chevronColor),
+          ),
+          Flexible(
+            flex: 11,
+            child: _TopicPill(
+              label: topic.subtopicLabel,
+              swatch: swatch,
+              onDark: onDark,
+              prominence: _TopicPillProminence.child,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+enum _TopicPillProminence { parent, child }
+
+class _TopicPill extends StatelessWidget {
+  const _TopicPill({
+    required this.label,
+    required this.swatch,
+    required this.onDark,
+    required this.prominence,
+  });
+
+  final String label;
+  final Color swatch;
+  final bool onDark;
+  final _TopicPillProminence prominence;
+
+  @override
+  Widget build(BuildContext context) {
+    final isParent = prominence == _TopicPillProminence.parent;
     final background =
         onDark
-            ? Colors.white.withValues(alpha: 0.16)
-            : swatch.withValues(alpha: 0.10);
+            ? Colors.white.withValues(alpha: isParent ? 0.20 : 0.10)
+            : swatch.withValues(alpha: isParent ? 0.15 : 0.07);
     final borderColor =
         onDark
-            ? Colors.white.withValues(alpha: 0.44)
-            : swatch.withValues(alpha: 0.46);
-    final primaryText = onDark ? Colors.white : baseTheme.colorScheme.primary;
-    final secondaryText =
-        onDark ? Colors.white.withValues(alpha: 0.80) : Colors.black54;
+            ? Colors.white.withValues(alpha: isParent ? 0.58 : 0.30)
+            : swatch.withValues(alpha: isParent ? 0.58 : 0.30);
+    final textColor =
+        onDark
+            ? Colors.white.withValues(alpha: isParent ? 1 : 0.86)
+            : isParent
+            ? baseTheme.colorScheme.primary
+            : Colors.black54;
+    final markerSize = isParent ? 7.0 : 5.0;
 
     return Container(
-      constraints: const BoxConstraints(maxWidth: 360),
-      padding: const EdgeInsets.fromLTRB(10, 7, 11, 7),
+      padding: EdgeInsets.fromLTRB(isParent ? 10 : 9, 7, 10, 7),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(999),
         border: Border.all(color: borderColor),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 7,
-            height: 7,
+            width: markerSize,
+            height: markerSize,
             margin: const EdgeInsets.only(top: 5),
-            decoration: BoxDecoration(color: swatch, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color:
+                  isParent
+                      ? swatch
+                      : onDark
+                      ? Colors.white.withValues(alpha: 0.62)
+                      : swatch.withValues(alpha: 0.48),
+              shape: BoxShape.circle,
+            ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 7),
           Flexible(
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: '${topic.parentTopicLabel}: ',
-                    style: TextStyle(
-                      color: primaryText,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  TextSpan(
-                    text: topic.subtopicLabel,
-                    style: TextStyle(
-                      color: secondaryText,
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-              style: const TextStyle(height: 1.18),
+            child: Text(
+              label,
               softWrap: true,
+              style: TextStyle(
+                color: textColor,
+                fontSize: isParent ? 12.5 : 11.5,
+                fontWeight: isParent ? FontWeight.w900 : FontWeight.w700,
+                height: 1.18,
+              ),
             ),
           ),
         ],
