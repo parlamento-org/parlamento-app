@@ -312,6 +312,41 @@ public sealed class ProposalFlowService : IProposalFlowService
             .OrderBy(item => item.Acronym)
             .ToList();
 
+        var availableParentTopicRows = await _context.ProposalInteractionEvents
+            .AsNoTracking()
+            .Where(interaction =>
+                interaction.UserId == userId &&
+                TerminalFeedActions.Contains(interaction.InteractionType) &&
+                interaction.ProjectLaw != null)
+            .SelectMany(interaction => interaction.ProjectLaw!.TopicAssignments)
+            .Where(assignment =>
+                assignment.IsCurrent &&
+                DisplayableTopicAssignmentStatuses.Contains(assignment.AssignmentStatus) &&
+                assignment.Subtopic != null &&
+                assignment.Subtopic.ParentTopic != null)
+            .Select(assignment => new
+            {
+                assignment.Subtopic!.ParentTopic!.Slug,
+                assignment.Subtopic.ParentTopic.Label,
+                assignment.Subtopic.ParentTopic.DisplayOrder
+            })
+            .ToListAsync(cancellationToken);
+
+        var availableParentTopics = availableParentTopicRows
+            .GroupBy(item => item.Slug, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group
+                .OrderBy(item => item.DisplayOrder)
+                .ThenBy(item => item.Label)
+                .First())
+            .OrderBy(item => item.DisplayOrder)
+            .ThenBy(item => item.Label)
+            .Select(item => new ProposalHistoryParentTopicResponse
+            {
+                Slug = item.Slug,
+                Label = item.Label
+            })
+            .ToList();
+
         var filteredInteractions = _context.ProposalInteractionEvents
             .AsNoTracking()
             .Where(interaction =>
@@ -330,6 +365,17 @@ public sealed class ProposalFlowService : IProposalFlowService
             filteredInteractions = filteredInteractions.Where(interaction =>
                 interaction.ProjectLaw!.ProposingParty != null &&
                 interaction.ProjectLaw.ProposingParty.partyAcronym == filters.ProposingParty);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filters.ParentTopicSlug))
+        {
+            filteredInteractions = filteredInteractions.Where(interaction =>
+                interaction.ProjectLaw!.TopicAssignments.Any(assignment =>
+                    assignment.IsCurrent &&
+                    DisplayableTopicAssignmentStatuses.Contains(assignment.AssignmentStatus) &&
+                    assignment.Subtopic != null &&
+                    assignment.Subtopic.ParentTopic != null &&
+                    assignment.Subtopic.ParentTopic.Slug == filters.ParentTopicSlug));
         }
 
         if (filters.InteractionType is { } interactionType)
@@ -410,7 +456,8 @@ public sealed class ProposalFlowService : IProposalFlowService
             HasNextPage = page < totalPages,
             HasPreviousPage = page > 1 && totalPages > 0,
             AvailableLegislatures = availableLegislatures,
-            AvailableProposingParties = availableProposingParties
+            AvailableProposingParties = availableProposingParties,
+            AvailableParentTopics = availableParentTopics
         });
     }
 

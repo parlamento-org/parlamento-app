@@ -189,18 +189,21 @@ class ProposalHistoryFilters {
   const ProposalHistoryFilters({
     this.legislature,
     this.proposingParty,
+    this.parentTopicSlug,
     this.search,
     this.interactionType,
   });
 
   final String? legislature;
   final String? proposingParty;
+  final String? parentTopicSlug;
   final String? search;
   final ProposalInteractionAction? interactionType;
 
   bool get hasActiveFilters =>
       _hasValue(legislature) ||
       _hasValue(proposingParty) ||
+      _hasValue(parentTopicSlug) ||
       _hasValue(search) ||
       interactionType != null &&
           interactionType != ProposalInteractionAction.unknown;
@@ -210,6 +213,8 @@ class ProposalHistoryFilters {
     bool clearLegislature = false,
     String? proposingParty,
     bool clearProposingParty = false,
+    String? parentTopicSlug,
+    bool clearParentTopicSlug = false,
     String? search,
     bool clearSearch = false,
     ProposalInteractionAction? interactionType,
@@ -219,6 +224,8 @@ class ProposalHistoryFilters {
       legislature: clearLegislature ? null : legislature ?? this.legislature,
       proposingParty:
           clearProposingParty ? null : proposingParty ?? this.proposingParty,
+      parentTopicSlug:
+          clearParentTopicSlug ? null : parentTopicSlug ?? this.parentTopicSlug,
       search: clearSearch ? null : search ?? this.search,
       interactionType:
           clearInteractionType ? null : interactionType ?? this.interactionType,
@@ -229,6 +236,8 @@ class ProposalHistoryFilters {
     return {
       if (_hasValue(legislature)) 'legislature': legislature!.trim(),
       if (_hasValue(proposingParty)) 'proposingParty': proposingParty!.trim(),
+      if (_hasValue(parentTopicSlug))
+        'parentTopicSlug': parentTopicSlug!.trim(),
       if (_hasValue(search)) 'search': search!.trim(),
       if (interactionType != null &&
           interactionType != ProposalInteractionAction.unknown)
@@ -665,6 +674,7 @@ class ProposalHistoryPage {
     required this.hasPreviousPage,
     required this.availableLegislatures,
     required this.availableProposingParties,
+    required this.availableParentTopics,
   });
 
   final List<ProposalHistoryItem> items;
@@ -676,6 +686,7 @@ class ProposalHistoryPage {
   final bool hasPreviousPage;
   final List<String> availableLegislatures;
   final List<ProposalHistoryProposingParty> availableProposingParties;
+  final List<ProposalHistoryParentTopic> availableParentTopics;
 
   factory ProposalHistoryPage.fromJson(Map<String, dynamic> json) {
     return ProposalHistoryPage(
@@ -690,6 +701,10 @@ class ProposalHistoryPage {
       availableProposingParties: _objectList(
         json['availableProposingParties'],
         ProposalHistoryProposingParty.fromJson,
+      ),
+      availableParentTopics: _objectList(
+        json['availableParentTopics'],
+        ProposalHistoryParentTopic.fromJson,
       ),
     );
   }
@@ -765,6 +780,20 @@ class ProposalHistoryProposingParty {
     return ProposalHistoryProposingParty(
       acronym: _stringOrFallback(json['acronym'], ''),
       name: _stringOrNull(json['name']),
+    );
+  }
+}
+
+class ProposalHistoryParentTopic {
+  ProposalHistoryParentTopic({required this.slug, required this.label});
+
+  final String slug;
+  final String label;
+
+  factory ProposalHistoryParentTopic.fromJson(Map<String, dynamic> json) {
+    return ProposalHistoryParentTopic(
+      slug: _stringOrFallback(json['slug'], ''),
+      label: _stringOrFallback(json['label'], ''),
     );
   }
 }

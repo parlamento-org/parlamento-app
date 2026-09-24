@@ -86,6 +86,9 @@ void main() {
         'availableProposingParties': [
           {'acronym': 'PS', 'name': 'Partido Socialista'},
         ],
+        'availableParentTopics': [
+          {'slug': 'educacao', 'label': 'Educação'},
+        ],
       });
 
       expect(page.items, hasLength(1));
@@ -97,6 +100,8 @@ void main() {
       expect(page.hasPreviousPage, isFalse);
       expect(page.availableLegislatures, ['XVII', 'XVI']);
       expect(page.availableProposingParties.single.acronym, 'PS');
+      expect(page.availableParentTopics.single.slug, 'educacao');
+      expect(page.availableParentTopics.single.label, 'Educação');
     });
 
     test('serializes proposal history filters as query parameters', () {
@@ -106,6 +111,7 @@ void main() {
         filters: const ProposalHistoryFilters(
           legislature: 'XVII',
           proposingParty: 'PS',
+          parentTopicSlug: 'educacao',
           search: 'energia',
           interactionType: ProposalInteractionAction.support,
         ),
@@ -116,6 +122,7 @@ void main() {
         'pageSize': '10',
         'legislature': 'XVII',
         'proposingParty': 'PS',
+        'parentTopicSlug': 'educacao',
         'search': 'energia',
         'interactionType': 'Support',
       });

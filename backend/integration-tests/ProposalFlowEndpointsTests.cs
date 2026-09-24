@@ -525,6 +525,54 @@ public sealed class ProposalHistoryEndpointsFactory : TestingWebAppFactory
         db.ProjectLaws.AddRange(xvOld, xvDuplicate, xvi, xvii);
         db.SaveChanges();
 
+        var taxonomyVersion = new ProposalTopicTaxonomyVersion
+        {
+            Version = "history_taxonomy",
+            EmbeddingProvider = "test-provider",
+            EmbeddingModel = "test-model"
+        };
+        var education = new ProposalTopicParent
+        {
+            TaxonomyVersion = taxonomyVersion,
+            Slug = "educacao",
+            Label = "Educação",
+            DisplayOrder = 1
+        };
+        var health = new ProposalTopicParent
+        {
+            TaxonomyVersion = taxonomyVersion,
+            Slug = "saude",
+            Label = "Saúde",
+            DisplayOrder = 2
+        };
+        var schools = new ProposalSubtopic
+        {
+            TaxonomyVersion = taxonomyVersion,
+            ParentTopic = education,
+            Slug = "escolas",
+            Label = "Escolas",
+            DisplayOrder = 1
+        };
+        var prevention = new ProposalSubtopic
+        {
+            TaxonomyVersion = taxonomyVersion,
+            ParentTopic = health,
+            Slug = "prevencao",
+            Label = "Prevenção",
+            DisplayOrder = 1
+        };
+
+        db.ProposalTopicTaxonomyVersions.Add(taxonomyVersion);
+        db.ProposalTopicParents.AddRange(education, health);
+        db.ProposalSubtopics.AddRange(schools, prevention);
+        db.SaveChanges();
+
+        db.ProjectLawTopicAssignments.AddRange(
+            CreateTopicAssignment(xvi.Id, taxonomyVersion.Id, schools.Id),
+            CreateTopicAssignment(xvii.Id, taxonomyVersion.Id, schools.Id),
+            CreateTopicAssignment(xvOld.Id, taxonomyVersion.Id, prevention.Id));
+        db.SaveChanges();
+
         var now = DateTime.UtcNow;
         db.ProposalInteractionEvents.AddRange(
             CreateInteraction(user.Id, xvOld.Id, ProposalInteractionType.Support, now.AddMinutes(-40)),
@@ -556,6 +604,26 @@ public sealed class ProposalHistoryEndpointsFactory : TestingWebAppFactory
             ProposalTitle = title,
             FullProposalTextLink = $"https://example.com/proposals/{sourceId}",
             ProposalResult = ProposalResult.ApprovedInGenerality
+        };
+    }
+
+    private static ProjectLawTopicAssignment CreateTopicAssignment(
+        int projectLawId,
+        int taxonomyVersionId,
+        int subtopicId)
+    {
+        return new ProjectLawTopicAssignment
+        {
+            ProjectLawId = projectLawId,
+            TaxonomyVersionId = taxonomyVersionId,
+            SubtopicId = subtopicId,
+            BestSubtopicId = subtopicId,
+            AssignmentMethod = "seeded_reviewed",
+            AssignmentStatus = "assigned",
+            AssignmentConfidence = 0.96,
+            EmbeddingProvider = "test-provider",
+            EmbeddingModel = "test-model",
+            IsCurrent = true
         };
     }
 
@@ -615,6 +683,11 @@ public sealed class ProposalHistoryEndpointsTests : IClassFixture<ProposalHistor
         Assert.Contains(
             root.GetProperty("availableProposingParties").EnumerateArray(),
             item => item.GetProperty("acronym").GetString() == "PS");
+        Assert.Contains(
+            root.GetProperty("availableParentTopics").EnumerateArray(),
+            item =>
+                item.GetProperty("slug").GetString() == "educacao" &&
+                item.GetProperty("label").GetString() == "Educação");
     }
 
     [Fact]
@@ -651,6 +724,28 @@ public sealed class ProposalHistoryEndpointsTests : IClassFixture<ProposalHistor
             Assert.Contains(
                 item.GetProperty("proposers").EnumerateArray(),
                 proposer => proposer.GetProperty("acronym").GetString() == "PSD"));
+    }
+
+    [Fact]
+    public async Task HistoryEndpointFiltersByParentTopic()
+    {
+        var response = await _client.GetAsync("/proposal-flow/history?page=1&pageSize=10&parentTopicSlug=educacao");
+
+        response.EnsureSuccessStatusCode();
+
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var root = document.RootElement;
+        var titles = root
+            .GetProperty("items")
+            .EnumerateArray()
+            .Select(item => item.GetProperty("title").GetString())
+            .ToList();
+
+        Assert.Equal(2, root.GetProperty("totalItems").GetInt32());
+        Assert.Contains("Only XVI initiative", titles);
+        Assert.Contains("Newest XVII initiative", titles);
+        Assert.DoesNotContain("Older XV initiative", titles);
+        Assert.DoesNotContain("Latest duplicate XV initiative", titles);
     }
 
     [Fact]

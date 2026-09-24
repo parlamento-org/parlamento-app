@@ -81,12 +81,51 @@ void main() {
       expect(find.textContaining('Projeto de Lei nº'), findsNothing);
     },
   );
+
+  testWidgets('filters history by parent topic', (tester) async {
+    final repository = _FakeRepository(
+      item: ProposalHistoryItem(
+        interactionId: 12,
+        initiativeId: 99,
+        initiativeType: 'Projeto de Lei',
+        title: 'Titulo da iniciativa',
+        action: ProposalInteractionAction.support,
+        proposers: const [],
+      ),
+      availableParentTopics: [
+        ProposalHistoryParentTopic(slug: 'educacao', label: 'Educação'),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PreviousVotesHistoryPage(
+            voteController: VoteController(repository: repository),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Mostrar filtros'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Tópico'), findsOneWidget);
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Educação'));
+    await tester.pumpAndSettle();
+
+    expect(repository.requests.last.filters.parentTopicSlug, 'educacao');
+    expect(find.text('Tópico: Educação'), findsOneWidget);
+  });
 }
 
 class _FakeRepository implements Repository {
-  _FakeRepository({required this.item});
+  _FakeRepository({required this.item, this.availableParentTopics = const []});
 
   final ProposalHistoryItem item;
+  final List<ProposalHistoryParentTopic> availableParentTopics;
+  final List<ProposalHistoryRequest> requests = [];
 
   @override
   Future<UserSession> loginRequest(String email, String password) =>
@@ -96,6 +135,8 @@ class _FakeRepository implements Repository {
   Future<ProposalHistoryPage> getProposalHistory(
     ProposalHistoryRequest request,
   ) async {
+    requests.add(request);
+
     return ProposalHistoryPage(
       items: [item],
       page: 1,
@@ -106,6 +147,7 @@ class _FakeRepository implements Repository {
       hasPreviousPage: false,
       availableLegislatures: const ['XV'],
       availableProposingParties: const [],
+      availableParentTopics: availableParentTopics,
     );
   }
 
