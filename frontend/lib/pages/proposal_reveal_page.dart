@@ -3,7 +3,6 @@ import 'package:frontend/models/proposal_flow.dart';
 import 'package:frontend/pages/proposal_journey_page.dart';
 import 'package:frontend/themes/base_theme.dart';
 import 'package:frontend/widgets/parliamentary_vote_breakdown.dart';
-import 'package:frontend/widgets/proposal_topic_chips.dart';
 
 class ProposalRevealPage extends StatelessWidget {
   const ProposalRevealPage({super.key, required this.reveal});
@@ -40,6 +39,8 @@ class ProposalRevealPage extends StatelessWidget {
                       builder:
                           (context) => ProposalJourneyPage(
                             initiativeId: reveal.initiativeId,
+                            initialProposers: reveal.proposers,
+                            initialTopicAssignments: reveal.topicAssignments,
                           ),
                     ),
                   ),
@@ -103,14 +104,6 @@ class _OutcomePanel extends StatelessWidget {
                 color: outcomeColor,
                 icon: _outcomeIcon(approved),
               ),
-              if (reveal.topicAssignments.isNotEmpty) ...[
-                const SizedBox(height: 20),
-                ProposalTopicChips(
-                  topics: reveal.topicAssignments,
-                  onDark: true,
-                  alignment: WrapAlignment.center,
-                ),
-              ],
               const SizedBox(height: 30),
               const _FloatingLabel('Proposto por:'),
               const SizedBox(height: 14),

@@ -19,6 +19,12 @@ public sealed class ProposalJourneyResponse
     [JsonPropertyName("fullProposalTextLink")]
     public string? FullProposalTextLink { get; set; }
 
+    [JsonPropertyName("proposers")]
+    public List<ProposalProposerResponse> Proposers { get; set; } = [];
+
+    [JsonPropertyName("topicAssignments")]
+    public List<ProposalTopicAssignmentResponse> TopicAssignments { get; set; } = [];
+
     [JsonPropertyName("phases")]
     public List<ProposalJourneyPhaseResponse> Phases { get; set; } = [];
 }

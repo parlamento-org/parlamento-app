@@ -459,6 +459,8 @@ class ProposalJourney {
     this.initiativeNumber,
     required this.title,
     this.fullProposalTextLink,
+    this.proposers = const [],
+    this.topicAssignments = const [],
     required this.phases,
   });
 
@@ -467,6 +469,8 @@ class ProposalJourney {
   final String? initiativeNumber;
   final String title;
   final String? fullProposalTextLink;
+  final List<ProposalProposer> proposers;
+  final List<ProposalTopicAssignment> topicAssignments;
   final List<ProposalJourneyPhase> phases;
 
   factory ProposalJourney.fromJson(Map<String, dynamic> json) {
@@ -482,6 +486,11 @@ class ProposalJourney {
         'Iniciativa sem título disponível',
       ),
       fullProposalTextLink: _stringOrNull(json['fullProposalTextLink']),
+      proposers: _objectList(json['proposers'], ProposalProposer.fromJson),
+      topicAssignments: _objectList(
+        json['topicAssignments'],
+        ProposalTopicAssignment.fromJson,
+      ),
       phases: _objectList(json['phases'], ProposalJourneyPhase.fromJson),
     );
   }

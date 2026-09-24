@@ -118,10 +118,29 @@ void main() {
         'initiativeNumber': '10/XV/1',
         'title': 'Titulo da iniciativa',
         'fullProposalTextLink': 'https://example.com/propostas/10',
+        'proposers': [
+          {
+            'kind': 'ParliamentaryGroup',
+            'name': 'Partido Socialista',
+            'acronym': 'PS',
+          },
+        ],
+        'topicAssignments': [
+          {
+            'parentTopicSlug': 'ambiente',
+            'parentTopicLabel': 'Ambiente',
+            'subtopicSlug': 'energia',
+            'subtopicLabel': 'Energia',
+            'assignmentStatus': 'assigned',
+          },
+        ],
         'phases': [],
       });
 
       expect(journey.fullProposalTextLink, 'https://example.com/propostas/10');
+      expect(journey.proposers.single.acronym, 'PS');
+      expect(journey.topicAssignments.single.parentTopicLabel, 'Ambiente');
+      expect(journey.topicAssignments.single.subtopicLabel, 'Energia');
 
       final withoutLink = ProposalJourney.fromJson({
         'initiativeId': 11,
@@ -130,6 +149,8 @@ void main() {
       });
 
       expect(withoutLink.fullProposalTextLink, isNull);
+      expect(withoutLink.proposers, isEmpty);
+      expect(withoutLink.topicAssignments, isEmpty);
       expect(withoutLink.phases, isEmpty);
     });
 

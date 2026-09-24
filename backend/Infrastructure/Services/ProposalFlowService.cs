@@ -223,6 +223,8 @@ public sealed class ProposalFlowService : IProposalFlowService
         var initiative = await _context.ProjectLaws
             .AsNoTracking()
             .AsSplitQuery()
+            .Include(item => item.ProposingParty)
+            .Include(item => item.ImportedAuthors)
             .Include(item => item.ImportedEvents)
                 .ThenInclude(item => item.Votes)
                     .ThenInclude(vote => vote.Blocks)
@@ -238,6 +240,9 @@ public sealed class ProposalFlowService : IProposalFlowService
             .Include(item => item.ImportedVotes)
                 .ThenInclude(vote => vote.Blocks)
             .Include(item => item.Summaries)
+            .Include(item => item.TopicAssignments)
+                .ThenInclude(assignment => assignment.Subtopic)
+                    .ThenInclude(subtopic => subtopic!.ParentTopic)
             .FirstOrDefaultAsync(item => item.Id == initiativeId, cancellationToken);
 
         if (initiative == null)
@@ -513,6 +518,8 @@ public sealed class ProposalFlowService : IProposalFlowService
             FullProposalTextLink = string.IsNullOrWhiteSpace(initiative.FullProposalTextLink)
                 ? null
                 : initiative.FullProposalTextLink,
+            Proposers = MapProposers(initiative),
+            TopicAssignments = MapTopicAssignments(initiative),
             Phases = BuildJourneyPhases(initiative)
         };
     }

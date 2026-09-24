@@ -1024,6 +1024,15 @@ public sealed class ProposalRevealEndpointsTests : IClassFixture<ProposalRevealE
         Assert.Equal(
             "https://example.com/proposals/4001",
             root.GetProperty("fullProposalTextLink").GetString());
+
+        var proposer = root.GetProperty("proposers").EnumerateArray().Single();
+        Assert.Equal("PS", proposer.GetProperty("acronym").GetString());
+
+        var topic = root.GetProperty("topicAssignments").EnumerateArray().Single();
+        Assert.Equal("educacao", topic.GetProperty("parentTopicSlug").GetString());
+        Assert.Equal("Educação", topic.GetProperty("parentTopicLabel").GetString());
+        Assert.Equal("escolas", topic.GetProperty("subtopicSlug").GetString());
+        Assert.Equal("Escolas", topic.GetProperty("subtopicLabel").GetString());
     }
 
     [Fact]

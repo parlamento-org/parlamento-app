@@ -3,17 +3,23 @@ import 'package:flutter/services.dart';
 import 'package:frontend/controllers/vote_controller.dart';
 import 'package:frontend/models/proposal_flow.dart';
 import 'package:frontend/themes/base_theme.dart';
+import 'package:frontend/utils/portuguese_date_format.dart';
 import 'package:frontend/widgets/parliamentary_vote_breakdown.dart';
+import 'package:frontend/widgets/proposal_topic_chips.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ProposalJourneyPage extends StatefulWidget {
   const ProposalJourneyPage({
     super.key,
     required this.initiativeId,
+    this.initialProposers = const [],
+    this.initialTopicAssignments = const [],
     VoteController? voteController,
   }) : _voteController = voteController;
 
   final int initiativeId;
+  final List<ProposalProposer> initialProposers;
+  final List<ProposalTopicAssignment> initialTopicAssignments;
   final VoteController? _voteController;
 
   @override
@@ -57,7 +63,11 @@ class _ProposalJourneyPageState extends State<ProposalJourneyPage> {
               );
             }
 
-            return _JourneyContent(journey: snapshot.data!);
+            return _JourneyContent(
+              journey: snapshot.data!,
+              initialProposers: widget.initialProposers,
+              initialTopicAssignments: widget.initialTopicAssignments,
+            );
           },
         ),
       ),
@@ -66,9 +76,15 @@ class _ProposalJourneyPageState extends State<ProposalJourneyPage> {
 }
 
 class _JourneyContent extends StatelessWidget {
-  const _JourneyContent({required this.journey});
+  const _JourneyContent({
+    required this.journey,
+    required this.initialProposers,
+    required this.initialTopicAssignments,
+  });
 
   final ProposalJourney journey;
+  final List<ProposalProposer> initialProposers;
+  final List<ProposalTopicAssignment> initialTopicAssignments;
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +93,11 @@ class _JourneyContent extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(18, 10, 18, 24),
       children: [
-        _JourneyHeader(journey: journey),
+        _JourneyHeader(
+          journey: journey,
+          initialProposers: initialProposers,
+          initialTopicAssignments: initialTopicAssignments,
+        ),
         const SizedBox(height: 18),
         if (phases.isEmpty)
           const _EmptyTimeline()
@@ -89,9 +109,15 @@ class _JourneyContent extends StatelessWidget {
 }
 
 class _JourneyHeader extends StatelessWidget {
-  const _JourneyHeader({required this.journey});
+  const _JourneyHeader({
+    required this.journey,
+    required this.initialProposers,
+    required this.initialTopicAssignments,
+  });
 
   final ProposalJourney journey;
+  final List<ProposalProposer> initialProposers;
+  final List<ProposalTopicAssignment> initialTopicAssignments;
 
   @override
   Widget build(BuildContext context) {
@@ -99,29 +125,113 @@ class _JourneyHeader extends StatelessWidget {
       journey.initiativeType,
       if (journey.initiativeNumber != null) journey.initiativeNumber!,
     ];
+    final topicAssignments =
+        journey.topicAssignments.isNotEmpty
+            ? journey.topicAssignments
+            : initialTopicAssignments;
+    final proposers =
+        journey.proposers.isNotEmpty ? journey.proposers : initialProposers;
+    final proposerLabel = _firstKnownProposer(proposers);
     final originalProposalUrl = journey.fullProposalTextLink?.trim();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: meta.map((label) => _MetaBadge(label)).toList(),
-        ),
+        _HeaderMetaRow(meta: meta, topicAssignments: topicAssignments),
         const SizedBox(height: 12),
-        Text(
-          journey.title,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: baseTheme.colorScheme.primary,
-            fontWeight: FontWeight.w900,
-            height: 1.15,
-          ),
-        ),
+        _JourneyTitleRow(title: journey.title, proposerLabel: proposerLabel),
         if (originalProposalUrl != null && originalProposalUrl.isNotEmpty) ...[
           const SizedBox(height: 16),
           _OriginalProposalSection(url: originalProposalUrl),
         ],
+      ],
+    );
+  }
+}
+
+class _HeaderMetaRow extends StatelessWidget {
+  const _HeaderMetaRow({required this.meta, required this.topicAssignments});
+
+  final List<String> meta;
+  final List<ProposalTopicAssignment> topicAssignments;
+
+  @override
+  Widget build(BuildContext context) {
+    final metaBadges = meta.map((label) => _MetaBadge(label)).toList();
+    if (topicAssignments.isEmpty) {
+      return Wrap(spacing: 8, runSpacing: 8, children: metaBadges);
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 680) {
+          return Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ...metaBadges,
+              ProposalTopicChips(topics: topicAssignments),
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Wrap(spacing: 8, runSpacing: 8, children: metaBadges),
+            ),
+            const SizedBox(width: 12),
+            Flexible(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: ProposalTopicChips(
+                  topics: topicAssignments,
+                  alignment: WrapAlignment.end,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _JourneyTitleRow extends StatelessWidget {
+  const _JourneyTitleRow({required this.title, required this.proposerLabel});
+
+  final String title;
+  final String? proposerLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final titleText = Text(
+      title,
+      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+        color: baseTheme.colorScheme.primary,
+        fontWeight: FontWeight.w900,
+        height: 1.15,
+      ),
+    );
+
+    if (proposerLabel == null) {
+      return titleText;
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: 74,
+          child: ParliamentaryPartyLogo(
+            acronym: proposerLabel!,
+            size: 68,
+            fallbackLabel: proposerLabel!,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(child: titleText),
       ],
     );
   }
@@ -386,7 +496,8 @@ class _PhaseSubtitle extends StatelessWidget {
       spacing: 8,
       runSpacing: 8,
       children: [
-        if (phase.date != null) _MetaBadge(phase.date!),
+        if (phase.date != null)
+          _MetaBadge(formatPortugueseLongDate(phase.date!)),
         if (phase.status != null) _MetaBadge(phase.status!),
         if (phase.phaseCode != null) _MetaBadge('Fase ${phase.phaseCode}'),
       ],
@@ -478,7 +589,8 @@ class _VoteSummaryBlock extends StatelessWidget {
           runSpacing: 8,
           children: [
             _MetaBadge(vote.stageName),
-            if (vote.date != null) _MetaBadge(vote.date!),
+            if (vote.date != null)
+              _MetaBadge(formatPortugueseLongDate(vote.date!)),
             if (vote.result != null) _MetaBadge(vote.result!),
           ],
         ),
@@ -903,7 +1015,7 @@ String _videoLabel(ProposalJourneyVideo video) {
 
 String _videoDetail(ProposalJourneyVideo video) {
   final parts = [
-    if (video.date != null) video.date!,
+    if (video.date != null) formatPortugueseLongDate(video.date!),
     if (video.startTime != null && video.endTime != null)
       '${video.startTime!}-${video.endTime!}'
     else if (video.startTime != null)
@@ -911,4 +1023,22 @@ String _videoDetail(ProposalJourneyVideo video) {
   ];
 
   return parts.isEmpty ? 'Vídeo' : parts.join(' · ');
+}
+
+String? _firstKnownProposer(List<ProposalProposer> proposers) {
+  for (final proposer in proposers) {
+    final acronym = proposer.acronym ?? proposer.name;
+    if (acronym != null && partyLogoAsset(acronym) != null) {
+      return acronym;
+    }
+  }
+
+  for (final proposer in proposers) {
+    final label = proposer.acronym ?? proposer.name;
+    if (label != null && label.trim().isNotEmpty) {
+      return label;
+    }
+  }
+
+  return null;
 }
