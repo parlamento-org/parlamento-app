@@ -704,10 +704,8 @@ class _HistoryCard extends StatelessWidget {
       legislature: item.legislature,
       initiativeSelection: item.initiativeSelection,
     );
-    final legislatureLabel = proposalLegislatureLabel(item.legislature);
     final metaBadges = [
       if (initiativeReference != null) _HistoryMetaBadge(initiativeReference),
-      if (legislatureLabel != null) _HistoryMetaBadge(legislatureLabel),
     ];
 
     return InkWell(

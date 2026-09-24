@@ -8,7 +8,7 @@ import 'package:frontend/models/user.dart';
 import 'package:frontend/pages/previous_votes_history_page.dart';
 
 void main() {
-  testWidgets('shows explicit vote labels and initiative metadata pills', (
+  testWidgets('shows explicit vote labels and initiative metadata pill', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -49,38 +49,38 @@ void main() {
     expect(find.text('Parlamento (Generalidade)'), findsOneWidget);
     expect(find.text('AR'), findsNothing);
     expect(find.text('Projeto de Lei nº 40 / XV / 1'), findsOneWidget);
-    expect(find.text('Legislatura XV'), findsOneWidget);
+    expect(find.text('Legislatura XV'), findsNothing);
   });
 
-  testWidgets('hides metadata pills when their source fields are missing', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: PreviousVotesHistoryPage(
-            voteController: VoteController(
-              repository: _FakeRepository(
-                item: ProposalHistoryItem(
-                  interactionId: 12,
-                  initiativeId: 99,
-                  initiativeType: 'Projeto de Lei',
-                  title: 'Titulo da iniciativa',
-                  action: ProposalInteractionAction.support,
-                  proposers: const [],
+  testWidgets(
+    'hides initiative metadata pill when its source number is missing',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PreviousVotesHistoryPage(
+              voteController: VoteController(
+                repository: _FakeRepository(
+                  item: ProposalHistoryItem(
+                    interactionId: 12,
+                    initiativeId: 99,
+                    initiativeType: 'Projeto de Lei',
+                    title: 'Titulo da iniciativa',
+                    action: ProposalInteractionAction.support,
+                    proposers: const [],
+                  ),
                 ),
               ),
             ),
           ),
         ),
-      ),
-    );
+      );
 
-    await tester.pumpAndSettle();
+      await tester.pumpAndSettle();
 
-    expect(find.textContaining('Projeto de Lei nº'), findsNothing);
-    expect(find.textContaining('Legislatura'), findsNothing);
-  });
+      expect(find.textContaining('Projeto de Lei nº'), findsNothing);
+    },
+  );
 }
 
 class _FakeRepository implements Repository {
