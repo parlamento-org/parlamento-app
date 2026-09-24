@@ -2,30 +2,16 @@
 
 import 'dart:html' as html;
 
-const _historyFilterQueryKeys = [
-  'legislature',
-  'proposingParty',
-  'parentTopicSlug',
-  'search',
-  'interactionType',
-];
+import 'history_filter_url_codec.dart';
 
 Map<String, String> readHistoryFilterQueryParameters() {
-  return Uri.base.queryParameters;
+  return readHistoryFilterQueryParametersFromUri(Uri.base);
 }
 
 void writeHistoryFilterQueryParameters(Map<String, String> queryParameters) {
-  final nextQuery = Map<String, String>.from(Uri.base.queryParameters);
-
-  for (final key in _historyFilterQueryKeys) {
-    nextQuery.remove(key);
-  }
-  final nextFilterQuery = Map<String, String>.from(queryParameters)
-    ..removeWhere((_, value) => value.trim().isEmpty);
-  nextQuery.addAll(nextFilterQuery);
-
-  final nextUri = Uri.base.replace(
-    queryParameters: nextQuery.isEmpty ? null : nextQuery,
+  final nextUri = replaceHistoryFilterQueryParameters(
+    Uri.base,
+    queryParameters,
   );
   html.window.history.replaceState(
     null,
