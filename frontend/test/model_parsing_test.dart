@@ -67,6 +67,14 @@ void main() {
             'initiativeType': 'Projeto de Lei',
             'title': 'Histórico sem campos opcionais',
             'action': 'Support',
+            'generalityVote': {
+              'stageCode': '250',
+              'stageName': 'Votação na generalidade',
+              'result': 'Aprovado',
+              'approved': true,
+              'isUnanimous': false,
+              'partyVotes': [],
+            },
           },
         ],
         'page': 1,
@@ -78,15 +86,22 @@ void main() {
         'availableProposingParties': [
           {'acronym': 'PS', 'name': 'Partido Socialista'},
         ],
+        'availableParentTopics': [
+          {'slug': 'educacao', 'label': 'Educação'},
+        ],
       });
 
       expect(page.items, hasLength(1));
       expect(page.items.single.legislature, isNull);
+      expect(page.items.single.initiativeSelection, isNull);
       expect(page.items.single.proposers, isEmpty);
       expect(page.items.single.action, ProposalInteractionAction.support);
+      expect(page.items.single.generalityVote?.approved, isTrue);
       expect(page.hasPreviousPage, isFalse);
       expect(page.availableLegislatures, ['XVII', 'XVI']);
       expect(page.availableProposingParties.single.acronym, 'PS');
+      expect(page.availableParentTopics.single.slug, 'educacao');
+      expect(page.availableParentTopics.single.label, 'Educação');
     });
 
     test('serializes proposal history filters as query parameters', () {
@@ -96,6 +111,7 @@ void main() {
         filters: const ProposalHistoryFilters(
           legislature: 'XVII',
           proposingParty: 'PS',
+          parentTopicSlug: 'educacao',
           search: 'energia',
           interactionType: ProposalInteractionAction.support,
         ),
@@ -106,22 +122,98 @@ void main() {
         'pageSize': '10',
         'legislature': 'XVII',
         'proposingParty': 'PS',
+        'parentTopicSlug': 'educacao',
         'search': 'energia',
         'interactionType': 'Support',
       });
+    });
+
+    test('formats proposal metadata labels from project law fields', () {
+      expect(
+        proposalInitiativeReferenceLabel(
+          initiativeType: 'Projeto de Lei',
+          initiativeNumber: '40/XV/1',
+          legislature: 'XV',
+          initiativeSelection: '1',
+        ),
+        'Projeto de Lei nº 40 / XV / 1',
+      );
+      expect(
+        proposalInitiativeReferenceLabel(
+          initiativeType: 'Projeto de Resolução',
+          initiativeNumber: '12',
+          legislature: null,
+          initiativeSelection: '2',
+        ),
+        'Projeto de Resolução nº 12 / 2',
+      );
+      expect(
+        proposalInitiativeReferenceLabel(
+          initiativeType: 'Projeto de Lei',
+          initiativeNumber: null,
+          legislature: 'XV',
+          initiativeSelection: '1',
+        ),
+        isNull,
+      );
+      expect(proposalLegislatureLabel(null), isNull);
     });
 
     test('parses proposal journey original document link', () {
       final journey = ProposalJourney.fromJson({
         'initiativeId': 10,
         'initiativeType': 'Projeto de Lei',
-        'initiativeNumber': '10/XV/1',
+        'initiativeNumber': '10',
+        'legislature': 'XV',
+        'initiativeSelection': '1',
         'title': 'Titulo da iniciativa',
         'fullProposalTextLink': 'https://example.com/propostas/10',
+        'userVote': 'Support',
+        'generalityVote': {
+          'stageCode': '250',
+          'stageName': 'Votação na generalidade',
+          'result': 'Aprovado',
+          'approved': true,
+          'isUnanimous': false,
+          'partyVotes': [],
+        },
+        'proposers': [
+          {
+            'kind': 'ParliamentaryGroup',
+            'name': 'Partido Socialista',
+            'acronym': 'PS',
+          },
+        ],
+        'topicAssignments': [
+          {
+            'parentTopicSlug': 'ambiente',
+            'parentTopicLabel': 'Ambiente',
+            'subtopicSlug': 'energia',
+            'subtopicLabel': 'Energia',
+            'assignmentStatus': 'assigned',
+          },
+        ],
         'phases': [],
       });
 
       expect(journey.fullProposalTextLink, 'https://example.com/propostas/10');
+      expect(journey.legislature, 'XV');
+      expect(journey.initiativeSelection, '1');
+      expect(
+        proposalInitiativeReferenceLabel(
+          initiativeType: journey.initiativeType,
+          initiativeNumber: journey.initiativeNumber,
+          legislature: journey.legislature,
+          initiativeSelection: journey.initiativeSelection,
+        ),
+        'Projeto de Lei nº 10 / XV / 1',
+      );
+      expect(proposalLegislatureLabel(journey.legislature), 'Legislatura XV');
+      expect(journey.userVote, ProposalInteractionAction.support);
+      expect(journey.generalityVote?.approved, isTrue);
+      expect(journey.proposers.single.acronym, 'PS');
+      expect(journey.topicAssignments.single.parentTopicLabel, 'Ambiente');
+      expect(journey.topicAssignments.single.subtopicLabel, 'Energia');
 
       final withoutLink = ProposalJourney.fromJson({
         'initiativeId': 11,
@@ -130,7 +222,57 @@ void main() {
       });
 
       expect(withoutLink.fullProposalTextLink, isNull);
+      expect(withoutLink.proposers, isEmpty);
+      expect(withoutLink.topicAssignments, isEmpty);
       expect(withoutLink.phases, isEmpty);
+    });
+
+    test('parses proposal topic assignments on feed and reveal responses', () {
+      final feedCard = InitiativeFeedCard.fromJson({
+        'initiativeId': 10,
+        'initiativeType': 'Projeto de Lei',
+        'neutralTitle': 'Titulo neutro',
+        'topicAssignments': [
+          {
+            'parentTopicSlug': 'ambiente',
+            'parentTopicLabel': 'Ambiente',
+            'subtopicSlug': 'energia',
+            'subtopicLabel': 'Energia',
+            'assignmentStatus': 'assigned',
+            'assignmentConfidence': 92.4,
+          },
+        ],
+      });
+
+      expect(feedCard.topicAssignments, hasLength(1));
+      expect(feedCard.topicAssignments.single.parentTopicLabel, 'Ambiente');
+      expect(feedCard.topicAssignments.single.subtopicLabel, 'Energia');
+      expect(feedCard.topicAssignments.single.assignmentConfidence, 92.4);
+
+      final reveal = ProposalReveal.fromJson({
+        'initiativeId': 10,
+        'initiativeType': 'Projeto de Lei',
+        'title': 'Titulo revelado',
+        'userVote': 'Support',
+        'proposers': [],
+        'officialSources': [],
+        'journey': {'label': 'Percurso', 'endpoint': '/journey'},
+        'topicAssignments': [
+          {
+            'parentTopicSlug': 'educacao',
+            'parentTopicLabel': 'Educação',
+            'subtopicSlug': 'escolas',
+            'subtopicLabel': 'Escolas',
+            'assignmentStatus': 'accepted_cluster',
+          },
+        ],
+      });
+
+      expect(reveal.topicAssignments.single.parentTopicSlug, 'educacao');
+      expect(
+        reveal.topicAssignments.single.assignmentStatus,
+        'accepted_cluster',
+      );
     });
 
     test('parses profile overview and party alignment metadata', () {
@@ -147,6 +289,7 @@ void main() {
         'partyAlignment': {
           'isUnlocked': true,
           'minimumComparableVotes': 10,
+          'minimumTopicComparableVotes': 2,
           'totalComparableVotes': 11,
           'parties': [
             {
@@ -159,6 +302,31 @@ void main() {
               'alignmentPercentage': 81.8,
             },
           ],
+          'topicBreakdowns': [
+            {
+              'parentTopicSlug': 'educacao',
+              'parentTopicLabel': 'Educação',
+              'totalComparableVotes': 3,
+              'isLowData': false,
+              'parties': [
+                {
+                  'partyId': 'PS',
+                  'partyAcronym': 'PS',
+                  'partyName': 'Partido Socialista',
+                  'alignedCount': 3,
+                  'comparableCount': 3,
+                  'alignmentPercentage': 100,
+                },
+              ],
+            },
+            {
+              'parentTopicSlug': 'mobilidade',
+              'parentTopicLabel': 'Mobilidade',
+              'totalComparableVotes': 1,
+              'isLowData': true,
+              'parties': [],
+            },
+          ],
         },
       });
 
@@ -169,6 +337,23 @@ void main() {
       expect(profile.partyAlignment.parties.single.partyAcronym, 'PS');
       expect(profile.partyAlignment.parties.single.alignedCount, 9);
       expect(profile.partyAlignment.parties.single.alignmentPercentage, 81.8);
+      expect(profile.partyAlignment.minimumTopicComparableVotes, 2);
+      expect(profile.partyAlignment.topicBreakdowns, hasLength(2));
+      expect(
+        profile.partyAlignment.topicBreakdowns.first.parentTopicLabel,
+        'Educação',
+      );
+      expect(
+        profile
+            .partyAlignment
+            .topicBreakdowns
+            .first
+            .parties
+            .single
+            .alignedCount,
+        3,
+      );
+      expect(profile.partyAlignment.topicBreakdowns.last.isLowData, isTrue);
     });
   });
 }

@@ -31,6 +31,11 @@ public class ParliamentSummaryService : IParliamentSummaryService
         ParliamentSummaryRequest request,
         CancellationToken cancellationToken = default)
     {
+        var modelNames = _summaryClient.ModelNames
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
         var query = _context.ParliamentDocumentContents
             .Include(x => x.ProjectLaw)
             .Where(x => x.RedactionStatus == "Succeeded")
@@ -52,7 +57,7 @@ public class ParliamentSummaryService : IParliamentSummaryService
             query = query.Where(x => !_context.ParliamentSummaries.Any(summary =>
                 summary.ProjectLawId == x.ProjectLawId &&
                 summary.SourceDocumentHash == x.RedactedContentHash &&
-                summary.ModelName == _summaryClient.ModelName &&
+                modelNames.Contains(summary.ModelName) &&
                 summary.PromptVersion == _summaryClient.PromptVersion &&
                 (summary.GenerationStatus == "Succeeded" || summary.GenerationStatus == "Skipped")));
         }
@@ -87,10 +92,14 @@ public class ParliamentSummaryService : IParliamentSummaryService
                         break;
                 }
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 failed++;
-                await StoreFailureAsync(document, ex.Message, ex.ToString(), cancellationToken);
+                await TryStoreFailureAsync(document, ex, cancellationToken);
                 _logger.LogError(
                     ex,
                     "Failed to generate AI summary for ProjectLaw {ProjectLawId} DocumentContent {DocumentContentId}.",
@@ -139,7 +148,7 @@ public class ParliamentSummaryService : IParliamentSummaryService
         {
             ProjectLawId = document.ProjectLawId,
             ParliamentDocumentContentId = document.Id,
-            ModelName = _summaryClient.ModelName,
+            ModelName = generated.ModelName,
             PromptVersion = _summaryClient.PromptVersion,
             SourceDocumentHash = sourceHash,
             CreatedAtUtc = DateTime.UtcNow
@@ -152,7 +161,7 @@ public class ParliamentSummaryService : IParliamentSummaryService
 
         summary.ProjectLawId = document.ProjectLawId;
         summary.ParliamentDocumentContentId = document.Id;
-        summary.ModelName = _summaryClient.ModelName;
+        summary.ModelName = generated.ModelName;
         summary.PromptVersion = _summaryClient.PromptVersion;
         summary.SourceDocumentHash = sourceHash;
         summary.ShortTitle = generated.ShortTitle;
@@ -195,6 +204,20 @@ public class ParliamentSummaryService : IParliamentSummaryService
             _context.ParliamentSummaries.Add(summary);
         }
 
+        if (IsSucceededSummary(summary))
+        {
+            summary.ErrorMessage = $"Latest summary refresh skipped; preserved previous successful summary. {reason}";
+            summary.ErrorDetails = null;
+            summary.UpdatedAtUtc = DateTime.UtcNow;
+            await _context.SaveChangesAsync(cancellationToken);
+
+            _logger.LogWarning(
+                "Preserved existing successful AI summary for ProjectLaw {ProjectLawId} after skipped refresh: {Reason}",
+                document.ProjectLawId,
+                reason);
+            return;
+        }
+
         summary.GenerationStatus = "Skipped";
         summary.ErrorMessage = reason;
         summary.ErrorDetails = null;
@@ -235,6 +258,15 @@ public class ParliamentSummaryService : IParliamentSummaryService
             _context.ParliamentSummaries.Add(summary);
         }
 
+        if (IsSucceededSummary(summary))
+        {
+            summary.ErrorMessage = $"Latest summary refresh failed; preserved previous successful summary. {errorMessage}";
+            summary.ErrorDetails = errorDetails;
+            summary.UpdatedAtUtc = DateTime.UtcNow;
+            await _context.SaveChangesAsync(cancellationToken);
+            return;
+        }
+
         summary.GenerationStatus = "Failed";
         summary.ErrorMessage = errorMessage;
         summary.ErrorDetails = errorDetails;
@@ -243,15 +275,59 @@ public class ParliamentSummaryService : IParliamentSummaryService
         await _context.SaveChangesAsync(cancellationToken);
     }
 
+    private async Task TryStoreFailureAsync(
+        ParliamentDocumentContent document,
+        Exception originalException,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await StoreFailureAsync(document, originalException.Message, originalException.ToString(), cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception failurePersistenceException)
+        {
+            DetachSummaries(document);
+            _logger.LogError(
+                failurePersistenceException,
+                "Failed to persist AI summary failure status for ProjectLaw {ProjectLawId} DocumentContent {DocumentContentId} after error: {OriginalError}",
+                document.ProjectLawId,
+                document.Id,
+                originalException.Message);
+        }
+    }
+
+    private void DetachSummaries(ParliamentDocumentContent document)
+    {
+        var entries = _context.ChangeTracker
+            .Entries<ParliamentSummary>()
+            .Where(x => x.Entity.ProjectLawId == document.ProjectLawId &&
+                        x.Entity.ParliamentDocumentContentId == document.Id)
+            .ToList();
+
+        foreach (var entry in entries)
+        {
+            entry.State = EntityState.Detached;
+        }
+    }
+
     private Task<ParliamentSummary?> FindExistingSummaryAsync(
         int projectLawId,
         string sourceHash,
         CancellationToken cancellationToken)
     {
+        var modelNames = _summaryClient.ModelNames
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
         return _context.ParliamentSummaries
             .Where(x => x.ProjectLawId == projectLawId)
             .Where(x => x.SourceDocumentHash == sourceHash)
-            .Where(x => x.ModelName == _summaryClient.ModelName)
+            .Where(x => modelNames.Contains(x.ModelName))
             .Where(x => x.PromptVersion == _summaryClient.PromptVersion)
             .OrderByDescending(x => x.UpdatedAtUtc)
             .FirstOrDefaultAsync(cancellationToken);
@@ -260,6 +336,12 @@ public class ParliamentSummaryService : IParliamentSummaryService
     private static int CountNonWhitespace(string value)
     {
         return value.Count(x => !char.IsWhiteSpace(x));
+    }
+
+    private static bool IsSucceededSummary(ParliamentSummary summary)
+    {
+        return string.Equals(summary.GenerationStatus, "Succeeded", StringComparison.OrdinalIgnoreCase) &&
+               !string.IsNullOrWhiteSpace(summary.SummaryText);
     }
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);

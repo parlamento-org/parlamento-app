@@ -80,4 +80,6 @@ public class ProjectLaw
     public List<ParliamentInitiativeIntervention> ImportedInterventions { get; set; } = [];
 
     public List<ParliamentSummary> Summaries { get; set; } = [];
+
+    public List<ProjectLawTopicAssignment> TopicAssignments { get; set; } = [];
 }

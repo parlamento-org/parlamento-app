@@ -43,11 +43,17 @@ public sealed class PartyAlignmentSectionResponse
     [JsonPropertyName("minimumComparableVotes")]
     public int MinimumComparableVotes { get; set; }
 
+    [JsonPropertyName("minimumTopicComparableVotes")]
+    public int MinimumTopicComparableVotes { get; set; }
+
     [JsonPropertyName("totalComparableVotes")]
     public int TotalComparableVotes { get; set; }
 
     [JsonPropertyName("parties")]
     public List<PartyAlignmentResponse> Parties { get; set; } = [];
+
+    [JsonPropertyName("topicBreakdowns")]
+    public List<TopicPartyAlignmentResponse> TopicBreakdowns { get; set; } = [];
 }
 
 public sealed class PartyAlignmentResponse
@@ -72,4 +78,22 @@ public sealed class PartyAlignmentResponse
 
     [JsonPropertyName("alignmentPercentage")]
     public decimal AlignmentPercentage { get; set; }
+}
+
+public sealed class TopicPartyAlignmentResponse
+{
+    [JsonPropertyName("parentTopicSlug")]
+    public string ParentTopicSlug { get; set; } = string.Empty;
+
+    [JsonPropertyName("parentTopicLabel")]
+    public string ParentTopicLabel { get; set; } = string.Empty;
+
+    [JsonPropertyName("totalComparableVotes")]
+    public int TotalComparableVotes { get; set; }
+
+    [JsonPropertyName("isLowData")]
+    public bool IsLowData { get; set; }
+
+    [JsonPropertyName("parties")]
+    public List<PartyAlignmentResponse> Parties { get; set; } = [];
 }

@@ -66,21 +66,27 @@ class PartyAlignmentSection {
   PartyAlignmentSection({
     required this.isUnlocked,
     required this.minimumComparableVotes,
+    required this.minimumTopicComparableVotes,
     required this.totalComparableVotes,
     required this.parties,
+    required this.topicBreakdowns,
   });
 
   final bool isUnlocked;
   final int minimumComparableVotes;
+  final int minimumTopicComparableVotes;
   final int totalComparableVotes;
   final List<PartyAlignment> parties;
+  final List<TopicPartyAlignment> topicBreakdowns;
 
   factory PartyAlignmentSection.empty() {
     return PartyAlignmentSection(
       isUnlocked: false,
       minimumComparableVotes: 10,
+      minimumTopicComparableVotes: 2,
       totalComparableVotes: 0,
       parties: const [],
+      topicBreakdowns: const [],
     );
   }
 
@@ -91,8 +97,16 @@ class PartyAlignmentSection {
         json['minimumComparableVotes'],
         10,
       ),
+      minimumTopicComparableVotes: _intOrFallback(
+        json['minimumTopicComparableVotes'],
+        2,
+      ),
       totalComparableVotes: _intOrZero(json['totalComparableVotes']),
       parties: _objectList(json['parties'], PartyAlignment.fromJson),
+      topicBreakdowns: _objectList(
+        json['topicBreakdowns'],
+        TopicPartyAlignment.fromJson,
+      ),
     );
   }
 }
@@ -127,6 +141,34 @@ class PartyAlignment {
       alignedCount: _intOrZero(json['alignedCount']),
       comparableCount: _intOrZero(json['comparableCount']),
       alignmentPercentage: _doubleOrZero(json['alignmentPercentage']),
+    );
+  }
+}
+
+class TopicPartyAlignment {
+  TopicPartyAlignment({
+    required this.parentTopicSlug,
+    required this.parentTopicLabel,
+    required this.totalComparableVotes,
+    required this.isLowData,
+    required this.parties,
+  });
+
+  final String parentTopicSlug;
+  final String parentTopicLabel;
+  final int totalComparableVotes;
+  final bool isLowData;
+  final List<PartyAlignment> parties;
+
+  factory TopicPartyAlignment.fromJson(Map<String, dynamic> json) {
+    final slug = _stringOrFallback(json['parentTopicSlug'], '');
+
+    return TopicPartyAlignment(
+      parentTopicSlug: slug,
+      parentTopicLabel: _stringOrFallback(json['parentTopicLabel'], slug),
+      totalComparableVotes: _intOrZero(json['totalComparableVotes']),
+      isLowData: json['isLowData'] is bool ? json['isLowData'] : false,
+      parties: _objectList(json['parties'], PartyAlignment.fromJson),
     );
   }
 }

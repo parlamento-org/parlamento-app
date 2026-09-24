@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/controllers/profile_controller.dart';
 import 'package:frontend/models/profile.dart';
@@ -56,29 +57,9 @@ class _ProfilePageState extends State<ProfilePage> {
               );
             }
 
-            return RefreshIndicator(
+            return _ProfileStatsPager(
+              profile: profile,
               onRefresh: () async => _reload(),
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
-                children: [
-                  Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1180),
-                      child: Column(
-                        children: [
-                          const _ProfileHeader(),
-                          const SizedBox(height: 18),
-                          _OverviewSection(overview: profile.overview),
-                          const SizedBox(height: 14),
-                          _PartyAlignmentSection(
-                            alignment: profile.partyAlignment,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             );
           },
         ),
@@ -93,25 +74,496 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 }
 
-class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader();
+class _ProfileStatsPager extends StatefulWidget {
+  const _ProfileStatsPager({required this.profile, required this.onRefresh});
+
+  final ProfileStats profile;
+  final Future<void> Function() onRefresh;
+
+  @override
+  State<_ProfileStatsPager> createState() => _ProfileStatsPagerState();
+}
+
+class _ProfileStatsPagerState extends State<_ProfileStatsPager> {
+  late final PageController _pageController = PageController();
+  late final ScrollController _tabScrollController = ScrollController();
+  late List<_StatsPageTabItem> _tabItems = _createTabItems();
+  int _selectedIndex = 0;
+
+  List<TopicPartyAlignment> get _topicBreakdowns =>
+      widget.profile.partyAlignment.topicBreakdowns;
+
+  int get _pageCount => 1 + _topicBreakdowns.length;
+
+  List<String> get _tabLabels => [
+    'Geral',
+    ..._topicBreakdowns.map((topic) => topic.parentTopicLabel),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _centerSelectedTab(_selectedIndex, duration: Duration.zero);
+  }
+
+  @override
+  void didUpdateWidget(covariant _ProfileStatsPager oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_tabItemsMatchLabels()) {
+      _tabItems = _createTabItems(previousItems: _tabItems);
+    }
+
+    if (_selectedIndex >= _pageCount) {
+      _selectedIndex = _pageCount - 1;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+
+        if (_pageController.hasClients) {
+          _pageController.jumpToPage(_selectedIndex);
+        }
+        _centerSelectedTab(_selectedIndex, duration: Duration.zero);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _tabScrollController.dispose();
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
       children: [
+        const SizedBox(height: 10),
+        _StatsPageTabs(
+          selectedIndex: _selectedIndex,
+          items: _tabItems,
+          scrollController: _tabScrollController,
+          onSelected: _animateToPage,
+          onPrevious: () => _moveBy(-1),
+          onNext: () => _moveBy(1),
+          canGoPrevious: _selectedIndex > 0,
+          canGoNext: _selectedIndex < _pageCount - 1,
+        ),
+        const SizedBox(height: 8),
         Expanded(
-          child: Text(
-            'Perfil',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: baseTheme.colorScheme.primary,
-              fontWeight: FontWeight.w800,
-              height: 1,
+          child: NotificationListener<ScrollEndNotification>(
+            onNotification: (notification) {
+              if (notification.metrics.axis == Axis.horizontal) {
+                _centerSelectedTab(_selectedIndex);
+              }
+              return false;
+            },
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: _pageCount,
+              onPageChanged: _handlePageChanged,
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  return _ProfileStatsPage(
+                    onRefresh: widget.onRefresh,
+                    child: _GeneralStatsPage(profile: widget.profile),
+                  );
+                }
+
+                final topic = _topicBreakdowns[index - 1];
+                return _ProfileStatsPage(
+                  onRefresh: widget.onRefresh,
+                  child: _TopicStatsPage(
+                    topic: topic,
+                    minimumComparableVotes:
+                        widget
+                            .profile
+                            .partyAlignment
+                            .minimumTopicComparableVotes,
+                  ),
+                );
+              },
             ),
           ),
         ),
-        Icon(Icons.person, color: baseTheme.colorScheme.primary, size: 52),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(18, 8, 18, 14),
+          child: _StatsPageDots(
+            count: _pageCount,
+            selectedIndex: _selectedIndex,
+          ),
+        ),
       ],
+    );
+  }
+
+  void _animateToPage(int index) {
+    if (index < 0 || index >= _pageCount) {
+      return;
+    }
+
+    if (index == _selectedIndex) {
+      _centerSelectedTab(index);
+      return;
+    }
+
+    if (!_pageController.hasClients) {
+      _handlePageChanged(index);
+      _centerSelectedTab(index);
+      return;
+    }
+
+    _pageController
+        .animateToPage(
+          index,
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeOutCubic,
+        )
+        .then((_) {
+          if (!mounted) {
+            return;
+          }
+
+          _centerSelectedTab(_selectedIndex);
+        });
+  }
+
+  void _handlePageChanged(int index) {
+    if (_selectedIndex != index) {
+      setState(() => _selectedIndex = index);
+    }
+  }
+
+  void _moveBy(int delta) {
+    final nextIndex = (_selectedIndex + delta).clamp(0, _pageCount - 1);
+    _animateToPage(nextIndex);
+  }
+
+  void _centerSelectedTab(
+    int index, {
+    Duration duration = const Duration(milliseconds: 220),
+  }) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || index < 0 || index >= _tabItems.length) {
+        return;
+      }
+
+      final selectedTabContext = _tabItems[index].key.currentContext;
+      if (selectedTabContext == null) {
+        return;
+      }
+
+      Scrollable.ensureVisible(
+        selectedTabContext,
+        alignment: 0.5,
+        alignmentPolicy: ScrollPositionAlignmentPolicy.explicit,
+        duration: duration,
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
+  List<_StatsPageTabItem> _createTabItems({
+    List<_StatsPageTabItem> previousItems = const [],
+  }) {
+    final labels = _tabLabels;
+    return List.generate(labels.length, (index) {
+      if (index < previousItems.length &&
+          previousItems[index].label == labels[index]) {
+        return previousItems[index];
+      }
+
+      return _StatsPageTabItem(label: labels[index], key: GlobalKey());
+    });
+  }
+
+  bool _tabItemsMatchLabels() {
+    final labels = _tabLabels;
+    if (_tabItems.length != labels.length) {
+      return false;
+    }
+
+    for (var index = 0; index < labels.length; index++) {
+      if (_tabItems[index].label != labels[index]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+}
+
+class _ProfileStatsPage extends StatelessWidget {
+  const _ProfileStatsPage({required this.child, required this.onRefresh});
+
+  final Widget child;
+  final Future<void> Function() onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(18, 8, 18, 24),
+        children: [
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1180),
+              child: child,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GeneralStatsPage extends StatelessWidget {
+  const _GeneralStatsPage({required this.profile});
+
+  final ProfileStats profile;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _OverviewSection(overview: profile.overview),
+        const SizedBox(height: 14),
+        _OverallPartyAlignmentSection(alignment: profile.partyAlignment),
+      ],
+    );
+  }
+}
+
+class _StatsPageTabs extends StatelessWidget {
+  const _StatsPageTabs({
+    required this.items,
+    required this.scrollController,
+    required this.selectedIndex,
+    required this.onSelected,
+    required this.onPrevious,
+    required this.onNext,
+    required this.canGoPrevious,
+    required this.canGoNext,
+  });
+
+  final List<_StatsPageTabItem> items;
+  final ScrollController scrollController;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+  final VoidCallback onPrevious;
+  final VoidCallback onNext;
+  final bool canGoPrevious;
+  final bool canGoNext;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      type: MaterialType.transparency,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final showArrowControls =
+              constraints.maxWidth >= 720 && items.length > 1;
+
+          return SizedBox(
+            height: 42,
+            child: Row(
+              children: [
+                if (showArrowControls) ...[
+                  _StatsPageArrowButton(
+                    tooltip: 'Tópico anterior',
+                    icon: Icons.chevron_left,
+                    onPressed: canGoPrevious ? onPrevious : null,
+                  ),
+                  const SizedBox(width: 4),
+                ],
+                Expanded(
+                  child: _StatsPageTabStrip(
+                    items: items,
+                    scrollController: scrollController,
+                    selectedIndex: selectedIndex,
+                    onSelected: onSelected,
+                    horizontalPadding: showArrowControls ? 8 : 18,
+                  ),
+                ),
+                if (showArrowControls) ...[
+                  const SizedBox(width: 4),
+                  _StatsPageArrowButton(
+                    tooltip: 'Próximo tópico',
+                    icon: Icons.chevron_right,
+                    onPressed: canGoNext ? onNext : null,
+                  ),
+                ],
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _StatsPageTabStrip extends StatelessWidget {
+  const _StatsPageTabStrip({
+    required this.items,
+    required this.scrollController,
+    required this.selectedIndex,
+    required this.onSelected,
+    required this.horizontalPadding,
+  });
+
+  final List<_StatsPageTabItem> items;
+  final ScrollController scrollController;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+  final double horizontalPadding;
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      behavior: HitTestBehavior.opaque,
+      onPointerSignal: _handlePointerSignal,
+      child: SingleChildScrollView(
+        controller: scrollController,
+        scrollDirection: Axis.horizontal,
+        physics: const ClampingScrollPhysics(),
+        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+        child: Row(
+          children: [
+            for (var index = 0; index < items.length; index++) ...[
+              ChoiceChip(
+                key: items[index].key,
+                selected: index == selectedIndex,
+                showCheckmark: false,
+                label: Text(
+                  items[index].label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                labelStyle: TextStyle(
+                  color:
+                      index == selectedIndex
+                          ? Colors.white
+                          : baseTheme.colorScheme.primary,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 12,
+                ),
+                selectedColor: baseTheme.colorScheme.primary,
+                backgroundColor: Colors.white,
+                side: BorderSide(
+                  color: baseTheme.colorScheme.primary.withValues(alpha: 0.42),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                onSelected: (_) => onSelected(index),
+              ),
+              if (index < items.length - 1) const SizedBox(width: 8),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _handlePointerSignal(PointerSignalEvent event) {
+    if (event is! PointerScrollEvent || !scrollController.hasClients) {
+      return;
+    }
+
+    final scrollDelta =
+        event.scrollDelta.dx.abs() > event.scrollDelta.dy.abs()
+            ? event.scrollDelta.dx
+            : event.scrollDelta.dy;
+    if (scrollDelta == 0) {
+      return;
+    }
+
+    final position = scrollController.position;
+    final nextOffset =
+        (scrollController.offset + scrollDelta)
+            .clamp(position.minScrollExtent, position.maxScrollExtent)
+            .toDouble();
+    scrollController.jumpTo(nextOffset);
+  }
+}
+
+class _StatsPageTabItem {
+  const _StatsPageTabItem({required this.label, required this.key});
+
+  final String label;
+  final GlobalKey key;
+}
+
+class _StatsPageArrowButton extends StatelessWidget {
+  const _StatsPageArrowButton({
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 42,
+      height: 42,
+      child: IconButton(
+        tooltip: tooltip,
+        onPressed: onPressed,
+        icon: Icon(icon, size: 22),
+        color: baseTheme.colorScheme.primary,
+        disabledColor: baseTheme.colorScheme.primary.withValues(alpha: 0.28),
+        style: IconButton.styleFrom(
+          backgroundColor: Colors.white,
+          disabledBackgroundColor: Colors.white.withValues(alpha: 0.72),
+          side: BorderSide(
+            color: baseTheme.colorScheme.primary.withValues(
+              alpha: onPressed == null ? 0.18 : 0.42,
+            ),
+          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatsPageDots extends StatelessWidget {
+  const _StatsPageDots({required this.count, required this.selectedIndex});
+
+  final int count;
+  final int selectedIndex;
+
+  @override
+  Widget build(BuildContext context) {
+    if (count <= 1) {
+      return const SizedBox(height: 8);
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(count, (index) {
+        final selected = index == selectedIndex;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: selected ? 22 : 8,
+          height: 8,
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          decoration: BoxDecoration(
+            color:
+                selected
+                    ? baseTheme.colorScheme.primary
+                    : baseTheme.colorScheme.primary.withValues(alpha: 0.24),
+            borderRadius: BorderRadius.circular(99),
+          ),
+        );
+      }),
     );
   }
 }
@@ -274,17 +726,16 @@ class _OverviewStat extends StatelessWidget {
   }
 }
 
-class _PartyAlignmentSection extends StatelessWidget {
-  const _PartyAlignmentSection({required this.alignment});
+class _OverallPartyAlignmentSection extends StatelessWidget {
+  const _OverallPartyAlignmentSection({required this.alignment});
 
   final PartyAlignmentSection alignment;
 
   @override
   Widget build(BuildContext context) {
-    final visibleParties =
-        alignment.parties
-            .where((party) => party.comparableCount > 0)
-            .toList(growable: false);
+    final visibleParties = alignment.parties
+        .where((party) => party.comparableCount > 0)
+        .toList(growable: false);
 
     return _ProfileSectionCard(
       title: 'Alinhamento com votos dos partidos',
@@ -292,7 +743,7 @@ class _PartyAlignmentSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Percentagens de concordancia entre as tuas escolhas e os votos dos partidos na generalidade.',
+            'Percentagens de concordância entre as tuas escolhas e os votos dos partidos na generalidade.',
             style: TextStyle(
               color: baseTheme.colorScheme.primary.withValues(alpha: 0.76),
               fontWeight: FontWeight.w700,
@@ -366,6 +817,190 @@ class _AlignmentLockedState extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _TopicStatsPage extends StatelessWidget {
+  const _TopicStatsPage({
+    required this.topic,
+    required this.minimumComparableVotes,
+  });
+
+  final TopicPartyAlignment topic;
+  final int minimumComparableVotes;
+
+  @override
+  Widget build(BuildContext context) {
+    return _ProfileSectionCard(
+      title: topic.parentTopicLabel,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.topic_outlined,
+                color: baseTheme.colorScheme.primary,
+                size: 20,
+              ),
+              const SizedBox(width: 7),
+              Text(
+                '${topic.totalComparableVotes} votos comparáveis',
+                style: TextStyle(
+                  color: baseTheme.colorScheme.primary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (topic.isLowData)
+            _TopicLowDataState(minimumComparableVotes: minimumComparableVotes)
+          else
+            Column(
+              children:
+                  topic.parties
+                      .map(
+                        (party) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _CompactPartyAlignmentRow(party: party),
+                        ),
+                      )
+                      .toList(),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TopicLowDataState extends StatelessWidget {
+  const _TopicLowDataState({required this.minimumComparableVotes});
+
+  final int minimumComparableVotes;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: baseTheme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: baseTheme.colorScheme.primary.withValues(alpha: 0.20),
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.insights_outlined,
+            color: baseTheme.colorScheme.primary,
+            size: 32,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Poucos dados neste tópico',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: baseTheme.colorScheme.primary,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Precisas de $minimumComparableVotes votos comparáveis para ver a distribuição partidária.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.black54,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              height: 1.3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompactPartyAlignmentRow extends StatelessWidget {
+  const _CompactPartyAlignmentRow({required this.party});
+
+  final PartyAlignment party;
+
+  @override
+  Widget build(BuildContext context) {
+    final percentage = party.alignmentPercentage.clamp(0, 100).toDouble();
+
+    return Row(
+      children: [
+        ParliamentaryPartyLogo(
+          acronym: party.partyAcronym,
+          size: 44,
+          fallbackLabel: party.partyAcronym,
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      party.partyAcronym,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: baseTheme.colorScheme.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    _formatPercentage(percentage),
+                    style: TextStyle(
+                      color: baseTheme.colorScheme.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: Container(
+                  height: 10,
+                  color: baseTheme.colorScheme.primary.withValues(alpha: 0.12),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: FractionallySizedBox(
+                      widthFactor: percentage / 100,
+                      child: Container(color: baseTheme.colorScheme.primary),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${party.alignedCount}/${party.comparableCount} votos comparáveis',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.black54,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

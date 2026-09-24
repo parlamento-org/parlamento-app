@@ -1,0 +1,1116 @@
+{
+  "version": "taxonomy_v2",
+  "generatedAtUtc": "2026-09-23T02:30:30.025052+00:00",
+  "topics": [
+    {
+      "slug": "administracao_territorial_e_organizacao_local",
+      "label": "Administração Territorial e Organização Local",
+      "description": "",
+      "displayOrder": 1,
+      "subtopics": [
+        {
+          "slug": "alteracao_de_denominacao_de_unioes_de_freguesias",
+          "label": "Alteração de denominação de uniões de freguesias",
+          "description": "Propostas que tratam da mudança de nome ou denominação oficial de uniões de freguesias, especialmente após reorganizações administrativas.",
+          "sourceClusterIds": [
+            2
+          ]
+        },
+        {
+          "slug": "alteracao_e_delimitacao_de_limites_territoriais_de_freguesias",
+          "label": "Alteração e delimitação de limites territoriais de freguesias",
+          "description": "Projetos que propõem mudanças nos limites territoriais entre freguesias e uniões de freguesias, incluindo delimitações e reorganizações administrativas.",
+          "sourceClusterIds": [
+            1
+          ]
+        },
+        {
+          "slug": "descentralizacao_e_regionalizacao_dos_servicos_publicos",
+          "label": "Descentralização e regionalização dos serviços públicos",
+          "description": "Propostas que abordam a descentralização administrativa, regionalização, deslocalização de serviços públicos e coesão territorial.",
+          "sourceClusterIds": [
+            54
+          ]
+        },
+        {
+          "slug": "elevacao_de_povoacoes_a_categoria_de_vila",
+          "label": "Elevação de povoações à categoria de vila",
+          "description": "Propostas legislativas que tratam da elevação de povoações e freguesias à categoria oficial de vila, com fundamentação histórica e cultural.",
+          "sourceClusterIds": [
+            0
+          ]
+        },
+        {
+          "slug": "financiamento_e_gestao_financeira_das_autarquias",
+          "label": "Financiamento e gestão financeira das autarquias",
+          "description": "Propostas relacionadas com o regime financeiro das autarquias locais, endividamento municipal e gestão territorial.",
+          "sourceClusterIds": [
+            98
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "ambiente_energia_e_agricultura_sustentavel",
+      "label": "Ambiente, Energia e Agricultura Sustentável",
+      "description": "",
+      "displayOrder": 2,
+      "subtopics": [
+        {
+          "slug": "apoio_a_agricultores_e_recuperacao_pos_tempestades",
+          "label": "Apoio a Agricultores e Recuperação Pós-Tempestades",
+          "description": "Propostas que recomendam medidas de apoio financeiro e recuperação para agricultores afetados por tempestades e fenómenos meteorológicos extremos.",
+          "sourceClusterIds": [
+            70
+          ]
+        },
+        {
+          "slug": "comunidades_de_energia_renovavel_e_pobreza_energetica",
+          "label": "Comunidades de Energia Renovável e Pobreza Energética",
+          "description": "Propostas que recomendam estratégias para desenvolvimento e democratização das comunidades de energia renovável e combate à pobreza energética.",
+          "sourceClusterIds": [
+            61
+          ]
+        },
+        {
+          "slug": "gestao_e_conservacao_dos_recursos_hidricos_e_regadio",
+          "label": "Gestão e Conservação dos Recursos Hídricos e Regadio",
+          "description": "Propostas relacionadas com a gestão da água, combate à seca, modernização do regadio e proteção dos recursos hídricos em Portugal.",
+          "sourceClusterIds": [
+            71
+          ]
+        },
+        {
+          "slug": "implementacao_da_lei_de_bases_do_clima_e_metas_de_reducao_de_emissoes",
+          "label": "Implementação da Lei de Bases do Clima e Metas de Redução de Emissões",
+          "description": "Propostas que recomendam o cumprimento e execução da Lei de Bases do Clima, com foco em metas para 2030 e redução de gases de efeito estufa.",
+          "sourceClusterIds": [
+            59
+          ]
+        },
+        {
+          "slug": "medidas_de_apoio_e_mitigacao_de_incendios_florestais_e_fenomenos_naturais",
+          "label": "Medidas de Apoio e Mitigação de Incêndios Florestais e Fenómenos Naturais",
+          "description": "Propostas relacionadas com apoio às vítimas, mitigação de danos e políticas para incêndios florestais e eventos climáticos extremos.",
+          "sourceClusterIds": [
+            57
+          ]
+        },
+        {
+          "slug": "prevencao_e_recuperacao_ambiental_do_parque_natural_da_serra_da_estrela",
+          "label": "Prevenção e recuperação ambiental do Parque Natural da Serra da Estrela",
+          "description": "Propostas que recomendam medidas para prevenção de incêndios, reflorestação e conservação ecológica no Parque Natural da Serra da Estrela e áreas florestais protegidas.",
+          "sourceClusterIds": [
+            75
+          ]
+        },
+        {
+          "slug": "producao_agricola_sustentavel_e_protecao_ambiental",
+          "label": "Produção Agrícola Sustentável e Proteção Ambiental",
+          "description": "Propostas que promovem a produção agrícola nacional sustentável, proteção do espaço marítimo e avaliações de impacto ambiental.",
+          "sourceClusterIds": [
+            68
+          ]
+        },
+        {
+          "slug": "protecao_ambiental_e_valorizacao_de_espacos_verdes_municipais",
+          "label": "Proteção ambiental e valorização de espaços verdes municipais",
+          "description": "Propostas focadas na preservação, valorização ecológica e classificação de áreas verdes urbanas, como a Quinta dos Ingleses em Cascais.",
+          "sourceClusterIds": [
+            82
+          ]
+        },
+        {
+          "slug": "protecao_e_bem_estar_animal",
+          "label": "Proteção e bem-estar animal",
+          "description": "Iniciativas sobre prevenção de maus-tratos, proteção e bem-estar de animais, sobretudo animais de companhia.",
+          "sourceClusterIds": [
+            26
+          ]
+        },
+        {
+          "slug": "biodiversidade_especies_e_patrimonio_natural",
+          "label": "Biodiversidade, espécies e património natural",
+          "description": "Propostas sobre conservação de espécies, raças autóctones, biodiversidade, recursos genéticos, património natural e critérios ambientais em acordos comerciais.",
+          "sourceClusterIds": [
+            "manual_final_review"
+          ]
+        },
+        {
+          "slug": "residuos_biorresiduos_e_economia_circular",
+          "label": "Resíduos, biorresíduos e economia circular",
+          "description": "Propostas sobre recolha seletiva, tratamento de resíduos e biorresíduos, cumprimento de metas ambientais e transição para economia circular.",
+          "sourceClusterIds": [
+            "manual_final_review"
+          ]
+        },
+        {
+          "slug": "infraestruturas_agricolas_pecuarias_e_pesca",
+          "label": "Infraestruturas agrícolas, pecuárias e pesca",
+          "description": "Propostas sobre infraestruturas de apoio à produção agrícola, pecuária e pesqueira, incluindo matadouros regionais e condições setoriais.",
+          "sourceClusterIds": [
+            "manual_final_review"
+          ]
+        },
+        {
+          "slug": "areas_protegidas_e_informacao_ambiental",
+          "label": "Áreas protegidas e informação ambiental",
+          "description": "Propostas sobre acesso, taxas, visitação e informação pública relativa a áreas protegidas, classificadas ou património ambiental.",
+          "sourceClusterIds": [
+            "manual_final_review"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "educacao_e_inclusao_social",
+      "label": "Educação e Inclusão Social",
+      "description": "",
+      "displayOrder": 3,
+      "subtopics": [
+        {
+          "slug": "acolhimento_familiar_e_adocao_de_criancas_e_jovens",
+          "label": "Acolhimento familiar e adoção de crianças e jovens",
+          "description": "Propostas sobre acolhimento familiar, adoção, proteção de crianças e jovens e apoio às famílias nesse contexto.",
+          "sourceClusterIds": [
+            34
+          ]
+        },
+        {
+          "slug": "apoio_social_e_alojamento_para_estudantes_do_ensino_superior",
+          "label": "Apoio Social e Alojamento para Estudantes do Ensino Superior",
+          "description": "Propostas relacionadas com medidas de apoio social, alojamento e complementos para estudantes do ensino superior, visando reduzir custos e promover equidade.",
+          "sourceClusterIds": [
+            65
+          ]
+        },
+        {
+          "slug": "carreira_e_progressao_dos_docentes",
+          "label": "Carreira e progressão dos docentes",
+          "description": "Propostas que abordam a carreira, progressão, tempo de serviço e condições laborais dos professores e docentes em geral.",
+          "sourceClusterIds": [
+            21
+          ]
+        },
+        {
+          "slug": "carreiras_e_valorizacao_dos_assistentes_escolares",
+          "label": "Carreiras e valorização dos assistentes escolares",
+          "description": "Propostas relacionadas com a criação, valorização e regulamentação das carreiras dos assistentes operacionais e técnicos nas escolas.",
+          "sourceClusterIds": [
+            20
+          ]
+        },
+        {
+          "slug": "educacao_inclusiva_e_apoio_a_alunos_com_necessidades_especiais",
+          "label": "Educação inclusiva e apoio a alunos com necessidades especiais",
+          "description": "Iniciativas que recomendam melhorias no regime jurídico da educação inclusiva, formação de professores e recursos para alunos com deficiência.",
+          "sourceClusterIds": [
+            29
+          ]
+        },
+        {
+          "slug": "ensino_da_lingua_portuguesa_e_manuais_escolares",
+          "label": "Ensino da língua portuguesa e manuais escolares",
+          "description": "Propostas que abordam o ensino do português, acesso ao ensino no estrangeiro e a disponibilização de manuais escolares para alunos.",
+          "sourceClusterIds": [
+            17
+          ]
+        },
+        {
+          "slug": "financiamento_e_acesso_as_refeicoes_escolares",
+          "label": "Financiamento e acesso às refeições escolares",
+          "description": "Propostas que recomendam atualização do financiamento público e garantia de acesso às refeições escolares para crianças e jovens.",
+          "sourceClusterIds": [
+            14
+          ]
+        },
+        {
+          "slug": "gratuidade_e_limitacao_de_propinas_no_ensino_superior",
+          "label": "Gratuidade e Limitação de Propinas no Ensino Superior",
+          "description": "Propostas legislativas focadas na eliminação, redução ou limitação das propinas e outras taxas no ensino superior público para facilitar o acesso dos estudantes.",
+          "sourceClusterIds": [
+            64
+          ]
+        },
+        {
+          "slug": "identidade_e_expressao_de_genero_no_contexto_escolar",
+          "label": "Identidade e expressão de género no contexto escolar",
+          "description": "Propostas que tratam da autodeterminação da identidade de género, expressão de género e proteção das características sexuais no âmbito escolar.",
+          "sourceClusterIds": [
+            19
+          ]
+        },
+        {
+          "slug": "inclusao_de_estudantes_com_necessidades_educativas_especificas_no_ensino_superior",
+          "label": "Inclusão de estudantes com necessidades educativas específicas no ensino superior",
+          "description": "Propostas que estabelecem regimes jurídicos e promovem a inclusão e autonomia de estudantes com necessidades educativas específicas no ensino superior.",
+          "sourceClusterIds": [
+            39
+          ]
+        },
+        {
+          "slug": "integracao_e_carreira_na_administracao_publica",
+          "label": "Integração e carreira na administração pública",
+          "description": "Propostas que tratam da integração de trabalhadores, requalificação, carreira e condições laborais na administração pública.",
+          "sourceClusterIds": [
+            42
+          ]
+        },
+        {
+          "slug": "rede_publica_de_creches_e_educacao_infantil",
+          "label": "Rede pública de creches e educação infantil",
+          "description": "Propostas para criação e expansão de redes públicas de creches garantindo acesso e qualidade na educação infantil.",
+          "sourceClusterIds": [
+            13
+          ]
+        },
+        {
+          "slug": "regime_juridico_e_gestao_das_instituicoes_de_ensino_superior",
+          "label": "Regime jurídico e gestão das instituições de ensino superior",
+          "description": "Propostas que alteram o regime jurídico das instituições de ensino superior, incluindo gestão democrática, estatutos e organização interna.",
+          "sourceClusterIds": [
+            47
+          ]
+        },
+        {
+          "slug": "requalificacao_e_obras_em_escolas_basicas_e_secundarias",
+          "label": "Requalificação e obras em escolas básicas e secundárias",
+          "description": "Propostas que recomendam ou solicitam obras de requalificação, reabilitação e melhoria das condições físicas de escolas básicas e secundárias.",
+          "sourceClusterIds": [
+            6
+          ]
+        },
+        {
+          "slug": "saude_mental_em_escolas_e_ensino_superior",
+          "label": "Saúde mental em escolas e ensino superior",
+          "description": "Propostas para criação de serviços de psicologia nas escolas e ensino superior, além de linhas de apoio para saúde mental.",
+          "sourceClusterIds": [
+            15
+          ]
+        },
+        {
+          "slug": "organizacao_escolar_e_dimensao_das_turmas",
+          "label": "Organização escolar e dimensão das turmas",
+          "description": "Propostas sobre dimensão das turmas, organização escolar, ensino artístico especializado e funcionamento dos estabelecimentos de ensino.",
+          "sourceClusterIds": [
+            "manual_noise_review"
+          ]
+        },
+        {
+          "slug": "associativismo_juvenil_e_participacao_civica_dos_jovens",
+          "label": "Associativismo juvenil e participação cívica dos jovens",
+          "description": "Propostas sobre organizações juvenis, conselhos municipais de juventude, Conselho Nacional de Juventude e participação cívica dos jovens.",
+          "sourceClusterIds": [
+            "manual_final_review"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "financas_publicas_fiscalidade_e_regulacao_financeira",
+      "label": "Finanças Públicas, Fiscalidade e Regulação Financeira",
+      "description": "",
+      "displayOrder": 4,
+      "subtopics": [
+        {
+          "slug": "alteracoes_gerais_ao_codigo_do_irs",
+          "label": "Alterações gerais ao Código do IRS",
+          "description": "Propostas que alteram o Código do Imposto sobre o Rendimento das Pessoas Singulares, incluindo escalões, deduções e regimes fiscais.",
+          "sourceClusterIds": [
+            95
+          ]
+        },
+        {
+          "slug": "analise_e_recomendacoes_ao_programa_de_estabilidade_orcamental",
+          "label": "Análise e Recomendações ao Programa de Estabilidade Orçamental",
+          "description": "Propostas que discutem, rejeitam ou recomendam alterações ao Programa de Estabilidade, abordando crescimento, investimento e políticas fiscais.",
+          "sourceClusterIds": [
+            60
+          ]
+        },
+        {
+          "slug": "deducoes_fiscais_para_dependentes_no_irs",
+          "label": "Deduções fiscais para dependentes no IRS",
+          "description": "Propostas que visam reforçar deduções e benefícios fiscais relacionados com dependentes e famílias no âmbito do IRS.",
+          "sourceClusterIds": [
+            94
+          ]
+        },
+        {
+          "slug": "financiamento_e_beneficios_fiscais_dos_partidos_politicos",
+          "label": "Financiamento e benefícios fiscais dos partidos políticos",
+          "description": "Propostas que tratam da regulação, redução ou eliminação de benefícios fiscais e subvenções públicas atribuídas a partidos políticos e campanhas eleitorais.",
+          "sourceClusterIds": [
+            48
+          ]
+        },
+        {
+          "slug": "orcamento_do_estado_e_disposicoes_gerais",
+          "label": "Orçamento do Estado e disposições gerais",
+          "description": "Propostas referentes ao Orçamento do Estado, apresentadas pela Presidência do Conselho de Ministros, com disposições preliminares e gerais.",
+          "sourceClusterIds": [
+            99
+          ]
+        },
+        {
+          "slug": "pagamentos_em_atraso_e_compromissos_do_estado",
+          "label": "Pagamentos em atraso e compromissos do Estado",
+          "description": "Propostas que abordam a problemática dos atrasos nos pagamentos do Estado a fornecedores e outras entidades, incluindo revogação da legislação relacionada.",
+          "sourceClusterIds": [
+            90
+          ]
+        },
+        {
+          "slug": "reducao_da_taxa_de_iva_sobre_eletricidade_e_gas",
+          "label": "Redução da Taxa de IVA sobre Eletricidade e Gás",
+          "description": "Propostas que visam reduzir a taxa do Imposto sobre o Valor Acrescentado (IVA) aplicada aos consumos de eletricidade e gás para aliviar o custo para famílias e empresas.",
+          "sourceClusterIds": [
+            66
+          ]
+        },
+        {
+          "slug": "reforma_fiscal_e_tributacao_de_empresas",
+          "label": "Reforma fiscal e tributação de empresas",
+          "description": "Propostas relacionadas com o código do IRC, benefícios fiscais, tributação de empresas e justiça fiscal.",
+          "sourceClusterIds": [
+            96
+          ]
+        },
+        {
+          "slug": "reformas_e_regras_do_sistema_eleitoral_e_voto",
+          "label": "Reformas e regras do sistema eleitoral e voto",
+          "description": "Propostas relacionadas com alterações às leis eleitorais, direitos dos eleitores, organização dos círculos eleitorais e processos de votação.",
+          "sourceClusterIds": [
+            49
+          ]
+        },
+        {
+          "slug": "reformas_no_iva_e_obrigacoes_fiscais",
+          "label": "Reformas no IVA e obrigações fiscais",
+          "description": "Propostas que tratam da simplificação, isenção e alterações no imposto sobre o valor acrescentado (IVA) e outras obrigações fiscais para empresas e sujeitos passivos.",
+          "sourceClusterIds": [
+            89
+          ]
+        },
+        {
+          "slug": "regulacao_e_controlo_dos_precos_dos_combustiveis",
+          "label": "Regulação e Controlo dos Preços dos Combustíveis",
+          "description": "Propostas para fixar preços de referência, combater especulação e reduzir os preços dos combustíveis como gasolina, gasóleo e GPL.",
+          "sourceClusterIds": [
+            67
+          ]
+        },
+        {
+          "slug": "regulacao_financeira_europeia_e_criptoativos",
+          "label": "Regulação financeira europeia e criptoativos",
+          "description": "Propostas relacionadas com a transposição de diretivas europeias, regulação de criptoativos e resiliência operacional do setor financeiro.",
+          "sourceClusterIds": [
+            93
+          ]
+        },
+        {
+          "slug": "supervisao_e_regulacao_do_sistema_financeiro",
+          "label": "Supervisão e regulação do sistema financeiro",
+          "description": "Propostas que tratam da supervisão, transparência e regulação das instituições de crédito e do sistema financeiro em Portugal.",
+          "sourceClusterIds": [
+            92
+          ]
+        },
+        {
+          "slug": "controlo_de_precos_e_bens_essenciais",
+          "label": "Controlo de preços e bens essenciais",
+          "description": "Propostas sobre monitorização, controlo ou regulação de preços de bens essenciais, incluindo cabazes alimentares e práticas especulativas.",
+          "sourceClusterIds": [
+            "manual_noise_review"
+          ]
+        },
+        {
+          "slug": "protecao_do_consumidor_financeiro_e_servicos_a_distancia",
+          "label": "Proteção do consumidor financeiro e serviços à distância",
+          "description": "Propostas sobre transparência, contratação à distância e proteção dos consumidores no acesso a serviços financeiros.",
+          "sourceClusterIds": [
+            "manual_noise_review"
+          ]
+        },
+        {
+          "slug": "financas_regionais_e_autonomias",
+          "label": "Finanças regionais e autonomias",
+          "description": "Propostas sobre enquadramento orçamental, assistência financeira, taxas regionais e finanças públicas das regiões autónomas.",
+          "sourceClusterIds": [
+            "manual_final_review"
+          ]
+        },
+        {
+          "slug": "beneficios_fiscais_e_regimes_fiscais_setoriais",
+          "label": "Benefícios fiscais e regimes fiscais setoriais",
+          "description": "Propostas sobre benefícios fiscais, isenções, regimes fiscais excecionais e medidas tributárias aplicadas a setores ou eventos específicos.",
+          "sourceClusterIds": [
+            "manual_final_review"
+          ]
+        },
+        {
+          "slug": "concorrencia_e_regulacao_economica",
+          "label": "Concorrência e regulação económica",
+          "description": "Propostas sobre defesa da concorrência, prescrição de processos concorrenciais, regulação económica e práticas de mercado.",
+          "sourceClusterIds": [
+            "manual_final_review"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "governanca_justica_e_administracao_publica",
+      "label": "Governança, Justiça e Administração Pública",
+      "description": "",
+      "displayOrder": 5,
+      "subtopics": [
+        {
+          "slug": "cultura_patrimonio_e_direitos_autorais",
+          "label": "Cultura, património e direitos autorais",
+          "description": "Propostas sobre preservação e valorização do património cultural, direitos de autor, direitos conexos e regulação do setor cultural, audiovisual e rádio.",
+          "sourceClusterIds": [
+            35,
+            81
+          ]
+        },
+        {
+          "slug": "reformas_e_funcionamento_dos_tribunais_administrativos",
+          "label": "Reformas e funcionamento dos tribunais administrativos",
+          "description": "Propostas relacionadas com a organização, funcionamento e reformas dos tribunais administrativos e fiscais, incluindo celeridade processual e recrutamento de magistrados.",
+          "sourceClusterIds": [
+            83
+          ]
+        },
+        {
+          "slug": "regulacao_e_supervisao_do_conselho_de_ministros",
+          "label": "Regulação e supervisão do Conselho de Ministros",
+          "description": "Propostas relacionadas com atos legislativos da Presidência do Conselho de Ministros, incluindo regulação de serviços digitais, cibersegurança e entidades reguladoras.",
+          "sourceClusterIds": [
+            91
+          ]
+        },
+        {
+          "slug": "regulacao_e_transparencia_de_cargos_politicos_e_altos_cargos_publicos",
+          "label": "Regulação e transparência de cargos políticos e altos cargos públicos",
+          "description": "Propostas que tratam de impedimentos, incompatibilidades, transparência e exercício de funções por titulares de cargos políticos e altos cargos públicos.",
+          "sourceClusterIds": [
+            84
+          ]
+        },
+        {
+          "slug": "valorizacao_e_condicoes_dos_funcionarios_judiciais",
+          "label": "Valorização e condições dos funcionários judiciais",
+          "description": "Iniciativas que recomendam revisão do estatuto, valorização salarial e melhoria das condições de trabalho para oficiais e funcionários de justiça.",
+          "sourceClusterIds": [
+            31
+          ]
+        },
+        {
+          "slug": "direitos_do_consumidor_e_contratacao_de_bens_e_servicos",
+          "label": "Direitos do consumidor e contratação de bens e serviços",
+          "description": "Propostas sobre direitos dos consumidores na compra e venda de bens, serviços e conteúdos digitais, incluindo regras gerais de contratação.",
+          "sourceClusterIds": [
+            "manual_noise_review"
+          ]
+        },
+        {
+          "slug": "servicos_publicos_comunicacoes_e_servico_postal_universal",
+          "label": "Serviços públicos, comunicações e serviço postal universal",
+          "description": "Propostas sobre comunicações eletrónicas, CTT, serviço postal universal, privatizações e salvaguarda de serviços públicos estratégicos.",
+          "sourceClusterIds": [
+            "manual_noise_review"
+          ]
+        },
+        {
+          "slug": "comunicacao_social_direitos_digitais_e_desinformacao",
+          "label": "Comunicação social, direitos digitais e desinformação",
+          "description": "Propostas sobre comunicação social, liberdade de expressão online, direitos digitais, desinformação e sustentabilidade de órgãos de comunicação social.",
+          "sourceClusterIds": [
+            "manual_final_review"
+          ]
+        },
+        {
+          "slug": "comunidades_portuguesas_no_estrangeiro_e_participacao_civica",
+          "label": "Comunidades portuguesas no estrangeiro e participação cívica",
+          "description": "Propostas sobre serviços consulares, participação eleitoral, associativismo e representação cívica das comunidades portuguesas residentes no estrangeiro.",
+          "sourceClusterIds": [
+            "manual_final_review"
+          ]
+        },
+        {
+          "slug": "participacao_cidada_e_iniciativa_legislativa",
+          "label": "Participação cidadã e iniciativa legislativa",
+          "description": "Propostas sobre mecanismos de participação cívica, iniciativa legislativa de cidadãos e aprofundamento da participação democrática.",
+          "sourceClusterIds": [
+            "manual_final_review"
+          ]
+        },
+        {
+          "slug": "gestao_publica_transparencia_e_avaliacao_de_entidades",
+          "label": "Gestão pública, transparência e avaliação de entidades",
+          "description": "Propostas sobre avaliação, transparência, racionalização e informação pública relativa a entidades, observatórios e recursos humanos da administração pública.",
+          "sourceClusterIds": [
+            "manual_final_review"
+          ]
+        },
+        {
+          "slug": "simplificacao_administrativa_licenciamentos_e_obrigacoes_formais",
+          "label": "Simplificação administrativa, licenciamentos e obrigações formais",
+          "description": "Propostas sobre simplificação de licenciamentos, comunicações prévias, obrigações formais e regimes administrativos aplicáveis a atividades económicas ou serviços.",
+          "sourceClusterIds": [
+            "manual_final_review"
+          ]
+        },
+        {
+          "slug": "economia_social_cooperativas_e_setor_solidario",
+          "label": "Economia social, cooperativas e setor solidário",
+          "description": "Propostas sobre economia social, cooperativas, mutualidades, fundações, misericórdias e entidades do setor social e solidário.",
+          "sourceClusterIds": [
+            "manual_final_review"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "habitacao_urbanismo_e_financiamento",
+      "label": "Habitação, Urbanismo e Financiamento",
+      "description": "",
+      "displayOrder": 6,
+      "subtopics": [
+        {
+          "slug": "credito_a_habitacao_e_taxas_de_juro",
+          "label": "Crédito à habitação e taxas de juro",
+          "description": "Propostas relacionadas com medidas de apoio e proteção dos particulares face ao aumento das taxas de juro nos contratos de crédito para aquisição de habitação própria.",
+          "sourceClusterIds": [
+            88
+          ]
+        },
+        {
+          "slug": "medidas_fiscais_para_habitacao_propria",
+          "label": "Medidas fiscais para habitação própria",
+          "description": "Propostas que tratam de impostos municipais sobre habitação própria, incluindo IMI e IMT, e incentivos para jovens e famílias.",
+          "sourceClusterIds": [
+            97
+          ]
+        },
+        {
+          "slug": "mobilizacao_de_patrimonio_publico_para_habitacao",
+          "label": "Mobilização de património público para habitação",
+          "description": "Propostas que recomendam a utilização de imóveis públicos devolutos para fins habitacionais e combate à especulação imobiliária.",
+          "sourceClusterIds": [
+            101
+          ]
+        },
+        {
+          "slug": "regulacao_do_uso_do_solo_e_ordenamento_territorial_urbano",
+          "label": "Regulação do uso do solo e ordenamento territorial urbano",
+          "description": "Propostas que tratam da simplificação, alteração e atualização do regime jurídico da urbanização, edificação, licenciamento e reconversão urbanística de áreas e imóveis.",
+          "sourceClusterIds": [
+            87
+          ]
+        },
+        {
+          "slug": "regulacao_e_limitacao_de_rendas_de_arrendamento",
+          "label": "Regulação e limitação de rendas de arrendamento",
+          "description": "Propostas que visam limitar aumentos de renda, regular contratos de arrendamento e proteger arrendatários.",
+          "sourceClusterIds": [
+            100
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "justica_penal_seguranca_e_protecao_de_vitimas",
+      "label": "Justiça Penal, Segurança e Proteção de Vítimas",
+      "description": "Propostas sobre crimes, processo penal, segurança interna, violência doméstica, crimes sexuais e proteção de vítimas.",
+      "displayOrder": 7,
+      "subtopics": [
+        {
+          "slug": "alteracoes_ao_codigo_de_processo_penal_e_medidas_penais",
+          "label": "Alterações ao Código de Processo Penal e medidas penais",
+          "description": "Propostas que visam alterar o Código de Processo Penal para melhorar celeridade, assistência ao arguido, combate à corrupção e outras medidas penais.",
+          "sourceClusterIds": [
+            86
+          ]
+        },
+        {
+          "slug": "combate_ao_terrorismo_e_criminalidade_organizada",
+          "label": "Combate ao terrorismo e criminalidade organizada",
+          "description": "Propostas relacionadas com investigação, repressão e prevenção de crimes graves, especialmente terrorismo e criminalidade organizada, incluindo troca de informações e registo criminal.",
+          "sourceClusterIds": [
+            85
+          ]
+        },
+        {
+          "slug": "combate_a_violencia_domestica_e_discriminacao",
+          "label": "Combate à violência doméstica e discriminação",
+          "description": "Propostas relacionadas com a prevenção e combate à violência doméstica, violência sexual baseada em imagens e discriminação contra mulheres e crianças.",
+          "sourceClusterIds": [
+            23
+          ]
+        },
+        {
+          "slug": "crimes_sexuais_e_protecao_das_vitimas",
+          "label": "Crimes sexuais e proteção das vítimas",
+          "description": "Propostas que tratam da tipificação, punição e proteção das vítimas em crimes sexuais, incluindo alterações ao código penal.",
+          "sourceClusterIds": [
+            22
+          ]
+        },
+        {
+          "slug": "protecao_e_apoio_a_vitimas_de_violencia_domestica",
+          "label": "Proteção e apoio a vítimas de violência doméstica",
+          "description": "Iniciativas legislativas que reforçam medidas de proteção, apoio e direitos das vítimas de violência doméstica, incluindo crianças e outras vítimas vulneráveis.",
+          "sourceClusterIds": [
+            33
+          ]
+        },
+        {
+          "slug": "armas_municoes_e_dispositivos_de_airsoft",
+          "label": "Armas, munições e dispositivos de airsoft",
+          "description": "Propostas sobre regime jurídico das armas, munições, entrega voluntária de armas, cofres de segurança e dispositivos de airsoft.",
+          "sourceClusterIds": [
+            "manual_final_review"
+          ]
+        },
+        {
+          "slug": "seguranca_e_comunicacoes_em_estabelecimentos_prisionais",
+          "label": "Segurança e comunicações em estabelecimentos prisionais",
+          "description": "Propostas sobre segurança prisional, utilização de telemóveis, inibidores de sinal e comunicações em estabelecimentos prisionais.",
+          "sourceClusterIds": [
+            "manual_final_review"
+          ]
+        },
+        {
+          "slug": "apoio_a_vitimas_de_acidentes_e_desaparecimentos",
+          "label": "Apoio a vítimas de acidentes e desaparecimentos",
+          "description": "Propostas sobre indemnizações, prestações sociais, desaparecimentos e apoio a vítimas ou familiares após acidentes e sinistros graves.",
+          "sourceClusterIds": [
+            "manual_final_review"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "nacionalidade_migracao_e_asilo",
+      "label": "Nacionalidade, Migração e Asilo",
+      "description": "Propostas sobre nacionalidade, autorização de residência, vistos, asilo, imigração e direitos dos cidadãos estrangeiros.",
+      "displayOrder": 8,
+      "subtopics": [
+        {
+          "slug": "nacionalidade_residencia_e_direitos_dos_estrangeiros",
+          "label": "Nacionalidade, residência e direitos dos estrangeiros",
+          "description": "Propostas sobre nacionalidade, vistos, asilo, autorização de residência e direitos de cidadãos estrangeiros em Portugal.",
+          "sourceClusterIds": [
+            25
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "politica_externa_e_relacoes_internacionais",
+      "label": "Política Externa e Relações Internacionais",
+      "description": "Propostas sobre relações internacionais, reconhecimento diplomático, conflitos externos e posições públicas de Portugal em matéria internacional.",
+      "displayOrder": 9,
+      "subtopics": [
+        {
+          "slug": "posicoes_e_recomendacoes_sobre_crises_internacionais_e_direitos_humanos",
+          "label": "Posições e recomendações sobre crises internacionais e direitos humanos",
+          "description": "Projetos de resolução que recomendam ações governamentais relativas a situações internacionais, com foco em direitos humanos e comunidades portuguesas no exterior.",
+          "sourceClusterIds": [
+            3
+          ]
+        },
+        {
+          "slug": "reconhecimento_do_estado_da_palestina_e_apoio_a_paz_no_medio_oriente",
+          "label": "Reconhecimento do Estado da Palestina e apoio à paz no Médio Oriente",
+          "description": "Propostas que recomendam o reconhecimento do Estado da Palestina e o apoio a soluções pacíficas para o conflito israelo-palestiniano.",
+          "sourceClusterIds": [
+            4
+          ]
+        },
+        {
+          "slug": "assuntos_europeus_e_escrutinio_parlamentar",
+          "label": "Assuntos europeus e escrutínio parlamentar",
+          "description": "Propostas sobre acompanhamento parlamentar da participação portuguesa na União Europeia, transposição de diretivas, posições em Conselhos Europeus e escrutínio de assuntos europeus.",
+          "sourceClusterIds": [
+            "manual_final_review"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "saude_publica_cuidados_e_politicas_sociais",
+      "label": "Saúde Pública, Cuidados e Políticas Sociais",
+      "description": "",
+      "displayOrder": 10,
+      "subtopics": [
+        {
+          "slug": "acessibilidade_certificacao_e_direitos_das_pessoas_com_deficiencia",
+          "label": "Acessibilidade, certificação e direitos das pessoas com deficiência",
+          "description": "Propostas sobre acessibilidade, certificação de incapacidade, atestados multiuso, prestações sociais e reforço dos direitos das pessoas com deficiência.",
+          "sourceClusterIds": [
+            12,
+            80
+          ]
+        },
+        {
+          "slug": "acesso_e_gestao_de_medicamentos_e_farmacias",
+          "label": "Acesso e gestão de medicamentos e farmácias",
+          "description": "Propostas relacionadas com o acesso, distribuição, crise de abastecimento e regulamentação de medicamentos e farmácias em Portugal.",
+          "sourceClusterIds": [
+            27
+          ]
+        },
+        {
+          "slug": "bioetica_ensaios_clinicos_e_morte_medicamente_assistida",
+          "label": "Bioética, ensaios clínicos e morte medicamente assistida",
+          "description": "Propostas sobre morte medicamente assistida, ensaios clínicos e regimes de decisão clínica com implicações bioéticas.",
+          "sourceClusterIds": [
+            69
+          ]
+        },
+        {
+          "slug": "comportamentos_aditivos_jogo_e_substancias_controladas",
+          "label": "Comportamentos aditivos, jogo e substâncias controladas",
+          "description": "Propostas sobre jogo, apostas, publicidade associada, jogo patológico e regulação de substâncias controladas ou psicoativas.",
+          "sourceClusterIds": [
+            50
+          ]
+        },
+        {
+          "slug": "condicoes_laborais_e_valorizacao_da_carreira_de_enfermagem",
+          "label": "Condições laborais e valorização da carreira de enfermagem",
+          "description": "Propostas que tratam do reconhecimento do desgaste rápido, regimes laborais específicos e valorização salarial para enfermeiros.",
+          "sourceClusterIds": [
+            30
+          ]
+        },
+        {
+          "slug": "contribuicoes_e_beneficios_dos_subsistemas_de_saude_para_militares",
+          "label": "Contribuições e benefícios dos subsistemas de saúde para militares",
+          "description": "Propostas que tratam da redução e regulação das contribuições para subsistemas de saúde específicos dos militares e beneficiários das forças armadas.",
+          "sourceClusterIds": [
+            73
+          ]
+        },
+        {
+          "slug": "cuidados_continuados_integrados",
+          "label": "Cuidados continuados integrados",
+          "description": "Propostas que visam o reforço e expansão da Rede Nacional de Cuidados Continuados Integrados e melhoria das respostas sociais associadas.",
+          "sourceClusterIds": [
+            10
+          ]
+        },
+        {
+          "slug": "direitos_e_protecao_na_gravidez_e_parto",
+          "label": "Direitos e proteção na gravidez e parto",
+          "description": "Propostas focadas na proteção dos direitos das mulheres grávidas, prevenção da violência obstétrica e humanização dos cuidados no parto.",
+          "sourceClusterIds": [
+            40
+          ]
+        },
+        {
+          "slug": "doencas_cronicas_e_comparticipacao_de_tratamentos",
+          "label": "Doenças crónicas e comparticipação de tratamentos",
+          "description": "Propostas que tratam da diabetes, doença de Crohn, epidermólise bolhosa e regimes de comparticipação para medicamentos e dispositivos médicos.",
+          "sourceClusterIds": [
+            28
+          ]
+        },
+        {
+          "slug": "doencas_femininas_e_dadiva_de_sangue",
+          "label": "Doenças femininas e dádiva de sangue",
+          "description": "Propostas relacionadas com a endometriose, adenomioma, saúde menstrual e incentivos à dádiva voluntária de sangue.",
+          "sourceClusterIds": [
+            24
+          ]
+        },
+        {
+          "slug": "gestao_e_reforco_do_servico_nacional_de_saude_sns",
+          "label": "Gestão e reforço do Serviço Nacional de Saúde (SNS)",
+          "description": "Iniciativas sobre modelos de gestão, financiamento, infraestruturas, cuidados primários, hospitais, parcerias e reforço do SNS para melhorar a prestação de cuidados de saúde.",
+          "sourceClusterIds": [
+            36,
+            45,
+            46
+          ]
+        },
+        {
+          "slug": "isencao_e_eliminacao_de_taxas_moderadoras_no_sns",
+          "label": "Isenção e eliminação de taxas moderadoras no SNS",
+          "description": "Propostas legislativas focadas na eliminação ou isenção do pagamento de taxas moderadoras para acesso a cuidados de saúde no Serviço Nacional de Saúde, incluindo transporte de doentes.",
+          "sourceClusterIds": [
+            32
+          ]
+        },
+        {
+          "slug": "licenca_parental_e_direitos_de_maternidade_paternidade",
+          "label": "Licença parental e direitos de maternidade/paternidade",
+          "description": "Projetos que ampliam e garantem direitos relacionados à licença parental, períodos de licença, subsídios e proteção no trabalho para progenitores.",
+          "sourceClusterIds": [
+            38
+          ]
+        },
+        {
+          "slug": "pensoes_complementos_e_sustentabilidade_do_sistema_publico",
+          "label": "Pensões, complementos e sustentabilidade do sistema público",
+          "description": "Propostas sobre atualização de pensões, complementos para pensionistas, idade legal de reforma, regimes especiais e sustentabilidade do sistema público de pensões.",
+          "sourceClusterIds": [
+            76,
+            79
+          ]
+        },
+        {
+          "slug": "politicas_para_pessoas_idosas",
+          "label": "Políticas para pessoas idosas",
+          "description": "Propostas dirigidas ao reconhecimento de direitos, proteção e reforço da rede de apoio para pessoas idosas.",
+          "sourceClusterIds": [
+            11
+          ]
+        },
+        {
+          "slug": "procriacao_medicamente_assistida_e_infertilidade",
+          "label": "Procriação medicamente assistida e infertilidade",
+          "description": "Propostas relacionadas com acesso, regulamentação e apoio a tratamentos de procriação medicamente assistida e infertilidade.",
+          "sourceClusterIds": [
+            41
+          ]
+        },
+        {
+          "slug": "rastreio_e_tratamento_do_cancro",
+          "label": "Rastreio e tratamento do cancro",
+          "description": "Propostas relacionadas com o alargamento do rastreio precoce e acesso a tratamentos para o cancro, especialmente o cancro da mama.",
+          "sourceClusterIds": [
+            9
+          ]
+        },
+        {
+          "slug": "reforco_e_expansao_dos_cuidados_paliativos",
+          "label": "Reforço e expansão dos cuidados paliativos",
+          "description": "Projetos que recomendam o desenvolvimento, alargamento e melhoria da rede nacional de cuidados paliativos para doentes oncológicos e em fim de vida.",
+          "sourceClusterIds": [
+            7
+          ]
+        },
+        {
+          "slug": "valorizacao_e_condicoes_dos_profissionais_de_saude_no_sns",
+          "label": "Valorização e condições dos profissionais de saúde no SNS",
+          "description": "Propostas que visam melhorar a remuneração, estabilidade, dedicação e estatutos dos profissionais do Serviço Nacional de Saúde.",
+          "sourceClusterIds": [
+            37
+          ]
+        },
+        {
+          "slug": "qualidade_ambiental_em_edificios_e_prevencao_sanitaria",
+          "label": "Qualidade ambiental em edifícios e prevenção sanitária",
+          "description": "Propostas sobre qualidade do ar interior, água, biofilmes, legionella e riscos ambientais com impacto na saúde pública.",
+          "sourceClusterIds": [
+            "manual_final_review"
+          ]
+        },
+        {
+          "slug": "vacinacao_e_prevencao_da_doenca",
+          "label": "Vacinação e prevenção da doença",
+          "description": "Propostas sobre planos de vacinação, prevenção da doença, imunização de adultos e medidas preventivas de saúde pública.",
+          "sourceClusterIds": [
+            "manual_final_review"
+          ]
+        },
+        {
+          "slug": "desporto_atividade_fisica_e_saude_publica",
+          "label": "Desporto, atividade física e saúde pública",
+          "description": "Propostas sobre prática desportiva, retoma de competições, atividade física e impactos de saúde pública no desporto.",
+          "sourceClusterIds": [
+            "manual_final_review"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "trabalho_direitos_laborais_e_recursos_humanos",
+      "label": "Trabalho, Direitos Laborais e Recursos Humanos",
+      "description": "",
+      "displayOrder": 11,
+      "subtopics": [
+        {
+          "slug": "aumento_do_salario_minimo_nacional",
+          "label": "Aumento do salário mínimo nacional",
+          "description": "Propostas focadas no aumento do salário mínimo nacional e melhoria das remunerações dos trabalhadores.",
+          "sourceClusterIds": [
+            8
+          ]
+        },
+        {
+          "slug": "carreira_e_condicoes_dos_investigadores_cientificos",
+          "label": "Carreira e condições dos investigadores científicos",
+          "description": "Propostas relacionadas com o regime laboral, carreira, bolsas e valorização dos investigadores científicos e do pessoal de apoio à investigação.",
+          "sourceClusterIds": [
+            16
+          ]
+        },
+        {
+          "slug": "condicoes_laborais_e_valorizacao_das_forcas_de_seguranca_e_militares",
+          "label": "Condições laborais e valorização das forças de segurança e militares",
+          "description": "Propostas sobre condições de trabalho, saúde mental, habitação, remuneração, recrutamento e valorização de profissionais das forças de segurança e militares.",
+          "sourceClusterIds": [
+            74,
+            78
+          ]
+        },
+        {
+          "slug": "direitos_laborais_jornada_ferias_e_descanso",
+          "label": "Direitos laborais: jornada, férias e descanso",
+          "description": "Propostas que visam assegurar direitos dos trabalhadores relacionados com horas de trabalho, férias, feriados, descanso e alterações ao Código do Trabalho.",
+          "sourceClusterIds": [
+            55
+          ]
+        },
+        {
+          "slug": "igualdade_de_genero_e_combate_a_discriminacao_salarial",
+          "label": "Igualdade de género e combate à discriminação salarial",
+          "description": "Propostas focadas na promoção da igualdade entre mulheres e homens, especialmente na remuneração e representação em órgãos de gestão.",
+          "sourceClusterIds": [
+            18
+          ]
+        },
+        {
+          "slug": "reformas_do_codigo_do_trabalho_e_direitos_laborais",
+          "label": "Reformas do Código do Trabalho e Direitos Laborais",
+          "description": "Propostas focadas na alteração do Código do Trabalho para reforçar direitos dos trabalhadores, combater precariedade e regular contratos e despedimentos.",
+          "sourceClusterIds": [
+            56
+          ]
+        },
+        {
+          "slug": "regulacao_e_organizacao_das_associacoes_profissionais",
+          "label": "Regulação e organização das associações profissionais",
+          "description": "Propostas relacionadas com o regime jurídico, organização e funcionamento das associações públicas profissionais e a regulação do exercício profissional.",
+          "sourceClusterIds": [
+            72
+          ]
+        },
+        {
+          "slug": "suplementos_e_regime_de_pensoes_para_forcas_de_seguranca",
+          "label": "Suplementos e regime de pensões para forças de segurança",
+          "description": "Propostas que asseguram aumento de suplementos por serviço e risco, e revisão do regime de pensões para pessoal das forças e serviços de segurança.",
+          "sourceClusterIds": [
+            77
+          ]
+        },
+        {
+          "slug": "valorizacao_e_direitos_dos_bombeiros_e_sapadores",
+          "label": "Valorização e direitos dos bombeiros e sapadores",
+          "description": "Projetos que visam reconhecer o estatuto profissional dos bombeiros, incluindo direitos, condições de trabalho, e regimes especiais de aposentadoria.",
+          "sourceClusterIds": [
+            5
+          ]
+        },
+        {
+          "slug": "regulacao_de_profissoes_e_qualificacoes_profissionais",
+          "label": "Regulação de profissões e qualificações profissionais",
+          "description": "Propostas sobre acesso e exercício de profissões, qualificações profissionais, certificações, reconhecimento profissional e regimes profissionais específicos.",
+          "sourceClusterIds": [
+            "manual_final_review"
+          ]
+        },
+        {
+          "slug": "politicas_de_emprego_e_compensacao_salarial",
+          "label": "Políticas de emprego e compensação salarial",
+          "description": "Propostas sobre emprego público, combate ao desemprego, garantia de emprego, compensações salariais e apoios laborais setoriais.",
+          "sourceClusterIds": [
+            "manual_final_review"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "transportes_e_mobilidade",
+      "label": "Transportes e Mobilidade",
+      "description": "",
+      "displayOrder": 12,
+      "subtopics": [
+        {
+          "slug": "desenvolvimento_e_investimento_na_rede_ferroviaria_nacional",
+          "label": "Desenvolvimento e Investimento na Rede Ferroviária Nacional",
+          "description": "Propostas que recomendam a priorização, revisão e investimento no plano ferroviário nacional, incluindo linhas de alta velocidade e ligações regionais.",
+          "sourceClusterIds": [
+            63
+          ]
+        },
+        {
+          "slug": "eliminacao_e_reducao_de_portagens_nas_autoestradas_do_interior",
+          "label": "Eliminação e redução de portagens nas autoestradas do interior",
+          "description": "Propostas que defendem a eliminação ou redução gradual das portagens em autoestradas, especialmente nas regiões do interior do país.",
+          "sourceClusterIds": [
+            44
+          ]
+        },
+        {
+          "slug": "incentivos_e_melhorias_nos_transportes_publicos",
+          "label": "Incentivos e melhorias nos transportes públicos",
+          "description": "Propostas que recomendam medidas para promoção, integração tarifária, valorização e expansão dos transportes públicos e coletivos, incluindo passes nacionais.",
+          "sourceClusterIds": [
+            53
+          ]
+        },
+        {
+          "slug": "mobilidade_eletrica_e_legislacao_veicular",
+          "label": "Mobilidade elétrica e legislação veicular",
+          "description": "Propostas relacionadas com veículos elétricos, mobilidade elétrica, isenções fiscais, estacionamento e alterações ao código da estrada.",
+          "sourceClusterIds": [
+            52
+          ]
+        },
+        {
+          "slug": "regulacao_do_transporte_individual_remunerado_tvde",
+          "label": "Regulação do transporte individual remunerado (TVDE)",
+          "description": "Propostas que tratam do regime jurídico, atividade, operadores e plataformas associadas ao transporte individual remunerado de passageiros em veículos descaracterizados.",
+          "sourceClusterIds": [
+            51
+          ]
+        },
+        {
+          "slug": "reprivatizacao_da_tap_e_gestao_aeroportuaria",
+          "label": "Reprivatização da TAP e Gestão Aeroportuária",
+          "description": "Propostas relacionadas com a reprivatização da TAP, defesa do interesse público, proteção dos trabalhadores e planeamento aeroportuário.",
+          "sourceClusterIds": [
+            62
+          ]
+        },
+        {
+          "slug": "requalificacao_e_melhorias_do_itinerario_complementar_8_ic8",
+          "label": "Requalificação e melhorias do Itinerário Complementar 8 (IC8)",
+          "description": "Propostas que recomendam a requalificação urgente e melhorias no IC8, uma via rodoviária que liga o litoral ao interior do país.",
+          "sourceClusterIds": [
+            43
+          ]
+        },
+        {
+          "slug": "subsidio_social_de_mobilidade_e_transporte_regional",
+          "label": "Subsídio Social de Mobilidade e Transporte Regional",
+          "description": "Propostas que recomendam a operacionalização e revisão do Subsídio Social de Mobilidade para residentes em regiões autónomas e melhoria do transporte aéreo e marítimo.",
+          "sourceClusterIds": [
+            58
+          ]
+        },
+        {
+          "slug": "mobilidade_ciclavel_e_modos_suaves",
+          "label": "Mobilidade ciclável e modos suaves",
+          "description": "Propostas sobre ciclovias, bicicleta, mobilidade suave, redes cicláveis e promoção de modos ativos de transporte.",
+          "sourceClusterIds": [
+            "manual_final_review"
+          ]
+        },
+        {
+          "slug": "navegacao_interior_e_transporte_fluvial",
+          "label": "Navegação interior e transporte fluvial",
+          "description": "Propostas sobre navegação interior, transporte fluvial, embarcações e regimes profissionais ou administrativos associados a vias navegáveis interiores.",
+          "sourceClusterIds": [
+            "manual_final_review"
+          ]
+        }
+      ]
+    }
+  ]
+}

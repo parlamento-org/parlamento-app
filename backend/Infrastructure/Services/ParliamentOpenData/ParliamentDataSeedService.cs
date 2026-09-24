@@ -6,7 +6,9 @@ using Microsoft.Extensions.Options;
 using Parlamento.Application.Abstractions;
 using Parlamento.Application.Imports;
 using Parlamento.Application.Summaries;
+using Parlamento.Application.Topics;
 using Parlamento.Infrastructure.Persistence;
+using Parlamento.Infrastructure.Services.ProposalTopics;
 using Parlamento.Infrastructure.Services.Summaries;
 
 namespace Parlamento.Infrastructure.Services.ParliamentOpenData;
@@ -18,8 +20,11 @@ public class ParliamentDataSeedService : IParliamentDataSeedService
     private readonly IParliamentBaseInfoImportService _baseInfoImportService;
     private readonly IParliamentDocumentRedactionService _redactionService;
     private readonly IParliamentSummaryService _summaryService;
+    private readonly IProposalTopicTaxonomyImportService _topicTaxonomyImportService;
+    private readonly IProjectLawTopicAssignmentService _topicAssignmentService;
     private readonly IOptionsMonitor<ParliamentOpenDataOptions> _openDataOptions;
     private readonly IOptionsMonitor<OpenAiSummaryOptions> _openAiOptions;
+    private readonly IOptionsMonitor<ProposalTopicOptions> _topicOptions;
     private readonly IConfiguration _configuration;
     private readonly ILogger<ParliamentDataSeedService> _logger;
 
@@ -29,8 +34,11 @@ public class ParliamentDataSeedService : IParliamentDataSeedService
         IParliamentBaseInfoImportService baseInfoImportService,
         IParliamentDocumentRedactionService redactionService,
         IParliamentSummaryService summaryService,
+        IProposalTopicTaxonomyImportService topicTaxonomyImportService,
+        IProjectLawTopicAssignmentService topicAssignmentService,
         IOptionsMonitor<ParliamentOpenDataOptions> openDataOptions,
         IOptionsMonitor<OpenAiSummaryOptions> openAiOptions,
+        IOptionsMonitor<ProposalTopicOptions> topicOptions,
         IConfiguration configuration,
         ILogger<ParliamentDataSeedService> logger)
     {
@@ -39,8 +47,11 @@ public class ParliamentDataSeedService : IParliamentDataSeedService
         _baseInfoImportService = baseInfoImportService;
         _redactionService = redactionService;
         _summaryService = summaryService;
+        _topicTaxonomyImportService = topicTaxonomyImportService;
+        _topicAssignmentService = topicAssignmentService;
         _openDataOptions = openDataOptions;
         _openAiOptions = openAiOptions;
+        _topicOptions = topicOptions;
         _configuration = configuration;
         _logger = logger;
     }
@@ -53,12 +64,20 @@ public class ParliamentDataSeedService : IParliamentDataSeedService
         var maxDocuments = request.MaxDocuments.GetValueOrDefault(int.MaxValue);
         var includeSummaries = request.IncludeSummaries;
         var openAiConfigured = IsOpenAiConfigured();
+        var topicAssignmentConfigured = IsTopicAssignmentConfigured();
         var skipSummariesBecauseOpenAiIsNotConfigured = includeSummaries && !openAiConfigured;
+        var skipTopicAssignmentsBecauseOpenAiIsNotConfigured = !topicAssignmentConfigured;
 
         if (skipSummariesBecauseOpenAiIsNotConfigured)
         {
             _logger.LogWarning(
                 "Summary generation was requested for seed pipeline, but OPENAI_API_KEY/OpenAI:ApiKey is not configured. The import and redaction phases will still run.");
+        }
+
+        if (skipTopicAssignmentsBecauseOpenAiIsNotConfigured)
+        {
+            _logger.LogWarning(
+                "Proposal topic taxonomy import will run, but automatic topic assignment is skipped because OPENAI_API_KEY/ProposalTopics:ApiKey is not configured.");
         }
 
         var succeededLegislatures = 0;
@@ -72,6 +91,27 @@ public class ParliamentDataSeedService : IParliamentDataSeedService
         var documentsProcessed = 0;
         var documentsSkipped = 0;
         var documentsFailed = 0;
+        var topicParentTopicsRead = 0;
+        var topicParentTopicsInserted = 0;
+        var topicParentTopicsUpdated = 0;
+        var topicSubtopicsRead = 0;
+        var topicSubtopicsInserted = 0;
+        var topicSubtopicsUpdated = 0;
+        var topicSeedAssignmentsRead = 0;
+        var topicSeedAssignmentsInserted = 0;
+        var topicSeedAssignmentsUpdated = 0;
+        var topicSeedAssignmentsSkipped = 0;
+        var topicSeedAssignmentsMissingProjectLaws = 0;
+        var topicSeedAssignmentsMissingSubtopics = 0;
+        var topicAssignmentDocumentsRead = 0;
+        var topicAssignmentsCreated = 0;
+        var topicAssignmentsSkipped = 0;
+        var topicAssignmentsFailed = 0;
+        var topicAutoAssigned = 0;
+        var topicNeedsReview = 0;
+        var topicUnassigned = 0;
+        var topicMissingRedactedText = 0;
+        var topicPreservedReviewedAssignments = 0;
         var summaryDocumentsRead = 0;
         var summariesGenerated = 0;
         var summariesSkipped = 0;
@@ -112,6 +152,42 @@ public class ParliamentDataSeedService : IParliamentDataSeedService
                 documentsProcessed += redactionResult.DocumentsProcessed;
                 documentsSkipped += redactionResult.DocumentsSkipped;
                 documentsFailed += redactionResult.DocumentsFailed;
+
+                var topicImportResult = await _topicTaxonomyImportService.ImportReviewedTaxonomyAsync(cancellationToken);
+                topicParentTopicsRead += topicImportResult.ParentTopicsRead;
+                topicParentTopicsInserted += topicImportResult.ParentTopicsInserted;
+                topicParentTopicsUpdated += topicImportResult.ParentTopicsUpdated;
+                topicSubtopicsRead += topicImportResult.SubtopicsRead;
+                topicSubtopicsInserted += topicImportResult.SubtopicsInserted;
+                topicSubtopicsUpdated += topicImportResult.SubtopicsUpdated;
+                topicSeedAssignmentsRead += topicImportResult.SeedAssignmentsRead;
+                topicSeedAssignmentsInserted += topicImportResult.SeedAssignmentsInserted;
+                topicSeedAssignmentsUpdated += topicImportResult.SeedAssignmentsUpdated;
+                topicSeedAssignmentsSkipped += topicImportResult.SeedAssignmentsSkipped;
+                topicSeedAssignmentsMissingProjectLaws += topicImportResult.SeedAssignmentsMissingProjectLaws;
+                topicSeedAssignmentsMissingSubtopics += topicImportResult.SeedAssignmentsMissingSubtopics;
+
+                if (topicAssignmentConfigured)
+                {
+                    var topicAssignmentResult = await _topicAssignmentService.AssignMissingAsync(
+                        new ProjectLawTopicAssignmentRequest
+                        {
+                            Legislature = legislature,
+                            Force = request.ForceTopicAssignments,
+                            MaxDocuments = request.MaxDocuments
+                        },
+                        cancellationToken);
+
+                    topicAssignmentDocumentsRead += topicAssignmentResult.DocumentsRead;
+                    topicAssignmentsCreated += topicAssignmentResult.AssignmentsCreated;
+                    topicAssignmentsSkipped += topicAssignmentResult.AssignmentsSkipped;
+                    topicAssignmentsFailed += topicAssignmentResult.AssignmentsFailed;
+                    topicAutoAssigned += topicAssignmentResult.AutoAssigned;
+                    topicNeedsReview += topicAssignmentResult.NeedsReview;
+                    topicUnassigned += topicAssignmentResult.Unassigned;
+                    topicMissingRedactedText += topicAssignmentResult.MissingRedactedText;
+                    topicPreservedReviewedAssignments += topicAssignmentResult.PreservedReviewedAssignments;
+                }
 
                 if (includeSummaries && openAiConfigured)
                 {
@@ -158,6 +234,29 @@ public class ParliamentDataSeedService : IParliamentDataSeedService
             documentsProcessed,
             documentsSkipped,
             documentsFailed,
+            topicParentTopicsRead,
+            topicParentTopicsInserted,
+            topicParentTopicsUpdated,
+            topicSubtopicsRead,
+            topicSubtopicsInserted,
+            topicSubtopicsUpdated,
+            topicSeedAssignmentsRead,
+            topicSeedAssignmentsInserted,
+            topicSeedAssignmentsUpdated,
+            topicSeedAssignmentsSkipped,
+            topicSeedAssignmentsMissingProjectLaws,
+            topicSeedAssignmentsMissingSubtopics,
+            topicAssignmentDocumentsRead,
+            topicAssignmentsCreated,
+            topicAssignmentsSkipped,
+            topicAssignmentsFailed,
+            topicAutoAssigned,
+            topicNeedsReview,
+            topicUnassigned,
+            topicMissingRedactedText,
+            topicPreservedReviewedAssignments,
+            topicAssignmentConfigured,
+            skipTopicAssignmentsBecauseOpenAiIsNotConfigured,
             summaryDocumentsRead,
             summariesGenerated,
             summariesSkipped,
@@ -225,5 +324,11 @@ public class ParliamentDataSeedService : IParliamentDataSeedService
     {
         return !string.IsNullOrWhiteSpace(_configuration["OPENAI_API_KEY"]) ||
                !string.IsNullOrWhiteSpace(_openAiOptions.CurrentValue.ApiKey);
+    }
+
+    private bool IsTopicAssignmentConfigured()
+    {
+        return !string.IsNullOrWhiteSpace(_configuration["OPENAI_API_KEY"]) ||
+               !string.IsNullOrWhiteSpace(_topicOptions.CurrentValue.ApiKey);
     }
 }

@@ -180,6 +180,80 @@ public class DatabaseContext : DbContext
         modelBuilder.Entity<ParliamentSummary>()
             .HasIndex(x => new { x.ProjectLawId, x.SourceDocumentHash, x.ModelName, x.PromptVersion });
 
+        modelBuilder.Entity<ProposalTopicTaxonomyVersion>()
+            .HasIndex(x => x.Version)
+            .IsUnique();
+
+        modelBuilder.Entity<ProposalTopicParent>()
+            .HasOne(x => x.TaxonomyVersion)
+            .WithMany(x => x.ParentTopics)
+            .HasForeignKey(x => x.TaxonomyVersionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ProposalTopicParent>()
+            .HasIndex(x => new { x.TaxonomyVersionId, x.Slug })
+            .IsUnique();
+
+        modelBuilder.Entity<ProposalSubtopic>()
+            .HasOne(x => x.TaxonomyVersion)
+            .WithMany(x => x.Subtopics)
+            .HasForeignKey(x => x.TaxonomyVersionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ProposalSubtopic>()
+            .HasOne(x => x.ParentTopic)
+            .WithMany(x => x.Subtopics)
+            .HasForeignKey(x => x.ParentTopicId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ProposalSubtopic>()
+            .HasIndex(x => new { x.TaxonomyVersionId, x.Slug })
+            .IsUnique();
+
+        modelBuilder.Entity<ProjectLawTopicAssignment>()
+            .HasOne(x => x.ProjectLaw)
+            .WithMany(x => x.TopicAssignments)
+            .HasForeignKey(x => x.ProjectLawId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ProjectLawTopicAssignment>()
+            .HasOne(x => x.ParliamentDocumentContent)
+            .WithMany()
+            .HasForeignKey(x => x.ParliamentDocumentContentId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<ProjectLawTopicAssignment>()
+            .HasOne(x => x.TaxonomyVersion)
+            .WithMany(x => x.ProjectLawAssignments)
+            .HasForeignKey(x => x.TaxonomyVersionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ProjectLawTopicAssignment>()
+            .HasOne(x => x.Subtopic)
+            .WithMany(x => x.ProjectLawAssignments)
+            .HasForeignKey(x => x.SubtopicId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<ProjectLawTopicAssignment>()
+            .HasOne(x => x.BestSubtopic)
+            .WithMany(x => x.BestProjectLawAssignments)
+            .HasForeignKey(x => x.BestSubtopicId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<ProjectLawTopicAssignment>()
+            .HasOne(x => x.SecondBestSubtopic)
+            .WithMany(x => x.SecondBestProjectLawAssignments)
+            .HasForeignKey(x => x.SecondBestSubtopicId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<ProjectLawTopicAssignment>()
+            .HasIndex(x => new { x.ProjectLawId, x.TaxonomyVersionId })
+            .HasFilter("\"IsCurrent\" = TRUE")
+            .IsUnique();
+
+        modelBuilder.Entity<ProjectLawTopicAssignment>()
+            .HasIndex(x => new { x.TaxonomyVersionId, x.AssignmentStatus });
+
         modelBuilder.Entity<ParliamentDeputy>()
             .HasIndex(x => new { x.Legislature, x.SourceDeputyId });
 
@@ -259,6 +333,10 @@ public class DatabaseContext : DbContext
     public DbSet<ParliamentInitiativeIntervention> ParliamentInitiativeInterventions { get; set; } = default!;
     public DbSet<ParliamentDocumentContent> ParliamentDocumentContents { get; set; } = default!;
     public DbSet<ParliamentSummary> ParliamentSummaries { get; set; } = default!;
+    public DbSet<ProposalTopicTaxonomyVersion> ProposalTopicTaxonomyVersions { get; set; } = default!;
+    public DbSet<ProposalTopicParent> ProposalTopicParents { get; set; } = default!;
+    public DbSet<ProposalSubtopic> ProposalSubtopics { get; set; } = default!;
+    public DbSet<ProjectLawTopicAssignment> ProjectLawTopicAssignments { get; set; } = default!;
     public DbSet<ParliamentDeputy> ParliamentDeputies { get; set; } = default!;
     public DbSet<ParliamentaryGroup> ParliamentaryGroups { get; set; } = default!;
     public DbSet<ParliamentRedactionTerm> ParliamentRedactionTerms { get; set; } = default!;

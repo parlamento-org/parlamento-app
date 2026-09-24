@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:frontend/controllers/vote_controller.dart';
 import 'package:frontend/models/proposal_flow.dart';
+import 'package:frontend/pages/history_filter_url.dart';
 import 'package:frontend/pages/proposal_journey_page.dart';
 import 'package:frontend/themes/base_theme.dart';
 import 'package:frontend/widgets/parliamentary_vote_breakdown.dart';
@@ -54,6 +55,7 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
   final List<ProposalHistoryItem> _history = [];
   List<String> _availableLegislatures = [];
   List<ProposalHistoryProposingParty> _availableProposingParties = [];
+  List<ProposalHistoryParentTopic> _availableParentTopics = [];
 
   _HistoryFilter _filter = _HistoryFilter.all;
   ProposalHistoryFilters _filters = const ProposalHistoryFilters();
@@ -71,6 +73,7 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
   @override
   void initState() {
     super.initState();
+    _hydrateFiltersFromUrl();
     _searchController.addListener(_onSearchChanged);
     _historyFuture = _loadHistory();
   }
@@ -80,6 +83,34 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
     _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _hydrateFiltersFromUrl() {
+    final queryParameters = readHistoryFilterQueryParameters();
+    final legislature = _queryValue(queryParameters['legislature']);
+    final proposingParty = _queryValue(queryParameters['proposingParty']);
+    final parentTopicSlug = _queryValue(queryParameters['parentTopicSlug']);
+    final search = _queryValue(queryParameters['search']);
+    final interactionType = _interactionActionOrNull(
+      queryParameters['interactionType'],
+    );
+
+    _filter = _historyFilterFromInteractionAction(interactionType);
+    _filters = ProposalHistoryFilters(
+      legislature: legislature,
+      proposingParty: proposingParty,
+      parentTopicSlug: parentTopicSlug,
+      search: search,
+      interactionType: interactionType,
+    );
+    if (search != null) {
+      _searchController.text = search;
+    }
+    _showFilters =
+        _filter != _HistoryFilter.all ||
+        legislature != null ||
+        proposingParty != null ||
+        parentTopicSlug != null;
   }
 
   @override
@@ -111,13 +142,12 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
             return RefreshIndicator(
               onRefresh: () async => _reloadHistory(),
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
+                padding: const EdgeInsets.fromLTRB(18, 14, 18, 28),
                 children: [
-                  const _HistoryHeader(),
-                  const SizedBox(height: 22),
                   _HistorySearchBar(
                     controller: _searchController,
                     showFilters: _showFilters,
+                    activeFilterCount: _activeFilterChips.length,
                     onClearSearch: _clearSearch,
                     onToggleFilters:
                         () => setState(() => _showFilters = !_showFilters),
@@ -136,33 +166,63 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
                       ),
                     ),
                   ],
+                  if (_activeFilterChips.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    _HistoryActiveFilters(
+                      chips: _activeFilterChips,
+                      onClearAll: _clearFilters,
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  _HistoryFilterSection(
+                    title: 'Meu Voto',
+                    child: _HistoryFilterChips(
+                      selectedFilter: _filter,
+                      onSelected: _changeInteractionFilter,
+                    ),
+                  ),
                   _HistoryFilterPanel(
                     visible: _showFilters,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 12),
-                        _HistoryFilterChips(
-                          selectedFilter: _filter,
-                          onSelected: _changeInteractionFilter,
-                        ),
-                        if (_availableLegislatures.isNotEmpty) ...[
-                          const SizedBox(height: 10),
-                          _HistoryLegislatureChips(
-                            legislatures: _availableLegislatures,
-                            selectedLegislature: _filters.legislature,
-                            onSelected: _changeLegislature,
-                          ),
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (_availableParentTopics.isNotEmpty) ...[
+                            _HistoryFilterSection(
+                              title: 'Tópico',
+                              child: _HistoryParentTopicChips(
+                                parentTopics: _availableParentTopics,
+                                selectedParentTopicSlug:
+                                    _filters.parentTopicSlug,
+                                onSelected: _changeParentTopic,
+                              ),
+                            ),
+                          ],
+                          if (_availableLegislatures.isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            _HistoryFilterSection(
+                              title: 'Legislatura',
+                              child: _HistoryLegislatureChips(
+                                legislatures: _availableLegislatures,
+                                selectedLegislature: _filters.legislature,
+                                onSelected: _changeLegislature,
+                              ),
+                            ),
+                          ],
+                          if (_availableProposingParties.isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            _HistoryFilterSection(
+                              title: 'Proponente',
+                              child: _HistoryProposingPartyChips(
+                                parties: _availableProposingParties,
+                                selectedParty: _filters.proposingParty,
+                                onSelected: _changeProposingParty,
+                              ),
+                            ),
+                          ],
                         ],
-                        if (_availableProposingParties.isNotEmpty) ...[
-                          const SizedBox(height: 10),
-                          _HistoryProposingPartyChips(
-                            parties: _availableProposingParties,
-                            selectedParty: _filters.proposingParty,
-                            onSelected: _changeProposingParty,
-                          ),
-                        ],
-                      ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -173,11 +233,16 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
                           _hasActiveServerFilter
                               ? 'Sem resultados para a pesquisa ou filtros selecionados.'
                               : 'Ainda não tens votos registados.',
+                      actionLabel:
+                          _hasActiveServerFilter ? 'Limpar filtros' : null,
+                      onPressed: _hasActiveServerFilter ? _clearFilters : null,
                     )
                   else if (filteredHistory.isEmpty)
-                    const _HistoryEmptyState(
+                    _HistoryEmptyState(
                       icon: Icons.search_off,
                       message: 'Nenhum voto corresponde à pesquisa.',
+                      actionLabel: 'Limpar filtros',
+                      onPressed: _clearFilters,
                     )
                   else ...[
                     ...filteredHistory.map(
@@ -220,6 +285,7 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
         ..addAll(response.items);
       _availableLegislatures = response.availableLegislatures;
       _availableProposingParties = response.availableProposingParties;
+      _availableParentTopics = response.availableParentTopics;
       _nextPage = response.page + 1;
       _totalItems = response.totalItems;
       _hasNextPage = response.hasNextPage;
@@ -241,10 +307,15 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
   }
 
   void _startHistoryRefresh() {
+    _writeFilterUrl();
     setState(() {
       _isRefreshing = _hasLoadedHistory;
       _historyFuture = _loadHistory();
     });
+  }
+
+  void _writeFilterUrl() {
+    writeHistoryFilterQueryParameters(_filters.toQueryParameters());
   }
 
   void _onSearchChanged() {
@@ -315,6 +386,7 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
         );
         _availableLegislatures = response.availableLegislatures;
         _availableProposingParties = response.availableProposingParties;
+        _availableParentTopics = response.availableParentTopics;
         _nextPage = response.page + 1;
         _totalItems = response.totalItems;
         _hasNextPage = response.hasNextPage;
@@ -353,6 +425,17 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
     _startHistoryRefresh();
   }
 
+  void _changeParentTopic(String? parentTopicSlug) {
+    if (_filters.parentTopicSlug == parentTopicSlug) return;
+    setState(() {
+      _filters = _filters.copyWith(
+        parentTopicSlug: parentTopicSlug,
+        clearParentTopicSlug: parentTopicSlug == null,
+      );
+    });
+    _startHistoryRefresh();
+  }
+
   void _changeProposingParty(String? proposingParty) {
     if (_filters.proposingParty == proposingParty) return;
     setState(() {
@@ -364,29 +447,62 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
     _startHistoryRefresh();
   }
 
+  void _clearFilters() {
+    _searchDebounce?.cancel();
+    if (_searchController.text.isNotEmpty) {
+      _searchController.clear();
+    }
+    _searchDebounce?.cancel();
+
+    if (!_filters.hasActiveFilters && _filter == _HistoryFilter.all) return;
+
+    setState(() {
+      _filter = _HistoryFilter.all;
+      _filters = const ProposalHistoryFilters();
+    });
+    _startHistoryRefresh();
+  }
+
   bool get _hasActiveServerFilter => _filters.hasActiveFilters;
-}
 
-class _HistoryHeader extends StatelessWidget {
-  const _HistoryHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            'Os Meus Votos',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: baseTheme.colorScheme.primary,
-              fontWeight: FontWeight.w800,
-              height: 1,
-            ),
-          ),
+  List<_HistoryActiveFilter> get _activeFilterChips {
+    return [
+      if ((_filters.search ?? '').trim().isNotEmpty)
+        _HistoryActiveFilter(
+          label: 'Pesquisa: ${_filters.search!.trim()}',
+          onRemove: _clearSearch,
         ),
-        Icon(Icons.edit, color: baseTheme.colorScheme.primary, size: 52),
-      ],
-    );
+      if (_filter != _HistoryFilter.all)
+        _HistoryActiveFilter(
+          label: 'Meu Voto: ${_filter.label}',
+          onRemove: () => _changeInteractionFilter(_HistoryFilter.all),
+        ),
+      if ((_filters.parentTopicSlug ?? '').trim().isNotEmpty)
+        _HistoryActiveFilter(
+          label: 'Tópico: ${_parentTopicLabel(_filters.parentTopicSlug!)}',
+          onRemove: () => _changeParentTopic(null),
+        ),
+      if ((_filters.legislature ?? '').trim().isNotEmpty)
+        _HistoryActiveFilter(
+          label: 'Legislatura: ${_filters.legislature!.trim()}',
+          onRemove: () => _changeLegislature(null),
+        ),
+      if ((_filters.proposingParty ?? '').trim().isNotEmpty)
+        _HistoryActiveFilter(
+          label: 'Proponente: ${_filters.proposingParty!.trim()}',
+          onRemove: () => _changeProposingParty(null),
+        ),
+    ];
+  }
+
+  String _parentTopicLabel(String slug) {
+    for (final topic in _availableParentTopics) {
+      if (topic.slug == slug) {
+        return topic.label;
+      }
+    }
+
+    return slug;
   }
 }
 
@@ -394,12 +510,14 @@ class _HistorySearchBar extends StatelessWidget {
   const _HistorySearchBar({
     required this.controller,
     required this.showFilters,
+    required this.activeFilterCount,
     required this.onClearSearch,
     required this.onToggleFilters,
   });
 
   final TextEditingController controller;
   final bool showFilters;
+  final int activeFilterCount;
   final VoidCallback onClearSearch;
   final VoidCallback onToggleFilters;
 
@@ -459,20 +577,128 @@ class _HistorySearchBar extends StatelessWidget {
             IconButton(
               tooltip: showFilters ? 'Ocultar filtros' : 'Mostrar filtros',
               onPressed: onToggleFilters,
-              icon: AnimatedRotation(
-                turns: showFilters ? 0.5 : 0,
-                duration: const Duration(milliseconds: 180),
-                curve: Curves.easeOutCubic,
-                child: Icon(
-                  Icons.filter_list,
-                  color: baseTheme.colorScheme.primary,
-                  size: 30,
-                ),
+              icon: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  AnimatedRotation(
+                    turns: showFilters ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOutCubic,
+                    child: Icon(
+                      Icons.filter_list,
+                      color: baseTheme.colorScheme.primary,
+                      size: 30,
+                    ),
+                  ),
+                  if (activeFilterCount > 0)
+                    Positioned(
+                      right: -8,
+                      top: -8,
+                      child: Container(
+                        constraints: const BoxConstraints(
+                          minWidth: 18,
+                          minHeight: 18,
+                        ),
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(horizontal: 5),
+                        decoration: BoxDecoration(
+                          color: rejectedRedBold,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          activeFilterCount.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           ],
         );
       },
+    );
+  }
+}
+
+class _HistoryActiveFilter {
+  const _HistoryActiveFilter({required this.label, required this.onRemove});
+
+  final String label;
+  final VoidCallback onRemove;
+}
+
+class _HistoryActiveFilters extends StatelessWidget {
+  const _HistoryActiveFilters({required this.chips, required this.onClearAll});
+
+  final List<_HistoryActiveFilter> chips;
+  final VoidCallback onClearAll;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        ...chips.map(
+          (chip) => InputChip(
+            label: Text(chip.label),
+            onDeleted: chip.onRemove,
+            deleteIcon: const Icon(Icons.close, size: 16),
+            backgroundColor: Colors.white,
+            side: BorderSide(
+              color: baseTheme.colorScheme.primary.withValues(alpha: 0.36),
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            labelStyle: TextStyle(
+              color: baseTheme.colorScheme.primary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        TextButton.icon(
+          onPressed: onClearAll,
+          icon: const Icon(Icons.clear_all, size: 18),
+          label: const Text('Limpar filtros'),
+          style: TextButton.styleFrom(
+            foregroundColor: baseTheme.colorScheme.primary,
+            textStyle: const TextStyle(fontWeight: FontWeight.w900),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HistoryFilterSection extends StatelessWidget {
+  const _HistoryFilterSection({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            color: baseTheme.colorScheme.primary.withValues(alpha: 0.78),
+            fontSize: 12,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 7),
+        child,
+      ],
     );
   }
 }
@@ -591,6 +817,62 @@ class _HistoryLegislatureChips extends StatelessWidget {
                 ),
               )
               .toList(),
+    );
+  }
+}
+
+class _HistoryParentTopicChips extends StatelessWidget {
+  const _HistoryParentTopicChips({
+    required this.parentTopics,
+    required this.selectedParentTopicSlug,
+    required this.onSelected,
+  });
+
+  final List<ProposalHistoryParentTopic> parentTopics;
+  final String? selectedParentTopicSlug;
+  final ValueChanged<String?> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        ChoiceChip(
+          label: const Text('Todos'),
+          selected: selectedParentTopicSlug == null,
+          onSelected: (_) => onSelected(null),
+          selectedColor: baseTheme.colorScheme.primary,
+          labelStyle: TextStyle(
+            color:
+                selectedParentTopicSlug == null
+                    ? Colors.white
+                    : baseTheme.colorScheme.primary,
+            fontWeight: FontWeight.w800,
+          ),
+          side: BorderSide(color: baseTheme.colorScheme.primary),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        ...parentTopics.map(
+          (topic) => ChoiceChip(
+            label: Text(topic.label),
+            selected: selectedParentTopicSlug == topic.slug,
+            onSelected: (_) => onSelected(topic.slug),
+            selectedColor: baseTheme.colorScheme.primary,
+            labelStyle: TextStyle(
+              color:
+                  selectedParentTopicSlug == topic.slug
+                      ? Colors.white
+                      : baseTheme.colorScheme.primary,
+              fontWeight: FontWeight.w800,
+            ),
+            side: BorderSide(color: baseTheme.colorScheme.primary),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -723,7 +1005,15 @@ class _HistoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final proposerAcronym = _firstKnownProposer(item.proposers);
-    final actionColor = _actionColor(item.action);
+    final initiativeReference = proposalInitiativeReferenceLabel(
+      initiativeType: item.initiativeType,
+      initiativeNumber: item.initiativeNumber,
+      legislature: item.legislature,
+      initiativeSelection: item.initiativeSelection,
+    );
+    final metaBadges = [
+      if (initiativeReference != null) _HistoryMetaBadge(initiativeReference),
+    ];
 
     return InkWell(
       borderRadius: BorderRadius.circular(8),
@@ -771,32 +1061,22 @@ class _HistoryCard extends StatelessWidget {
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: [
-                      _HistoryMetaBadge(_actionLabel(item.action)),
-                      if (item.initiativeNumber != null)
-                        _HistoryMetaBadge(item.initiativeNumber!),
-                    ],
+                  const SizedBox(height: 10),
+                  _HistorySignalRow(
+                    action: item.action,
+                    generalityVote: item.generalityVote,
                   ),
+                  if (metaBadges.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Wrap(spacing: 6, runSpacing: 6, children: metaBadges),
+                  ],
                 ],
               ),
             ),
             const SizedBox(width: 12),
-            Container(
-              width: 54,
-              height: 54,
-              decoration: BoxDecoration(
-                color: actionColor,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                _actionIcon(item.action),
-                color: Colors.white,
-                size: 38,
-              ),
+            Icon(
+              Icons.chevron_right,
+              color: baseTheme.colorScheme.primary.withValues(alpha: 0.58),
             ),
           ],
         ),
@@ -820,6 +1100,94 @@ class _HistoryCard extends StatelessWidget {
     }
 
     return null;
+  }
+}
+
+class _HistorySignalRow extends StatelessWidget {
+  const _HistorySignalRow({required this.action, required this.generalityVote});
+
+  final ProposalInteractionAction action;
+  final ParliamentaryVoteSummary? generalityVote;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _HistorySignalIcon(
+          label: 'O teu voto',
+          icon: _actionIcon(action),
+          color: _actionColor(action),
+          tooltip: 'O teu voto: ${_actionLabel(action)}',
+        ),
+        _HistorySignalIcon(
+          label: 'Parlamento (Generalidade)',
+          icon: _approvalIcon(generalityVote?.approved),
+          color: _approvalColor(generalityVote?.approved),
+          tooltip:
+              'Parlamento: ${_approvalLabel(generalityVote?.approved, generalityVote?.result)}',
+        ),
+      ],
+    );
+  }
+}
+
+class _HistorySignalIcon extends StatelessWidget {
+  const _HistorySignalIcon({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.tooltip,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color color;
+  final String tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Semantics(
+        label: tooltip,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 34),
+          padding: const EdgeInsets.fromLTRB(8, 4, 9, 4),
+          decoration: BoxDecoration(
+            color: baseTheme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: baseTheme.colorScheme.primary.withValues(alpha: 0.28),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: baseTheme.colorScheme.primary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                width: 25,
+                height: 25,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: Colors.white, size: 18),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -924,6 +1292,28 @@ class _HistoryEmptyState extends StatelessWidget {
   }
 }
 
+String? _queryValue(String? value) {
+  final trimmedValue = value?.trim();
+  return trimmedValue == null || trimmedValue.isEmpty ? null : trimmedValue;
+}
+
+ProposalInteractionAction? _interactionActionOrNull(String? value) {
+  final action = ProposalInteractionAction.fromWireName(_queryValue(value));
+  return action == ProposalInteractionAction.unknown ? null : action;
+}
+
+_HistoryFilter _historyFilterFromInteractionAction(
+  ProposalInteractionAction? action,
+) {
+  return switch (action) {
+    ProposalInteractionAction.support => _HistoryFilter.support,
+    ProposalInteractionAction.oppose => _HistoryFilter.oppose,
+    ProposalInteractionAction.abstain => _HistoryFilter.abstain,
+    ProposalInteractionAction.skip => _HistoryFilter.skip,
+    _ => _HistoryFilter.all,
+  };
+}
+
 String _actionLabel(ProposalInteractionAction action) {
   return switch (action) {
     ProposalInteractionAction.support => 'A favor',
@@ -939,8 +1329,8 @@ IconData _actionIcon(ProposalInteractionAction action) {
     ProposalInteractionAction.support => Icons.check,
     ProposalInteractionAction.oppose => Icons.close,
     ProposalInteractionAction.abstain => Icons.remove,
-    ProposalInteractionAction.skip => Icons.help_outline,
-    ProposalInteractionAction.unknown => Icons.check,
+    ProposalInteractionAction.skip => Icons.skip_next,
+    ProposalInteractionAction.unknown => Icons.help_outline,
   };
 }
 
@@ -952,4 +1342,34 @@ Color _actionColor(ProposalInteractionAction action) {
     ProposalInteractionAction.skip => baseTheme.colorScheme.secondary,
     ProposalInteractionAction.unknown => baseTheme.colorScheme.primary,
   };
+}
+
+IconData _approvalIcon(bool? approved) {
+  if (approved == true) {
+    return Icons.check;
+  }
+  if (approved == false) {
+    return Icons.close;
+  }
+  return Icons.remove;
+}
+
+Color _approvalColor(bool? approved) {
+  if (approved == true) {
+    return approvedGreenBold;
+  }
+  if (approved == false) {
+    return rejectedRedBold;
+  }
+  return Colors.grey.shade700;
+}
+
+String _approvalLabel(bool? approved, String? rawResult) {
+  if (approved == true) {
+    return 'Aprovado';
+  }
+  if (approved == false) {
+    return 'Rejeitado';
+  }
+  return rawResult ?? 'Sem resultado';
 }

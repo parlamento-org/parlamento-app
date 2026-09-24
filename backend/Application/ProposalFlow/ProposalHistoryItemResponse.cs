@@ -24,11 +24,17 @@ public sealed class ProposalHistoryItemResponse
     [JsonPropertyName("legislature")]
     public string? Legislature { get; set; }
 
+    [JsonPropertyName("initiativeSelection")]
+    public string? InitiativeSelection { get; set; }
+
     [JsonPropertyName("action")]
     public ProposalInteractionType Action { get; set; }
 
     [JsonPropertyName("createdAtUtc")]
     public DateTime CreatedAtUtc { get; set; }
+
+    [JsonPropertyName("generalityVote")]
+    public ParliamentaryVoteSummaryResponse? GeneralityVote { get; set; }
 
     [JsonPropertyName("proposers")]
     public List<ProposalProposerResponse> Proposers { get; set; } = [];
@@ -52,6 +58,9 @@ public sealed class ProposalHistoryRequest
     [JsonPropertyName("proposingParty")]
     public string? ProposingParty { get; set; }
 
+    [JsonPropertyName("parentTopicSlug")]
+    public string? ParentTopicSlug { get; set; }
+
     [JsonPropertyName("search")]
     public string? Search { get; set; }
 
@@ -73,6 +82,9 @@ public sealed class ProposalHistoryRequest
     public string? NormalizedProposingParty =>
         string.IsNullOrWhiteSpace(ProposingParty) ? null : ProposingParty.Trim();
 
+    public string? NormalizedParentTopicSlug =>
+        string.IsNullOrWhiteSpace(ParentTopicSlug) ? null : ParentTopicSlug.Trim();
+
     public string? NormalizedSearch =>
         string.IsNullOrWhiteSpace(Search) ? null : Search.Trim();
 
@@ -82,6 +94,7 @@ public sealed class ProposalHistoryRequest
         {
             Legislature = NormalizedLegislature,
             ProposingParty = NormalizedProposingParty,
+            ParentTopicSlug = NormalizedParentTopicSlug,
             Search = NormalizedSearch,
             InteractionType = InteractionType
         };
@@ -93,6 +106,8 @@ public sealed class ProposalHistoryFilters
     public string? Legislature { get; set; }
 
     public string? ProposingParty { get; set; }
+
+    public string? ParentTopicSlug { get; set; }
 
     public string? Search { get; set; }
 
@@ -127,6 +142,9 @@ public sealed class ProposalHistoryPageResponse
 
     [JsonPropertyName("availableProposingParties")]
     public List<ProposalHistoryProposingPartyResponse> AvailableProposingParties { get; set; } = [];
+
+    [JsonPropertyName("availableParentTopics")]
+    public List<ProposalHistoryParentTopicResponse> AvailableParentTopics { get; set; } = [];
 }
 
 public sealed class ProposalHistoryProposingPartyResponse
@@ -136,4 +154,13 @@ public sealed class ProposalHistoryProposingPartyResponse
 
     [JsonPropertyName("name")]
     public string? Name { get; set; }
+}
+
+public sealed class ProposalHistoryParentTopicResponse
+{
+    [JsonPropertyName("slug")]
+    public string Slug { get; set; } = string.Empty;
+
+    [JsonPropertyName("label")]
+    public string Label { get; set; } = string.Empty;
 }

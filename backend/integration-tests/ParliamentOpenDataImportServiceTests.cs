@@ -2,13 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
+using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 
 using Parlamento.Application.Abstractions;
 using Parlamento.Application.Documents;
@@ -92,6 +96,88 @@ public class ParliamentOpenDataImportServiceTests
         Assert.Contains(
             initiative.ImportedVotes.SelectMany(x => x.Blocks),
             x => x.PartyAcronym == "CDS-PP" && x.VotingOrientation == VotingOrientation.InFavor);
+    }
+
+    [Fact]
+    public async Task ImportFromFileAsync_WhenExistingInitiativeUpdates_PreservesLastGoodDocumentContentAndSummary()
+    {
+        await using var context = CreateContext();
+        await context.Database.EnsureCreatedAsync();
+        var service = CreateService(context);
+        var firstPath = Path.GetTempFileName();
+        var secondPath = Path.GetTempFileName();
+
+        await File.WriteAllTextAsync(firstPath, BuildSingleInitiativeJson("Teste original", "original-document.txt"));
+        await File.WriteAllTextAsync(secondPath, BuildSingleInitiativeJson("Teste atualizado", "currently-unavailable-document.txt"));
+
+        try
+        {
+            var firstRun = await service.ImportFromFileAsync(firstPath);
+            Assert.Equal(1, firstRun.RecordsInserted);
+
+            var projectLaw = await context.ProjectLaws
+                .Include(x => x.ImportedDocuments)
+                .SingleAsync(x => x.SourceIdText == "990001");
+            var document = Assert.Single(projectLaw.ImportedDocuments.Where(x => x.Scope == "InitiativeText"));
+            var content = new ParliamentDocumentContent
+            {
+                ProjectLawId = projectLaw.Id,
+                ParliamentInitiativeDocumentId = document.Id,
+                SourceUrl = "original-document.txt",
+                SourceContentHash = "last-good-source-hash",
+                RedactedContentHash = "last-good-redacted-hash",
+                RedactedContentText = BuildLongRedactedText("preservado"),
+                RedactedContentHtml = "<article>last good html</article>",
+                ExtractionStatus = "Succeeded",
+                RedactionStatus = "Succeeded",
+                RedactedAtUtc = DateTime.UtcNow
+            };
+            context.ParliamentDocumentContents.Add(content);
+            context.ParliamentSummaries.Add(new ParliamentSummary
+            {
+                ProjectLawId = projectLaw.Id,
+                ParliamentDocumentContentId = content.Id,
+                ModelName = "fake-model",
+                PromptVersion = "fake-prompt-v1",
+                SourceDocumentHash = "last-good-redacted-hash",
+                ShortTitle = "Titulo preservado",
+                SummaryText = "Resumo preservado.",
+                GenerationStatus = "Succeeded",
+                GeneratedAtUtc = DateTime.UtcNow
+            });
+            await context.SaveChangesAsync();
+
+            var originalDocumentId = document.Id;
+            var originalContentId = content.Id;
+
+            var secondRun = await service.ImportFromFileAsync(secondPath);
+
+            Assert.Equal(1, secondRun.RecordsUpdated);
+
+            var updatedProjectLaw = await context.ProjectLaws
+                .Include(x => x.ImportedDocuments)
+                    .ThenInclude(x => x.Content)
+                .Include(x => x.Summaries)
+                .SingleAsync(x => x.SourceIdText == "990001");
+            var updatedDocument = Assert.Single(updatedProjectLaw.ImportedDocuments.Where(x => x.Scope == "InitiativeText"));
+
+            Assert.Equal(originalDocumentId, updatedDocument.Id);
+            Assert.Equal("currently-unavailable-document.txt", updatedDocument.Url);
+            Assert.Equal(originalContentId, updatedDocument.Content!.Id);
+            Assert.Equal("Succeeded", updatedDocument.Content.RedactionStatus);
+            Assert.Equal("last-good-source-hash", updatedDocument.Content.SourceContentHash);
+            Assert.Contains("preservado", updatedDocument.Content.RedactedContentText);
+
+            var summary = Assert.Single(updatedProjectLaw.Summaries);
+            Assert.Equal("Succeeded", summary.GenerationStatus);
+            Assert.Equal("Resumo preservado.", summary.SummaryText);
+            Assert.Equal(originalContentId, summary.ParliamentDocumentContentId);
+        }
+        finally
+        {
+            File.Delete(firstPath);
+            File.Delete(secondPath);
+        }
     }
 
     [Fact]
@@ -313,6 +399,146 @@ public class ParliamentOpenDataImportServiceTests
         Assert.Equal(0, fakeClient.Calls);
         var summary = await context.ParliamentSummaries.SingleAsync();
         Assert.Equal("Skipped", summary.GenerationStatus);
+    }
+
+    [Fact]
+    public async Task SummaryGeneration_ContinuesAfterDocumentFailure()
+    {
+        await using var context = CreateContext();
+        await context.Database.EnsureCreatedAsync();
+
+        var party = await context.PoliticalParties.SingleAsync(x => x.partyAcronym == "CH");
+        var first = AddProjectLawWithInitiativeDocument(context, party, 2101, "summary-failure-one.txt");
+        var second = AddProjectLawWithInitiativeDocument(context, party, 2102, "summary-failure-two.txt");
+        await context.SaveChangesAsync();
+
+        context.ParliamentDocumentContents.AddRange(
+            new ParliamentDocumentContent
+            {
+                ProjectLawId = first.ProjectLaw.Id,
+                ParliamentInitiativeDocumentId = first.Document.Id,
+                SourceUrl = first.Document.Url,
+                SourceContentHash = "source-hash-summary-failure-one",
+                RedactedContentHash = "redacted-hash-summary-failure-one",
+                RedactedContentText = BuildLongRedactedText("primeiro"),
+                ExtractionStatus = "Succeeded",
+                RedactionStatus = "Succeeded"
+            },
+            new ParliamentDocumentContent
+            {
+                ProjectLawId = second.ProjectLaw.Id,
+                ParliamentInitiativeDocumentId = second.Document.Id,
+                SourceUrl = second.Document.Url,
+                SourceContentHash = "source-hash-summary-failure-two",
+                RedactedContentHash = "redacted-hash-summary-failure-two",
+                RedactedContentText = BuildLongRedactedText("segundo"),
+                ExtractionStatus = "Succeeded",
+                RedactionStatus = "Succeeded"
+            });
+        await context.SaveChangesAsync();
+
+        var summaryService = new ParliamentSummaryService(
+            context,
+            new FailingFirstSummaryClient(),
+            NullLogger<ParliamentSummaryService>.Instance);
+
+        var result = await summaryService.GenerateSummariesAsync(new ParliamentSummaryRequest
+        {
+            Legislature = "XVII"
+        });
+
+        Assert.Equal(2, result.DocumentsRead);
+        Assert.Equal(1, result.SummariesFailed);
+        Assert.Equal(1, result.SummariesGenerated);
+
+        var summaries = await context.ParliamentSummaries
+            .OrderBy(x => x.ProjectLawId)
+            .ToListAsync();
+        Assert.Equal(2, summaries.Count);
+        Assert.Equal("Failed", summaries[0].GenerationStatus);
+        Assert.Equal("Succeeded", summaries[1].GenerationStatus);
+    }
+
+    [Fact]
+    public async Task SummaryGeneration_WhenForcedRefreshFails_PreservesExistingSucceededSummary()
+    {
+        await using var context = CreateContext();
+        await context.Database.EnsureCreatedAsync();
+
+        var party = await context.PoliticalParties.SingleAsync(x => x.partyAcronym == "CH");
+        var existing = AddProjectLawWithInitiativeDocument(context, party, 2103, "summary-existing.txt");
+        await context.SaveChangesAsync();
+
+        var content = new ParliamentDocumentContent
+        {
+            ProjectLawId = existing.ProjectLaw.Id,
+            ParliamentInitiativeDocumentId = existing.Document.Id,
+            SourceUrl = existing.Document.Url,
+            SourceContentHash = "source-hash-summary-existing",
+            RedactedContentHash = "redacted-hash-summary-existing",
+            RedactedContentText = BuildLongRedactedText("existente"),
+            ExtractionStatus = "Succeeded",
+            RedactionStatus = "Succeeded"
+        };
+        context.ParliamentDocumentContents.Add(content);
+        await context.SaveChangesAsync();
+
+        context.ParliamentSummaries.Add(new ParliamentSummary
+        {
+            ProjectLawId = existing.ProjectLaw.Id,
+            ParliamentDocumentContentId = content.Id,
+            ModelName = "fake-model",
+            PromptVersion = "fake-prompt-v1",
+            SourceDocumentHash = "redacted-hash-summary-existing",
+            ShortTitle = "Titulo antigo",
+            SummaryText = "Resumo antigo que deve ficar visivel.",
+            GenerationStatus = "Succeeded",
+            GeneratedAtUtc = DateTime.UtcNow
+        });
+        await context.SaveChangesAsync();
+
+        var summaryService = new ParliamentSummaryService(
+            context,
+            new FailingFirstSummaryClient(),
+            NullLogger<ParliamentSummaryService>.Instance);
+
+        var result = await summaryService.GenerateSummariesAsync(new ParliamentSummaryRequest
+        {
+            ProjectLawId = existing.ProjectLaw.Id,
+            Force = true
+        });
+
+        Assert.Equal(1, result.SummariesFailed);
+        var summary = await context.ParliamentSummaries.SingleAsync();
+        Assert.Equal("Succeeded", summary.GenerationStatus);
+        Assert.Equal("Resumo antigo que deve ficar visivel.", summary.SummaryText);
+        Assert.Contains("Simulated summary generation failure", summary.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task OpenAiSummaryClient_RetriesContextLengthFailureWithLongContextModel()
+    {
+        var handler = new ContextLengthRetryHandler();
+        var options = Options.Create(new OpenAiSummaryOptions
+        {
+            ApiKey = "test-key",
+            Model = "small-context-model",
+            LongContextFallbackModel = "large-context-model",
+            MaxOutputTokens = 700,
+            Temperature = 0.1
+        });
+        var client = new OpenAiLegislativeSummaryClient(
+            new HttpClient(handler),
+            options,
+            NullLogger<OpenAiLegislativeSummaryClient>.Instance);
+
+        var summary = await client.GenerateSummaryAsync("Texto redigido muito longo para resumir.");
+
+        Assert.Equal("large-context-model", summary.ModelName);
+        Assert.Equal(["small-context-model", "large-context-model"], handler.RequestModels);
+        Assert.All(
+            handler.RequestBodies,
+            body => Assert.Contains("Texto redigido muito longo para resumir.", body));
     }
 
     [Fact]
@@ -835,6 +1061,109 @@ public class ParliamentOpenDataImportServiceTests
     }
 
     [Fact]
+    public async Task DocumentRedaction_ContinuesAfterDocumentFailure()
+    {
+        await using var context = CreateContext();
+        await context.Database.EnsureCreatedAsync();
+
+        var failingDocumentPath = Path.GetTempFileName();
+        var succeedingDocumentPath = Path.GetTempFileName();
+        await File.WriteAllTextAsync(failingDocumentPath, "redaction-failure");
+        await File.WriteAllTextAsync(succeedingDocumentPath, "Texto publico da iniciativa sem termos sensiveis.");
+
+        var party = await context.PoliticalParties.SingleAsync(x => x.partyAcronym == "CH");
+        var failing = AddProjectLawWithInitiativeDocument(context, party, 1101, failingDocumentPath);
+        var succeeding = AddProjectLawWithInitiativeDocument(context, party, 1102, succeedingDocumentPath);
+        await context.SaveChangesAsync();
+
+        var redactionService = new ParliamentDocumentRedactionService(
+            context,
+            new HttpClient(),
+            new IDocumentExtractor[]
+            {
+                new FailingTextExtractor()
+            },
+            new DocumentModelRedactor(),
+            new DocumentModelRenderer(),
+            NullLogger<ParliamentDocumentRedactionService>.Instance);
+
+        var result = await redactionService.ProcessInitiativeTextDocumentsAsync("XVII", null, 10);
+
+        Assert.Equal(2, result.DocumentsRead);
+        Assert.Equal(1, result.DocumentsFailed);
+        Assert.Equal(1, result.DocumentsProcessed);
+
+        var contents = await context.ParliamentDocumentContents
+            .OrderBy(x => x.ProjectLawId)
+            .ToListAsync();
+        Assert.Equal(2, contents.Count);
+        Assert.Equal(failing.ProjectLaw.Id, contents[0].ProjectLawId);
+        Assert.Equal("Failed", contents[0].RedactionStatus);
+        Assert.Equal(succeeding.ProjectLaw.Id, contents[1].ProjectLawId);
+        Assert.Equal("Succeeded", contents[1].RedactionStatus);
+        Assert.Contains("Texto publico", contents[1].RedactedContentText);
+    }
+
+    [Fact]
+    public async Task DocumentRedaction_WhenDocumentIsUnavailable_PreservesExistingSucceededContent()
+    {
+        await using var context = CreateContext();
+        await context.Database.EnsureCreatedAsync();
+
+        var unavailableDocumentPath = Path.GetTempFileName();
+        await File.WriteAllTextAsync(
+            unavailableDocumentPath,
+            "O recurso ao qual tentou aceder não existe ou não se encontra disponível de momento. Por favor, tente mais tarde.");
+
+        var party = await context.PoliticalParties.SingleAsync(x => x.partyAcronym == "CH");
+        var existing = AddProjectLawWithInitiativeDocument(context, party, 1103, unavailableDocumentPath);
+        await context.SaveChangesAsync();
+
+        context.ParliamentDocumentContents.Add(new ParliamentDocumentContent
+        {
+            ProjectLawId = existing.ProjectLaw.Id,
+            ParliamentInitiativeDocumentId = existing.Document.Id,
+            SourceUrl = "last-good-document.txt",
+            SourceContentHash = "last-good-source-hash",
+            RedactedContentHash = "last-good-redacted-hash",
+            RedactedContentText = BuildLongRedactedText("anterior"),
+            RedactedContentHtml = "<article>last good</article>",
+            ExtractionStatus = "Succeeded",
+            RedactionStatus = "Succeeded",
+            RedactedAtUtc = DateTime.UtcNow
+        });
+        await context.SaveChangesAsync();
+
+        var redactionService = new ParliamentDocumentRedactionService(
+            context,
+            new HttpClient(),
+            new IDocumentExtractor[]
+            {
+                new TextDocumentExtractor()
+            },
+            new DocumentModelRedactor(),
+            new DocumentModelRenderer(),
+            NullLogger<ParliamentDocumentRedactionService>.Instance);
+
+        try
+        {
+            var result = await redactionService.ProcessInitiativeTextDocumentsAsync("XVII", existing.ProjectLaw.Id, 1, true);
+
+            Assert.Equal(1, result.DocumentsFailed);
+            var content = await context.ParliamentDocumentContents.SingleAsync();
+            Assert.Equal("Succeeded", content.RedactionStatus);
+            Assert.Equal("Succeeded", content.ExtractionStatus);
+            Assert.Equal("last-good-source-hash", content.SourceContentHash);
+            Assert.Contains("anterior", content.RedactedContentText);
+            Assert.Contains("unavailable", content.ErrorMessage, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            File.Delete(unavailableDocumentPath);
+        }
+    }
+
+    [Fact]
     public async Task ImportFromFileAsync_ImportsArraySample()
     {
         await using var context = CreateContext();
@@ -1046,6 +1375,79 @@ public class ParliamentOpenDataImportServiceTests
         Assert.DoesNotContain("Partido Comunista Português", content.RedactedContentText);
     }
 
+    private static (ProjectLaw ProjectLaw, ParliamentInitiativeDocument Document) AddProjectLawWithInitiativeDocument(
+        DatabaseContext context,
+        PoliticalParty party,
+        int sourceId,
+        string documentPath)
+    {
+        var projectLaw = new ProjectLaw
+        {
+            SourceId = sourceId,
+            SourceIdText = sourceId.ToString(),
+            Legislatura = "XVII",
+            VoteDate = "2026-01-01",
+            ProposingParty = party,
+            ProposalTitle = $"Teste {sourceId}",
+            FullProposalTextLink = documentPath
+        };
+        var document = new ParliamentInitiativeDocument
+        {
+            Scope = "InitiativeText",
+            Name = "Texto da iniciativa",
+            Url = documentPath
+        };
+        projectLaw.ImportedDocuments.Add(document);
+        context.ProjectLaws.Add(projectLaw);
+
+        return (projectLaw, document);
+    }
+
+    private static string BuildLongRedactedText(string marker)
+    {
+        return string.Join(
+            " ",
+            Enumerable.Repeat(
+                $"Este texto redigido {marker} descreve uma iniciativa legislativa com medidas, destinatarios, mecanismos de execucao e disposicoes transitórias.",
+                8));
+    }
+
+    private static string BuildSingleInitiativeJson(string title, string initiativeTextUrl)
+    {
+        return $$"""
+        {
+          "IniId": "990001",
+          "IniLeg": "XVII",
+          "IniTipo": "J",
+          "IniDescTipo": "Projeto de Lei",
+          "IniTitulo": "{{title}}",
+          "IniNr": "990",
+          "IniSel": "1",
+          "IniTextoSubst": "NAO",
+          "IniLinkTexto": "{{initiativeTextUrl}}",
+          "IniAutorGruposParlamentares": [{ "GP": "CH" }],
+          "IniAutorDeputados": null,
+          "IniAutorOutros": null,
+          "IniEventos": [
+            {
+              "EvtId": "13",
+              "CodigoFase": "250",
+              "Fase": "Votação na generalidade",
+              "DataFase": "2026-01-01",
+              "Votacao": [
+                {
+                  "id": "990001",
+                  "data": "2026-01-01",
+                  "resultado": "Aprovado",
+                  "detalhe": "A Favor: <I>CH</I>"
+                }
+              ]
+            }
+          ]
+        }
+        """;
+    }
+
     private static ParliamentOpenDataImportService CreateService(DatabaseContext context)
     {
         var configuration = new ConfigurationBuilder()
@@ -1215,9 +1617,44 @@ public class ParliamentOpenDataImportServiceTests
         }
     }
 
+    private sealed class FailingTextExtractor : IDocumentExtractor
+    {
+        private readonly TextDocumentExtractor _inner = new();
+
+        public string ExtractorKind => "FailingText";
+
+        public string ExtractorVersion => "failing-text-v1";
+
+        public bool CanExtract(string sourceName)
+        {
+            return true;
+        }
+
+        public bool CanExtract(byte[] bytes, string sourceName)
+        {
+            return true;
+        }
+
+        public Task<DocumentExtractionResult> ExtractAsync(
+            byte[] bytes,
+            string sourceName,
+            CancellationToken cancellationToken = default)
+        {
+            var text = System.Text.Encoding.UTF8.GetString(bytes);
+            if (text.Contains("redaction-failure", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Simulated redaction pipeline failure.");
+            }
+
+            return _inner.ExtractAsync(bytes, sourceName, cancellationToken);
+        }
+    }
+
     private sealed class FakeSummaryClient : ILegislativeSummaryClient
     {
         public string ModelName => "fake-model";
+
+        public IReadOnlyList<string> ModelNames => [ModelName];
 
         public string PromptVersion => "fake-prompt-v1";
 
@@ -1232,9 +1669,78 @@ public class ParliamentOpenDataImportServiceTests
             Calls++;
             LastInput = redactedPlainText;
             return Task.FromResult(new GeneratedParliamentSummary(
+                ModelName,
                 "Titulo neutro",
                 "Resumo neutral gerado a partir do texto redigido.",
                 ["Ponto factual um.", "Ponto factual dois."]));
+        }
+    }
+
+    private sealed class FailingFirstSummaryClient : ILegislativeSummaryClient
+    {
+        public string ModelName => "fake-model";
+
+        public IReadOnlyList<string> ModelNames => [ModelName];
+
+        public string PromptVersion => "fake-prompt-v1";
+
+        private int _calls;
+
+        public Task<GeneratedParliamentSummary> GenerateSummaryAsync(
+            string redactedPlainText,
+            CancellationToken cancellationToken = default)
+        {
+            _calls++;
+            if (_calls == 1)
+            {
+                throw new InvalidOperationException("Simulated summary generation failure.");
+            }
+
+            return Task.FromResult(new GeneratedParliamentSummary(
+                ModelName,
+                "Titulo neutro",
+                "Resumo neutral gerado depois de uma falha anterior.",
+                ["Ponto factual um.", "Ponto factual dois."]));
+        }
+    }
+
+    private sealed class ContextLengthRetryHandler : HttpMessageHandler
+    {
+        public List<string> RequestModels { get; } = [];
+
+        public List<string> RequestBodies { get; } = [];
+
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            var body = await request.Content!.ReadAsStringAsync(cancellationToken);
+            RequestBodies.Add(body);
+            using var payload = JsonDocument.Parse(body);
+            RequestModels.Add(payload.RootElement.GetProperty("model").GetString()!);
+
+            if (RequestModels.Count == 1)
+            {
+                return new HttpResponseMessage(HttpStatusCode.BadRequest)
+                {
+                    Content = new StringContent(
+                        """
+                        {"error":{"message":"This model's maximum context length is 128000 tokens. However, your messages resulted in 140000 tokens.","code":"context_length_exceeded"}}
+                        """,
+                        Encoding.UTF8,
+                        "application/json")
+                };
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    """
+                    {"choices":[{"message":{"content":"{\"title\":\"Titulo neutro\",\"summary\":\"Resumo neutral com contexto alargado.\",\"bullet_points\":[\"Ponto factual um.\"]}"}}]}
+                    """,
+                    Encoding.UTF8,
+                    "application/json")
+            };
         }
     }
 }

@@ -6,6 +6,8 @@ public interface ILegislativeSummaryClient
 {
     string ModelName { get; }
 
+    IReadOnlyList<string> ModelNames { get; }
+
     string PromptVersion { get; }
 
     Task<GeneratedParliamentSummary> GenerateSummaryAsync(

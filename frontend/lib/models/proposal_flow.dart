@@ -58,6 +58,7 @@ class InitiativeFeedCard {
     this.summary,
     this.summaryBulletPoints = const [],
     this.summaryGeneratedAtUtc,
+    this.topicAssignments = const [],
     this.redactedExcerpt,
     this.redactedText,
     this.redactedHtml,
@@ -72,6 +73,7 @@ class InitiativeFeedCard {
   final String? summary;
   final List<String> summaryBulletPoints;
   final String? summaryGeneratedAtUtc;
+  final List<ProposalTopicAssignment> topicAssignments;
   final String? redactedExcerpt;
   final String? redactedText;
   final String? redactedHtml;
@@ -93,11 +95,44 @@ class InitiativeFeedCard {
       summary: _stringOrNull(json['summary']),
       summaryBulletPoints: _stringList(json['summaryBulletPoints']),
       summaryGeneratedAtUtc: _stringOrNull(json['summaryGeneratedAtUtc']),
+      topicAssignments: _objectList(
+        json['topicAssignments'],
+        ProposalTopicAssignment.fromJson,
+      ),
       redactedExcerpt: _stringOrNull(json['redactedExcerpt']),
       redactedText: _stringOrNull(json['redactedText']),
       redactedHtml: _stringOrNull(json['redactedHtml']),
       legislature: _stringOrNull(json['legislature']),
       date: _stringOrNull(json['date']),
+    );
+  }
+}
+
+class ProposalTopicAssignment {
+  ProposalTopicAssignment({
+    required this.parentTopicSlug,
+    required this.parentTopicLabel,
+    required this.subtopicSlug,
+    required this.subtopicLabel,
+    required this.assignmentStatus,
+    this.assignmentConfidence,
+  });
+
+  final String parentTopicSlug;
+  final String parentTopicLabel;
+  final String subtopicSlug;
+  final String subtopicLabel;
+  final String assignmentStatus;
+  final double? assignmentConfidence;
+
+  factory ProposalTopicAssignment.fromJson(Map<String, dynamic> json) {
+    return ProposalTopicAssignment(
+      parentTopicSlug: _stringOrFallback(json['parentTopicSlug'], ''),
+      parentTopicLabel: _stringOrFallback(json['parentTopicLabel'], ''),
+      subtopicSlug: _stringOrFallback(json['subtopicSlug'], ''),
+      subtopicLabel: _stringOrFallback(json['subtopicLabel'], ''),
+      assignmentStatus: _stringOrFallback(json['assignmentStatus'], ''),
+      assignmentConfidence: _doubleOrNull(json['assignmentConfidence']),
     );
   }
 }
@@ -154,18 +189,21 @@ class ProposalHistoryFilters {
   const ProposalHistoryFilters({
     this.legislature,
     this.proposingParty,
+    this.parentTopicSlug,
     this.search,
     this.interactionType,
   });
 
   final String? legislature;
   final String? proposingParty;
+  final String? parentTopicSlug;
   final String? search;
   final ProposalInteractionAction? interactionType;
 
   bool get hasActiveFilters =>
       _hasValue(legislature) ||
       _hasValue(proposingParty) ||
+      _hasValue(parentTopicSlug) ||
       _hasValue(search) ||
       interactionType != null &&
           interactionType != ProposalInteractionAction.unknown;
@@ -175,6 +213,8 @@ class ProposalHistoryFilters {
     bool clearLegislature = false,
     String? proposingParty,
     bool clearProposingParty = false,
+    String? parentTopicSlug,
+    bool clearParentTopicSlug = false,
     String? search,
     bool clearSearch = false,
     ProposalInteractionAction? interactionType,
@@ -184,6 +224,8 @@ class ProposalHistoryFilters {
       legislature: clearLegislature ? null : legislature ?? this.legislature,
       proposingParty:
           clearProposingParty ? null : proposingParty ?? this.proposingParty,
+      parentTopicSlug:
+          clearParentTopicSlug ? null : parentTopicSlug ?? this.parentTopicSlug,
       search: clearSearch ? null : search ?? this.search,
       interactionType:
           clearInteractionType ? null : interactionType ?? this.interactionType,
@@ -194,6 +236,8 @@ class ProposalHistoryFilters {
     return {
       if (_hasValue(legislature)) 'legislature': legislature!.trim(),
       if (_hasValue(proposingParty)) 'proposingParty': proposingParty!.trim(),
+      if (_hasValue(parentTopicSlug))
+        'parentTopicSlug': parentTopicSlug!.trim(),
       if (_hasValue(search)) 'search': search!.trim(),
       if (interactionType != null &&
           interactionType != ProposalInteractionAction.unknown)
@@ -244,6 +288,7 @@ class ProposalReveal {
     required this.title,
     required this.userVote,
     required this.proposers,
+    this.topicAssignments = const [],
     this.generalityVote,
     required this.officialSources,
     required this.journey,
@@ -255,6 +300,7 @@ class ProposalReveal {
   final String title;
   final ProposalInteractionAction userVote;
   final List<ProposalProposer> proposers;
+  final List<ProposalTopicAssignment> topicAssignments;
   final ParliamentaryVoteSummary? generalityVote;
   final List<OfficialSourceLink> officialSources;
   final ProposalJourneyAction journey;
@@ -275,6 +321,10 @@ class ProposalReveal {
         _stringOrNull(json['userVote']),
       ),
       proposers: _objectList(json['proposers'], ProposalProposer.fromJson),
+      topicAssignments: _objectList(
+        json['topicAssignments'],
+        ProposalTopicAssignment.fromJson,
+      ),
       generalityVote:
           json['generalityVote'] is Map<String, dynamic>
               ? ParliamentaryVoteSummary.fromJson(json['generalityVote'])
@@ -416,16 +466,28 @@ class ProposalJourney {
     required this.initiativeId,
     required this.initiativeType,
     this.initiativeNumber,
+    this.legislature,
+    this.initiativeSelection,
     required this.title,
     this.fullProposalTextLink,
+    this.userVote,
+    this.generalityVote,
+    this.proposers = const [],
+    this.topicAssignments = const [],
     required this.phases,
   });
 
   final int initiativeId;
   final String initiativeType;
   final String? initiativeNumber;
+  final String? legislature;
+  final String? initiativeSelection;
   final String title;
   final String? fullProposalTextLink;
+  final ProposalInteractionAction? userVote;
+  final ParliamentaryVoteSummary? generalityVote;
+  final List<ProposalProposer> proposers;
+  final List<ProposalTopicAssignment> topicAssignments;
   final List<ProposalJourneyPhase> phases;
 
   factory ProposalJourney.fromJson(Map<String, dynamic> json) {
@@ -436,11 +498,23 @@ class ProposalJourney {
         'Iniciativa parlamentar',
       ),
       initiativeNumber: _stringOrNull(json['initiativeNumber']),
+      legislature: _stringOrNull(json['legislature']),
+      initiativeSelection: _stringOrNull(json['initiativeSelection']),
       title: _stringOrFallback(
         json['title'],
         'Iniciativa sem título disponível',
       ),
       fullProposalTextLink: _stringOrNull(json['fullProposalTextLink']),
+      userVote: _interactionActionOrNull(json['userVote']),
+      generalityVote:
+          json['generalityVote'] is Map<String, dynamic>
+              ? ParliamentaryVoteSummary.fromJson(json['generalityVote'])
+              : null,
+      proposers: _objectList(json['proposers'], ProposalProposer.fromJson),
+      topicAssignments: _objectList(
+        json['topicAssignments'],
+        ProposalTopicAssignment.fromJson,
+      ),
       phases: _objectList(json['phases'], ProposalJourneyPhase.fromJson),
     );
   }
@@ -542,8 +616,10 @@ class ProposalHistoryItem {
     this.initiativeNumber,
     required this.title,
     this.legislature,
+    this.initiativeSelection,
     required this.action,
     this.createdAtUtc,
+    this.generalityVote,
     required this.proposers,
   });
 
@@ -553,8 +629,10 @@ class ProposalHistoryItem {
   final String? initiativeNumber;
   final String title;
   final String? legislature;
+  final String? initiativeSelection;
   final ProposalInteractionAction action;
   final String? createdAtUtc;
+  final ParliamentaryVoteSummary? generalityVote;
   final List<ProposalProposer> proposers;
 
   factory ProposalHistoryItem.fromJson(Map<String, dynamic> json) {
@@ -574,7 +652,12 @@ class ProposalHistoryItem {
         _stringOrNull(json['action']),
       ),
       legislature: _stringOrNull(json['legislature']),
+      initiativeSelection: _stringOrNull(json['initiativeSelection']),
       createdAtUtc: _stringOrNull(json['createdAtUtc']),
+      generalityVote:
+          json['generalityVote'] is Map<String, dynamic>
+              ? ParliamentaryVoteSummary.fromJson(json['generalityVote'])
+              : null,
       proposers: _objectList(json['proposers'], ProposalProposer.fromJson),
     );
   }
@@ -591,6 +674,7 @@ class ProposalHistoryPage {
     required this.hasPreviousPage,
     required this.availableLegislatures,
     required this.availableProposingParties,
+    required this.availableParentTopics,
   });
 
   final List<ProposalHistoryItem> items;
@@ -602,6 +686,7 @@ class ProposalHistoryPage {
   final bool hasPreviousPage;
   final List<String> availableLegislatures;
   final List<ProposalHistoryProposingParty> availableProposingParties;
+  final List<ProposalHistoryParentTopic> availableParentTopics;
 
   factory ProposalHistoryPage.fromJson(Map<String, dynamic> json) {
     return ProposalHistoryPage(
@@ -617,8 +702,72 @@ class ProposalHistoryPage {
         json['availableProposingParties'],
         ProposalHistoryProposingParty.fromJson,
       ),
+      availableParentTopics: _objectList(
+        json['availableParentTopics'],
+        ProposalHistoryParentTopic.fromJson,
+      ),
     );
   }
+}
+
+String? proposalInitiativeReferenceLabel({
+  required String initiativeType,
+  required String? initiativeNumber,
+  required String? legislature,
+  required String? initiativeSelection,
+}) {
+  final number = initiativeNumber?.trim();
+  if (number == null || number.isEmpty) {
+    return null;
+  }
+
+  final displayNumber = _initiativeNumberDisplayValue(
+    number,
+    legislature: legislature,
+    initiativeSelection: initiativeSelection,
+  );
+  final referenceParts = [
+    displayNumber,
+    if (legislature != null && legislature.trim().isNotEmpty)
+      legislature.trim(),
+    if (initiativeSelection != null && initiativeSelection.trim().isNotEmpty)
+      initiativeSelection.trim(),
+  ];
+
+  final type =
+      initiativeType.trim().isEmpty
+          ? 'Iniciativa parlamentar'
+          : initiativeType.trim();
+
+  return '$type nº ${referenceParts.join(' / ')}';
+}
+
+String _initiativeNumberDisplayValue(
+  String initiativeNumber, {
+  required String? legislature,
+  required String? initiativeSelection,
+}) {
+  final parts = initiativeNumber.split('/').map((part) => part.trim()).toList();
+  if (parts.length < 3) {
+    return initiativeNumber;
+  }
+
+  final legislatureValue = legislature?.trim();
+  final selectionValue = initiativeSelection?.trim();
+  if (parts[1] == legislatureValue && parts[2] == selectionValue) {
+    return parts[0];
+  }
+
+  return initiativeNumber;
+}
+
+String? proposalLegislatureLabel(String? legislature) {
+  final value = legislature?.trim();
+  if (value == null || value.isEmpty) {
+    return null;
+  }
+
+  return 'Legislatura $value';
 }
 
 class ProposalHistoryProposingParty {
@@ -631,6 +780,20 @@ class ProposalHistoryProposingParty {
     return ProposalHistoryProposingParty(
       acronym: _stringOrFallback(json['acronym'], ''),
       name: _stringOrNull(json['name']),
+    );
+  }
+}
+
+class ProposalHistoryParentTopic {
+  ProposalHistoryParentTopic({required this.slug, required this.label});
+
+  final String slug;
+  final String label;
+
+  factory ProposalHistoryParentTopic.fromJson(Map<String, dynamic> json) {
+    return ProposalHistoryParentTopic(
+      slug: _stringOrFallback(json['slug'], ''),
+      label: _stringOrFallback(json['label'], ''),
     );
   }
 }
@@ -676,4 +839,15 @@ bool? _boolOrNull(dynamic value) {
 
 bool _boolOrFalse(dynamic value) {
   return _boolOrNull(value) ?? false;
+}
+
+ProposalInteractionAction? _interactionActionOrNull(dynamic value) {
+  final action = ProposalInteractionAction.fromWireName(_stringOrNull(value));
+  return action == ProposalInteractionAction.unknown ? null : action;
+}
+
+double? _doubleOrNull(dynamic value) {
+  if (value is num) return value.toDouble();
+  if (value is String) return double.tryParse(value);
+  return null;
 }

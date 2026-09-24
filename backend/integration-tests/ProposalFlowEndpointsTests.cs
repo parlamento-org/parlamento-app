@@ -104,6 +104,42 @@ public sealed class ProposalFlowEndpointsFactory : TestingWebAppFactory
         db.ProjectLaws.AddRange(eligibleInitiative, excludedInitiative);
         db.SaveChanges();
 
+        var topic = CreateTopicAssignmentSeed(db, "ambiente", "Ambiente", "energia", "Energia");
+        db.ProjectLawTopicAssignments.Add(new ProjectLawTopicAssignment
+        {
+            ProjectLawId = eligibleInitiative.Id,
+            TaxonomyVersionId = topic.TaxonomyVersionId,
+            SubtopicId = topic.SubtopicId,
+            BestSubtopicId = topic.SubtopicId,
+            AssignmentMethod = "seeded_reviewed",
+            AssignmentStatus = "assigned",
+            AssignmentConfidence = 0.93,
+            EmbeddingProvider = "test-provider",
+            EmbeddingModel = "test-model",
+            IsCurrent = true
+        });
+
+        var candidateTopic = CreateTopicAssignmentSeed(
+            db,
+            "candidato",
+            "Candidato",
+            "por_confirmar",
+            "Por confirmar");
+        db.ProjectLawTopicAssignments.Add(new ProjectLawTopicAssignment
+        {
+            ProjectLawId = eligibleInitiative.Id,
+            TaxonomyVersionId = candidateTopic.TaxonomyVersionId,
+            SubtopicId = candidateTopic.SubtopicId,
+            BestSubtopicId = candidateTopic.SubtopicId,
+            AssignmentMethod = "centroid_needs_review",
+            AssignmentStatus = "needs_review",
+            AssignmentConfidence = 0.72,
+            EmbeddingProvider = "test-provider",
+            EmbeddingModel = "test-model",
+            IsCurrent = true
+        });
+        db.SaveChanges();
+
         user.Votes.Add(new Vote
         {
             ProjectLawID = excludedInitiative.Id,
@@ -114,6 +150,43 @@ public sealed class ProposalFlowEndpointsFactory : TestingWebAppFactory
 
         UserId = user.Id;
         EligibleInitiativeId = eligibleInitiative.Id;
+    }
+
+    private static (int TaxonomyVersionId, int SubtopicId) CreateTopicAssignmentSeed(
+        DatabaseContext db,
+        string parentSlug,
+        string parentLabel,
+        string subtopicSlug,
+        string subtopicLabel)
+    {
+        var taxonomyVersion = new ProposalTopicTaxonomyVersion
+        {
+            Version = "taxonomy_v2",
+            EmbeddingProvider = "test-provider",
+            EmbeddingModel = "test-model"
+        };
+        var parentTopic = new ProposalTopicParent
+        {
+            TaxonomyVersion = taxonomyVersion,
+            Slug = parentSlug,
+            Label = parentLabel,
+            DisplayOrder = 1
+        };
+        var subtopic = new ProposalSubtopic
+        {
+            TaxonomyVersion = taxonomyVersion,
+            ParentTopic = parentTopic,
+            Slug = subtopicSlug,
+            Label = subtopicLabel,
+            DisplayOrder = 1
+        };
+
+        db.ProposalTopicTaxonomyVersions.Add(taxonomyVersion);
+        db.ProposalTopicParents.Add(parentTopic);
+        db.ProposalSubtopics.Add(subtopic);
+        db.SaveChanges();
+
+        return (taxonomyVersion.Id, subtopic.Id);
     }
 }
 
@@ -153,6 +226,14 @@ public sealed class ProposalFlowEndpointsTests : IClassFixture<ProposalFlowEndpo
         Assert.DoesNotContain("proposalResult", body);
         Assert.DoesNotContain("votingResult", body);
         Assert.DoesNotContain("PS", body);
+
+        var topics = root.GetProperty("topicAssignments").EnumerateArray().ToList();
+        var topic = topics.Single();
+        Assert.Equal("ambiente", topic.GetProperty("parentTopicSlug").GetString());
+        Assert.Equal("Ambiente", topic.GetProperty("parentTopicLabel").GetString());
+        Assert.Equal("energia", topic.GetProperty("subtopicSlug").GetString());
+        Assert.Equal("Energia", topic.GetProperty("subtopicLabel").GetString());
+        Assert.Equal("assigned", topic.GetProperty("assignmentStatus").GetString());
     }
 }
 
@@ -444,6 +525,54 @@ public sealed class ProposalHistoryEndpointsFactory : TestingWebAppFactory
         db.ProjectLaws.AddRange(xvOld, xvDuplicate, xvi, xvii);
         db.SaveChanges();
 
+        var taxonomyVersion = new ProposalTopicTaxonomyVersion
+        {
+            Version = "history_taxonomy",
+            EmbeddingProvider = "test-provider",
+            EmbeddingModel = "test-model"
+        };
+        var education = new ProposalTopicParent
+        {
+            TaxonomyVersion = taxonomyVersion,
+            Slug = "educacao",
+            Label = "Educação",
+            DisplayOrder = 1
+        };
+        var health = new ProposalTopicParent
+        {
+            TaxonomyVersion = taxonomyVersion,
+            Slug = "saude",
+            Label = "Saúde",
+            DisplayOrder = 2
+        };
+        var schools = new ProposalSubtopic
+        {
+            TaxonomyVersion = taxonomyVersion,
+            ParentTopic = education,
+            Slug = "escolas",
+            Label = "Escolas",
+            DisplayOrder = 1
+        };
+        var prevention = new ProposalSubtopic
+        {
+            TaxonomyVersion = taxonomyVersion,
+            ParentTopic = health,
+            Slug = "prevencao",
+            Label = "Prevenção",
+            DisplayOrder = 1
+        };
+
+        db.ProposalTopicTaxonomyVersions.Add(taxonomyVersion);
+        db.ProposalTopicParents.AddRange(education, health);
+        db.ProposalSubtopics.AddRange(schools, prevention);
+        db.SaveChanges();
+
+        db.ProjectLawTopicAssignments.AddRange(
+            CreateTopicAssignment(xvi.Id, taxonomyVersion.Id, schools.Id),
+            CreateTopicAssignment(xvii.Id, taxonomyVersion.Id, schools.Id),
+            CreateTopicAssignment(xvOld.Id, taxonomyVersion.Id, prevention.Id));
+        db.SaveChanges();
+
         var now = DateTime.UtcNow;
         db.ProposalInteractionEvents.AddRange(
             CreateInteraction(user.Id, xvOld.Id, ProposalInteractionType.Support, now.AddMinutes(-40)),
@@ -469,11 +598,32 @@ public sealed class ProposalHistoryEndpointsFactory : TestingWebAppFactory
             Legislatura = legislature,
             InitiativeNumber = $"{sourceId}/{legislature}/1",
             InitiativeTypeDescription = "Projeto de Lei",
+            InitiativeSelection = "1",
             VoteDate = "2024-05-01",
             ProposingParty = proposingParty,
             ProposalTitle = title,
             FullProposalTextLink = $"https://example.com/proposals/{sourceId}",
             ProposalResult = ProposalResult.ApprovedInGenerality
+        };
+    }
+
+    private static ProjectLawTopicAssignment CreateTopicAssignment(
+        int projectLawId,
+        int taxonomyVersionId,
+        int subtopicId)
+    {
+        return new ProjectLawTopicAssignment
+        {
+            ProjectLawId = projectLawId,
+            TaxonomyVersionId = taxonomyVersionId,
+            SubtopicId = subtopicId,
+            BestSubtopicId = subtopicId,
+            AssignmentMethod = "seeded_reviewed",
+            AssignmentStatus = "assigned",
+            AssignmentConfidence = 0.96,
+            EmbeddingProvider = "test-provider",
+            EmbeddingModel = "test-model",
+            IsCurrent = true
         };
     }
 
@@ -524,6 +674,7 @@ public sealed class ProposalHistoryEndpointsTests : IClassFixture<ProposalHistor
         Assert.True(root.GetProperty("hasNextPage").GetBoolean());
         Assert.False(root.GetProperty("hasPreviousPage").GetBoolean());
         Assert.Equal("Newest XVII initiative", items[0].GetProperty("title").GetString());
+        Assert.True(items[0].GetProperty("generalityVote").GetProperty("approved").GetBoolean());
         Assert.Equal("Latest duplicate XV initiative", items[1].GetProperty("title").GetString());
         Assert.Equal("Support", items[1].GetProperty("action").GetString());
         Assert.Contains(
@@ -532,6 +683,11 @@ public sealed class ProposalHistoryEndpointsTests : IClassFixture<ProposalHistor
         Assert.Contains(
             root.GetProperty("availableProposingParties").EnumerateArray(),
             item => item.GetProperty("acronym").GetString() == "PS");
+        Assert.Contains(
+            root.GetProperty("availableParentTopics").EnumerateArray(),
+            item =>
+                item.GetProperty("slug").GetString() == "educacao" &&
+                item.GetProperty("label").GetString() == "Educação");
     }
 
     [Fact]
@@ -547,6 +703,7 @@ public sealed class ProposalHistoryEndpointsTests : IClassFixture<ProposalHistor
 
         Assert.Equal(1, root.GetProperty("totalItems").GetInt32());
         Assert.Equal("XVI", item.GetProperty("legislature").GetString());
+        Assert.Equal("1", item.GetProperty("initiativeSelection").GetString());
         Assert.Equal("Only XVI initiative", item.GetProperty("title").GetString());
         Assert.False(root.GetProperty("hasNextPage").GetBoolean());
     }
@@ -567,6 +724,28 @@ public sealed class ProposalHistoryEndpointsTests : IClassFixture<ProposalHistor
             Assert.Contains(
                 item.GetProperty("proposers").EnumerateArray(),
                 proposer => proposer.GetProperty("acronym").GetString() == "PSD"));
+    }
+
+    [Fact]
+    public async Task HistoryEndpointFiltersByParentTopic()
+    {
+        var response = await _client.GetAsync("/proposal-flow/history?page=1&pageSize=10&parentTopicSlug=educacao");
+
+        response.EnsureSuccessStatusCode();
+
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var root = document.RootElement;
+        var titles = root
+            .GetProperty("items")
+            .EnumerateArray()
+            .Select(item => item.GetProperty("title").GetString())
+            .ToList();
+
+        Assert.Equal(2, root.GetProperty("totalItems").GetInt32());
+        Assert.Contains("Only XVI initiative", titles);
+        Assert.Contains("Newest XVII initiative", titles);
+        Assert.DoesNotContain("Older XV initiative", titles);
+        Assert.DoesNotContain("Latest duplicate XV initiative", titles);
     }
 
     [Fact]
@@ -740,6 +919,7 @@ public sealed class ProposalRevealEndpointsFactory : TestingWebAppFactory
             Legislatura = "XV",
             InitiativeNumber = "40/XV/1",
             InitiativeTypeDescription = "Projeto de Lei",
+            InitiativeSelection = "1",
             VoteDate = "2024-04-01",
             ProposingParty = ps,
             ProposalTitle = "Reveal candidate",
@@ -818,6 +998,46 @@ public sealed class ProposalRevealEndpointsFactory : TestingWebAppFactory
         db.ProjectLaws.Add(initiative);
         db.SaveChanges();
 
+        var taxonomyVersion = new ProposalTopicTaxonomyVersion
+        {
+            Version = "taxonomy_v2",
+            EmbeddingProvider = "test-provider",
+            EmbeddingModel = "test-model"
+        };
+        var parentTopic = new ProposalTopicParent
+        {
+            TaxonomyVersion = taxonomyVersion,
+            Slug = "educacao",
+            Label = "Educação",
+            DisplayOrder = 1
+        };
+        var subtopic = new ProposalSubtopic
+        {
+            TaxonomyVersion = taxonomyVersion,
+            ParentTopic = parentTopic,
+            Slug = "escolas",
+            Label = "Escolas",
+            DisplayOrder = 1
+        };
+        db.ProposalTopicTaxonomyVersions.Add(taxonomyVersion);
+        db.ProposalTopicParents.Add(parentTopic);
+        db.ProposalSubtopics.Add(subtopic);
+        db.SaveChanges();
+
+        db.ProjectLawTopicAssignments.Add(new ProjectLawTopicAssignment
+        {
+            ProjectLawId = initiative.Id,
+            TaxonomyVersionId = taxonomyVersion.Id,
+            SubtopicId = subtopic.Id,
+            BestSubtopicId = subtopic.Id,
+            AssignmentMethod = "seeded_reviewed",
+            AssignmentStatus = "assigned",
+            AssignmentConfidence = 0.97,
+            EmbeddingProvider = "test-provider",
+            EmbeddingModel = "test-model",
+            IsCurrent = true
+        });
+
         db.ProposalInteractionEvents.Add(new ProposalInteractionEvent
         {
             UserId = user.Id,
@@ -880,6 +1100,12 @@ public sealed class ProposalRevealEndpointsTests : IClassFixture<ProposalRevealE
         Assert.Equal(
             $"/proposal-flow/initiatives/{_factory.InitiativeId}/journey",
             root.GetProperty("journey").GetProperty("endpoint").GetString());
+
+        var topic = root.GetProperty("topicAssignments").EnumerateArray().Single();
+        Assert.Equal("educacao", topic.GetProperty("parentTopicSlug").GetString());
+        Assert.Equal("Educação", topic.GetProperty("parentTopicLabel").GetString());
+        Assert.Equal("escolas", topic.GetProperty("subtopicSlug").GetString());
+        Assert.Equal("Escolas", topic.GetProperty("subtopicLabel").GetString());
     }
 
     [Fact]
@@ -894,9 +1120,22 @@ public sealed class ProposalRevealEndpointsTests : IClassFixture<ProposalRevealE
         var root = document.RootElement;
 
         Assert.Equal(_factory.InitiativeId, root.GetProperty("initiativeId").GetInt32());
+        Assert.Equal("Support", root.GetProperty("userVote").GetString());
+        Assert.Equal("XV", root.GetProperty("legislature").GetString());
+        Assert.Equal("1", root.GetProperty("initiativeSelection").GetString());
+        Assert.True(root.GetProperty("generalityVote").GetProperty("approved").GetBoolean());
         Assert.Equal(
             "https://example.com/proposals/4001",
             root.GetProperty("fullProposalTextLink").GetString());
+
+        var proposer = root.GetProperty("proposers").EnumerateArray().Single();
+        Assert.Equal("PS", proposer.GetProperty("acronym").GetString());
+
+        var topic = root.GetProperty("topicAssignments").EnumerateArray().Single();
+        Assert.Equal("educacao", topic.GetProperty("parentTopicSlug").GetString());
+        Assert.Equal("Educação", topic.GetProperty("parentTopicLabel").GetString());
+        Assert.Equal("escolas", topic.GetProperty("subtopicSlug").GetString());
+        Assert.Equal("Escolas", topic.GetProperty("subtopicLabel").GetString());
     }
 
     [Fact]

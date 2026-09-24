@@ -8,6 +8,8 @@ public class OpenAiSummaryOptions
 
     public string Model { get; set; } = "gpt-4o-mini-2024-07-18";
 
+    public string? LongContextFallbackModel { get; set; } = "gpt-4.1";
+
     public double Temperature { get; set; } = 0.1;
 
     public int MaxOutputTokens { get; set; } = 700;

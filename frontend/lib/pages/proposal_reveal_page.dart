@@ -39,6 +39,8 @@ class ProposalRevealPage extends StatelessWidget {
                       builder:
                           (context) => ProposalJourneyPage(
                             initiativeId: reveal.initiativeId,
+                            initialProposers: reveal.proposers,
+                            initialTopicAssignments: reveal.topicAssignments,
                           ),
                     ),
                   ),
@@ -102,7 +104,7 @@ class _OutcomePanel extends StatelessWidget {
                 color: outcomeColor,
                 icon: _outcomeIcon(approved),
               ),
-              const SizedBox(height: 34),
+              const SizedBox(height: 30),
               const _FloatingLabel('Proposto por:'),
               const SizedBox(height: 14),
               _ProposerLogoStrip(proposers: reveal.proposers),

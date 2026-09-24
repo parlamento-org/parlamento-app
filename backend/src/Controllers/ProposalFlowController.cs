@@ -70,7 +70,13 @@ public sealed class ProposalFlowController : ControllerBase
         int initiativeId,
         CancellationToken cancellationToken)
     {
-        var result = await _proposalFlowService.GetJourneyAsync(initiativeId, cancellationToken);
+        var userId = User.GetUserId();
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
+
+        var result = await _proposalFlowService.GetJourneyAsync(userId.Value, initiativeId, cancellationToken);
         return this.ToActionResult(result);
     }
 

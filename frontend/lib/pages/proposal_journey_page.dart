@@ -3,17 +3,23 @@ import 'package:flutter/services.dart';
 import 'package:frontend/controllers/vote_controller.dart';
 import 'package:frontend/models/proposal_flow.dart';
 import 'package:frontend/themes/base_theme.dart';
+import 'package:frontend/utils/portuguese_date_format.dart';
 import 'package:frontend/widgets/parliamentary_vote_breakdown.dart';
+import 'package:frontend/widgets/proposal_topic_chips.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ProposalJourneyPage extends StatefulWidget {
   const ProposalJourneyPage({
     super.key,
     required this.initiativeId,
+    this.initialProposers = const [],
+    this.initialTopicAssignments = const [],
     VoteController? voteController,
   }) : _voteController = voteController;
 
   final int initiativeId;
+  final List<ProposalProposer> initialProposers;
+  final List<ProposalTopicAssignment> initialTopicAssignments;
   final VoteController? _voteController;
 
   @override
@@ -57,7 +63,11 @@ class _ProposalJourneyPageState extends State<ProposalJourneyPage> {
               );
             }
 
-            return _JourneyContent(journey: snapshot.data!);
+            return _JourneyContent(
+              journey: snapshot.data!,
+              initialProposers: widget.initialProposers,
+              initialTopicAssignments: widget.initialTopicAssignments,
+            );
           },
         ),
       ),
@@ -66,9 +76,15 @@ class _ProposalJourneyPageState extends State<ProposalJourneyPage> {
 }
 
 class _JourneyContent extends StatelessWidget {
-  const _JourneyContent({required this.journey});
+  const _JourneyContent({
+    required this.journey,
+    required this.initialProposers,
+    required this.initialTopicAssignments,
+  });
 
   final ProposalJourney journey;
+  final List<ProposalProposer> initialProposers;
+  final List<ProposalTopicAssignment> initialTopicAssignments;
 
   @override
   Widget build(BuildContext context) {
@@ -77,51 +93,308 @@ class _JourneyContent extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(18, 10, 18, 24),
       children: [
-        _JourneyHeader(journey: journey),
+        _JourneyHeader(
+          journey: journey,
+          initialProposers: initialProposers,
+          initialTopicAssignments: initialTopicAssignments,
+        ),
         const SizedBox(height: 18),
         if (phases.isEmpty)
           const _EmptyTimeline()
         else
-          _JourneyTimeline(phases: phases),
+          _JourneyTimeline(phases: phases, userVote: journey.userVote),
       ],
     );
   }
 }
 
 class _JourneyHeader extends StatelessWidget {
-  const _JourneyHeader({required this.journey});
+  const _JourneyHeader({
+    required this.journey,
+    required this.initialProposers,
+    required this.initialTopicAssignments,
+  });
 
   final ProposalJourney journey;
+  final List<ProposalProposer> initialProposers;
+  final List<ProposalTopicAssignment> initialTopicAssignments;
 
   @override
   Widget build(BuildContext context) {
+    final initiativeReference = proposalInitiativeReferenceLabel(
+      initiativeType: journey.initiativeType,
+      initiativeNumber: journey.initiativeNumber,
+      legislature: journey.legislature,
+      initiativeSelection: journey.initiativeSelection,
+    );
+    final legislatureLabel = proposalLegislatureLabel(journey.legislature);
     final meta = [
-      journey.initiativeType,
-      if (journey.initiativeNumber != null) journey.initiativeNumber!,
+      if (initiativeReference != null) initiativeReference,
+      if (legislatureLabel != null) legislatureLabel,
     ];
+    final topicAssignments =
+        journey.topicAssignments.isNotEmpty
+            ? journey.topicAssignments
+            : initialTopicAssignments;
+    final proposers =
+        journey.proposers.isNotEmpty ? journey.proposers : initialProposers;
+    final proposerLabel = _firstKnownProposer(proposers);
     final originalProposalUrl = journey.fullProposalTextLink?.trim();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: meta.map((label) => _MetaBadge(label)).toList(),
+        _JourneyOutcomeHero(
+          userVote: journey.userVote,
+          generalityVote: journey.generalityVote,
         ),
         const SizedBox(height: 12),
-        Text(
-          journey.title,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: baseTheme.colorScheme.primary,
-            fontWeight: FontWeight.w900,
-            height: 1.15,
-          ),
-        ),
+        _HeaderMetaRow(meta: meta, topicAssignments: topicAssignments),
+        const SizedBox(height: 12),
+        _JourneyTitleRow(title: journey.title, proposerLabel: proposerLabel),
         if (originalProposalUrl != null && originalProposalUrl.isNotEmpty) ...[
           const SizedBox(height: 16),
           _OriginalProposalSection(url: originalProposalUrl),
         ],
+      ],
+    );
+  }
+}
+
+class _JourneyOutcomeHero extends StatelessWidget {
+  const _JourneyOutcomeHero({
+    required this.userVote,
+    required this.generalityVote,
+  });
+
+  final ProposalInteractionAction? userVote;
+  final ParliamentaryVoteSummary? generalityVote;
+
+  @override
+  Widget build(BuildContext context) {
+    final vote = userVote ?? ProposalInteractionAction.unknown;
+    final approved = generalityVote?.approved;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: baseTheme.colorScheme.primary,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final userSignal = _JourneyOutcomeSignal(
+            title: 'O teu voto',
+            detail: 'Na proposta',
+            icon: _actionIcon(vote),
+            color: _actionColor(vote),
+            semanticLabel: _actionLabel(vote),
+          );
+          final parliamentSignal = _JourneyOutcomeSignal(
+            title: 'Parlamento',
+            detail: 'Generalidade',
+            icon: _approvalIcon(approved),
+            color: _approvalColor(approved),
+            semanticLabel: _approvalLabel(approved, generalityVote?.result),
+          );
+
+          if (constraints.maxWidth < 520) {
+            return Column(
+              children: [
+                userSignal,
+                const SizedBox(height: 10),
+                const _HeroDivider(isVertical: false),
+                const SizedBox(height: 10),
+                parliamentSignal,
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              Expanded(child: userSignal),
+              const _HeroDivider(isVertical: true),
+              Expanded(child: parliamentSignal),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _JourneyOutcomeSignal extends StatelessWidget {
+  const _JourneyOutcomeSignal({
+    required this.title,
+    required this.detail,
+    required this.icon,
+    required this.color,
+    required this.semanticLabel,
+  });
+
+  final String title;
+  final String detail;
+  final IconData icon;
+  final Color color;
+  final String semanticLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: '$title: $semanticLabel',
+      child: Tooltip(
+        message: semanticLabel,
+        child: Row(
+          children: [
+            Container(
+              width: 58,
+              height: 58,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white, width: 2),
+              ),
+              child: Icon(icon, color: Colors.white, size: 36),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    detail,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.76),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroDivider extends StatelessWidget {
+  const _HeroDivider({required this.isVertical});
+
+  final bool isVertical;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: isVertical ? 1 : double.infinity,
+      height: isVertical ? 54 : 1,
+      margin:
+          isVertical
+              ? const EdgeInsets.symmetric(horizontal: 12)
+              : EdgeInsets.zero,
+      color: Colors.white.withValues(alpha: 0.24),
+    );
+  }
+}
+
+class _HeaderMetaRow extends StatelessWidget {
+  const _HeaderMetaRow({required this.meta, required this.topicAssignments});
+
+  final List<String> meta;
+  final List<ProposalTopicAssignment> topicAssignments;
+
+  @override
+  Widget build(BuildContext context) {
+    final metaBadges = meta.map((label) => _MetaBadge(label)).toList();
+    if (topicAssignments.isEmpty) {
+      return Wrap(spacing: 8, runSpacing: 8, children: metaBadges);
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 680) {
+          return Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ...metaBadges,
+              ProposalTopicChips(topics: topicAssignments),
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Wrap(spacing: 8, runSpacing: 8, children: metaBadges),
+            ),
+            const SizedBox(width: 12),
+            Flexible(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: ProposalTopicChips(
+                  topics: topicAssignments,
+                  alignment: WrapAlignment.end,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _JourneyTitleRow extends StatelessWidget {
+  const _JourneyTitleRow({required this.title, required this.proposerLabel});
+
+  final String title;
+  final String? proposerLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final titleText = Text(
+      title,
+      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+        color: baseTheme.colorScheme.primary,
+        fontWeight: FontWeight.w900,
+        height: 1.15,
+      ),
+    );
+
+    if (proposerLabel == null) {
+      return titleText;
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: 74,
+          child: ParliamentaryPartyLogo(
+            acronym: proposerLabel!,
+            size: 68,
+            fallbackLabel: proposerLabel!,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(child: titleText),
       ],
     );
   }
@@ -207,9 +480,10 @@ class _OriginalProposalSection extends StatelessWidget {
 }
 
 class _JourneyTimeline extends StatefulWidget {
-  const _JourneyTimeline({required this.phases});
+  const _JourneyTimeline({required this.phases, required this.userVote});
 
   final List<ProposalJourneyPhase> phases;
+  final ProposalInteractionAction? userVote;
 
   @override
   State<_JourneyTimeline> createState() => _JourneyTimelineState();
@@ -259,6 +533,7 @@ class _JourneyTimelineState extends State<_JourneyTimeline>
                 for (var index = 0; index < widget.phases.length; index++)
                   _AnimatedPhaseRow(
                     phase: widget.phases[index],
+                    userVote: widget.userVote,
                     index: index,
                     total: widget.phases.length,
                     timelineProgress: progress,
@@ -275,12 +550,14 @@ class _JourneyTimelineState extends State<_JourneyTimeline>
 class _AnimatedPhaseRow extends StatelessWidget {
   const _AnimatedPhaseRow({
     required this.phase,
+    required this.userVote,
     required this.index,
     required this.total,
     required this.timelineProgress,
   });
 
   final ProposalJourneyPhase phase;
+  final ProposalInteractionAction? userVote;
   final int index;
   final int total;
   final double timelineProgress;
@@ -311,6 +588,7 @@ class _AnimatedPhaseRow extends StatelessWidget {
               Expanded(
                 child: _JourneyPhaseTile(
                   phase: phase,
+                  userVote: userVote,
                   initiallyExpanded: index == 0,
                 ),
               ),
@@ -325,10 +603,12 @@ class _AnimatedPhaseRow extends StatelessWidget {
 class _JourneyPhaseTile extends StatelessWidget {
   const _JourneyPhaseTile({
     required this.phase,
+    required this.userVote,
     required this.initiallyExpanded,
   });
 
   final ProposalJourneyPhase phase;
+  final ProposalInteractionAction? userVote;
   final bool initiallyExpanded;
 
   @override
@@ -368,7 +648,7 @@ class _JourneyPhaseTile extends StatelessWidget {
             padding: const EdgeInsets.only(top: 6),
             child: _PhaseSubtitle(phase: phase),
           ),
-          children: [_ExpandedPhaseDetails(phase: phase)],
+          children: [_ExpandedPhaseDetails(phase: phase, userVote: userVote)],
         ),
       ),
     );
@@ -386,18 +666,23 @@ class _PhaseSubtitle extends StatelessWidget {
       spacing: 8,
       runSpacing: 8,
       children: [
-        if (phase.date != null) _MetaBadge(phase.date!),
-        if (phase.status != null) _MetaBadge(phase.status!),
-        if (phase.phaseCode != null) _MetaBadge('Fase ${phase.phaseCode}'),
+        if (phase.date != null)
+          _MetaBadge(formatPortugueseLongDate(phase.date!)),
+        if (phase.status != null)
+          _VoteResultBadge(
+            label: phase.status!,
+            approved: _approvedFromResultLabel(phase.status!),
+          ),
       ],
     );
   }
 }
 
 class _ExpandedPhaseDetails extends StatelessWidget {
-  const _ExpandedPhaseDetails({required this.phase});
+  const _ExpandedPhaseDetails({required this.phase, required this.userVote});
 
   final ProposalJourneyPhase phase;
+  final ProposalInteractionAction? userVote;
 
   @override
   Widget build(BuildContext context) {
@@ -408,9 +693,10 @@ class _ExpandedPhaseDetails extends StatelessWidget {
         _DetailText(label: 'Resumo', value: phase.summary),
         if (phase.observation != null)
           _DetailText(label: 'Observação', value: phase.observation!),
-        if (phase.approvedTextId != null)
-          _DetailText(label: 'Texto aprovado', value: phase.approvedTextId!),
-        _VoteSection(votes: phase.votes),
+        _VoteSection(
+          votes: phase.votes,
+          userVote: _phase250UserVote(phase, userVote),
+        ),
         _LinksSection(
           title: 'Documentos oficiais',
           icon: Icons.description_outlined,
@@ -436,9 +722,10 @@ class _ExpandedPhaseDetails extends StatelessWidget {
 }
 
 class _VoteSection extends StatelessWidget {
-  const _VoteSection({required this.votes});
+  const _VoteSection({required this.votes, required this.userVote});
 
   final List<ParliamentaryVoteSummary> votes;
+  final ProposalInteractionAction? userVote;
 
   @override
   Widget build(BuildContext context) {
@@ -446,27 +733,39 @@ class _VoteSection extends StatelessWidget {
       title: 'Votação parlamentar',
       icon: Icons.how_to_vote_outlined,
       child:
-          votes.isEmpty
+          votes.isEmpty && userVote == null
               ? const _EmptyDetail('Sem votação registada nesta fase.')
               : Column(
-                children:
-                    votes
-                        .map(
-                          (vote) => Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: _VoteSummaryBlock(vote: vote),
-                          ),
-                        )
-                        .toList(),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (votes.isEmpty)
+                    ParliamentaryVoteBreakdown(
+                      votes: const [],
+                      userOrientation: orientationForUserVote(userVote!),
+                      style: ParliamentaryVoteBreakdownStyle.compact,
+                      emptyLabel: 'Sem votos por partido disponíveis.',
+                    )
+                  else
+                    ...votes.map(
+                      (vote) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _VoteSummaryBlock(
+                          vote: vote,
+                          userVote: userVote,
+                        ),
+                      ),
+                    ),
+                ],
               ),
     );
   }
 }
 
 class _VoteSummaryBlock extends StatelessWidget {
-  const _VoteSummaryBlock({required this.vote});
+  const _VoteSummaryBlock({required this.vote, required this.userVote});
 
   final ParliamentaryVoteSummary vote;
+  final ProposalInteractionAction? userVote;
 
   @override
   Widget build(BuildContext context) {
@@ -478,8 +777,10 @@ class _VoteSummaryBlock extends StatelessWidget {
           runSpacing: 8,
           children: [
             _MetaBadge(vote.stageName),
-            if (vote.date != null) _MetaBadge(vote.date!),
-            if (vote.result != null) _MetaBadge(vote.result!),
+            if (vote.date != null)
+              _MetaBadge(formatPortugueseLongDate(vote.date!)),
+            if (vote.result != null)
+              _VoteResultBadge(label: vote.result!, approved: vote.approved),
           ],
         ),
         if (vote.description != null) ...[
@@ -490,6 +791,8 @@ class _VoteSummaryBlock extends StatelessWidget {
         ParliamentaryVoteBreakdown(
           votes: vote.partyVotes,
           isUnanimous: vote.isUnanimous,
+          userOrientation:
+              userVote == null ? null : orientationForUserVote(userVote!),
           style: ParliamentaryVoteBreakdownStyle.compact,
           emptyLabel: 'Sem votos por partido disponíveis.',
         ),
@@ -833,6 +1136,51 @@ class _MetaBadge extends StatelessWidget {
   }
 }
 
+class _VoteResultBadge extends StatelessWidget {
+  const _VoteResultBadge({required this.label, required this.approved});
+
+  final String label;
+  final bool? approved;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _approvalColor(approved);
+    final icon = _approvalIcon(approved);
+
+    return Tooltip(
+      message: label,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 28),
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color, width: 2),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.white, size: 15),
+            const SizedBox(width: 5),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _EmptyDetail extends StatelessWidget {
   const _EmptyDetail(this.message);
 
@@ -885,6 +1233,98 @@ IconData _phaseIcon(ProposalJourneyPhase phase) {
   return Icons.flag_outlined;
 }
 
+IconData _actionIcon(ProposalInteractionAction action) {
+  return switch (action) {
+    ProposalInteractionAction.support => Icons.check,
+    ProposalInteractionAction.oppose => Icons.close,
+    ProposalInteractionAction.abstain => Icons.remove,
+    ProposalInteractionAction.skip => Icons.skip_next,
+    ProposalInteractionAction.unknown => Icons.help_outline,
+  };
+}
+
+ProposalInteractionAction? _phase250UserVote(
+  ProposalJourneyPhase phase,
+  ProposalInteractionAction? userVote,
+) {
+  if (userVote == null || !_isUserVoteAction(userVote)) {
+    return null;
+  }
+
+  return phase.phaseCode == '250' ? userVote : null;
+}
+
+bool _isUserVoteAction(ProposalInteractionAction action) {
+  return switch (action) {
+    ProposalInteractionAction.support ||
+    ProposalInteractionAction.oppose ||
+    ProposalInteractionAction.abstain => true,
+    ProposalInteractionAction.skip ||
+    ProposalInteractionAction.unknown => false,
+  };
+}
+
+Color _actionColor(ProposalInteractionAction action) {
+  return switch (action) {
+    ProposalInteractionAction.support => approvedGreenBold,
+    ProposalInteractionAction.oppose => rejectedRedBold,
+    ProposalInteractionAction.abstain => Colors.grey.shade700,
+    ProposalInteractionAction.skip => baseTheme.colorScheme.secondary,
+    ProposalInteractionAction.unknown => Colors.grey.shade700,
+  };
+}
+
+String _actionLabel(ProposalInteractionAction action) {
+  return switch (action) {
+    ProposalInteractionAction.support => 'A favor',
+    ProposalInteractionAction.oppose => 'Contra',
+    ProposalInteractionAction.abstain => 'Abstenção',
+    ProposalInteractionAction.skip => 'Saltado',
+    ProposalInteractionAction.unknown => 'Sem voto registado',
+  };
+}
+
+IconData _approvalIcon(bool? approved) {
+  if (approved == true) {
+    return Icons.check;
+  }
+  if (approved == false) {
+    return Icons.close;
+  }
+  return Icons.remove;
+}
+
+Color _approvalColor(bool? approved) {
+  if (approved == true) {
+    return approvedGreenBold;
+  }
+  if (approved == false) {
+    return rejectedRedBold;
+  }
+  return Colors.grey.shade700;
+}
+
+String _approvalLabel(bool? approved, String? rawResult) {
+  if (approved == true) {
+    return 'Aprovado';
+  }
+  if (approved == false) {
+    return 'Rejeitado';
+  }
+  return rawResult ?? 'Sem resultado';
+}
+
+bool? _approvedFromResultLabel(String label) {
+  final normalized = label.toLowerCase();
+  if (normalized.contains('aprovad')) {
+    return true;
+  }
+  if (normalized.contains('rejeitad')) {
+    return false;
+  }
+  return null;
+}
+
 String _videoLabel(ProposalJourneyVideo video) {
   if (video.speakerName != null) {
     return video.speakerParty == null
@@ -903,7 +1343,7 @@ String _videoLabel(ProposalJourneyVideo video) {
 
 String _videoDetail(ProposalJourneyVideo video) {
   final parts = [
-    if (video.date != null) video.date!,
+    if (video.date != null) formatPortugueseLongDate(video.date!),
     if (video.startTime != null && video.endTime != null)
       '${video.startTime!}-${video.endTime!}'
     else if (video.startTime != null)
@@ -911,4 +1351,22 @@ String _videoDetail(ProposalJourneyVideo video) {
   ];
 
   return parts.isEmpty ? 'Vídeo' : parts.join(' · ');
+}
+
+String? _firstKnownProposer(List<ProposalProposer> proposers) {
+  for (final proposer in proposers) {
+    final acronym = proposer.acronym ?? proposer.name;
+    if (acronym != null && partyLogoAsset(acronym) != null) {
+      return acronym;
+    }
+  }
+
+  for (final proposer in proposers) {
+    final label = proposer.acronym ?? proposer.name;
+    if (label != null && label.trim().isNotEmpty) {
+      return label;
+    }
+  }
+
+  return null;
 }
