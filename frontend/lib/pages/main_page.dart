@@ -73,56 +73,27 @@ class MainPageState extends State<MainPage> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: baseTheme.colorScheme.surface,
+        type: BottomNavigationBarType.fixed,
         items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            activeIcon: Icon(
-              Icons.speaker,
-              color: baseTheme.colorScheme.primary,
-              weight: 5.0,
-              size: 30.0,
-            ),
-            icon: Icon(
-              Icons.speaker,
-              color: baseTheme.colorScheme.primary.withValues(
-                alpha: fadedPrimaryOpacity,
-              ),
-            ),
+            activeIcon: const _NavIcon(icon: Icons.speaker, selected: true),
+            icon: const _NavIcon(icon: Icons.speaker),
             label: 'Perfil',
             backgroundColor: baseTheme.colorScheme.primary.withValues(
               alpha: fadedPrimaryOpacity,
             ),
           ),
           BottomNavigationBarItem(
-            activeIcon: Icon(
-              Icons.how_to_vote,
-              color: baseTheme.colorScheme.primary,
-              weight: 5.0,
-              size: 30.0,
-            ),
-            icon: Icon(
-              Icons.how_to_vote,
-              color: baseTheme.colorScheme.primary.withValues(
-                alpha: fadedPrimaryOpacity,
-              ),
-            ),
+            activeIcon: const _NavIcon(icon: Icons.how_to_vote, selected: true),
+            icon: const _NavIcon(icon: Icons.how_to_vote),
             label: 'Vota',
             backgroundColor: baseTheme.colorScheme.primary.withValues(
               alpha: fadedPrimaryOpacity,
             ),
           ),
           BottomNavigationBarItem(
-            activeIcon: Icon(
-              Icons.check_box,
-              color: baseTheme.colorScheme.primary,
-              weight: 5.0,
-              size: 30.0,
-            ),
-            icon: Icon(
-              Icons.check_box,
-              color: baseTheme.colorScheme.primary.withValues(
-                alpha: fadedPrimaryOpacity,
-              ),
-            ),
+            activeIcon: const _NavIcon(icon: Icons.check_box, selected: true),
+            icon: const _NavIcon(icon: Icons.check_box),
             label: 'Histórico',
             backgroundColor: baseTheme.colorScheme.primary.withValues(
               alpha: fadedPrimaryOpacity,
@@ -141,6 +112,41 @@ class MainPageState extends State<MainPage> {
         },
         currentIndex: _currentIndex,
         selectedItemColor: baseTheme.colorScheme.primary,
+        unselectedItemColor: baseTheme.colorScheme.primary.withValues(
+          alpha: fadedPrimaryOpacity,
+        ),
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w900),
+        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
+      ),
+    );
+  }
+}
+
+class _NavIcon extends StatelessWidget {
+  const _NavIcon({required this.icon, this.selected = false});
+
+  final IconData icon;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 44,
+      height: 34,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: selected ? baseTheme.colorScheme.primary : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(
+        icon,
+        color:
+            selected
+                ? Colors.white
+                : baseTheme.colorScheme.primary.withValues(
+                  alpha: fadedPrimaryOpacity,
+                ),
+        size: selected ? 25 : 24,
       ),
     );
   }

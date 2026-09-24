@@ -5,6 +5,7 @@ import 'package:frontend/models/proposal_flow.dart';
 import 'package:frontend/pages/proposal_reveal_page.dart';
 import 'package:frontend/pages/redacted_text_reader_page.dart';
 import 'package:frontend/themes/base_theme.dart';
+import 'package:frontend/utils/portuguese_date_format.dart';
 import 'package:frontend/widgets/proposal_topic_chips.dart';
 import 'package:provider/provider.dart';
 
@@ -244,7 +245,8 @@ class _AnonymizedProposalCard extends StatelessWidget {
                   runSpacing: 8,
                   children: [
                     _Badge(label: card.initiativeType),
-                    if (card.date != null) _Badge(label: card.date!),
+                    if (card.date != null)
+                      _Badge(label: formatPortugueseLongDate(card.date!)),
                     if (card.legislature != null)
                       _Badge(label: 'Legislatura ${card.legislature}'),
                   ],

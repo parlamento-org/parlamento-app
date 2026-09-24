@@ -139,16 +139,7 @@ class _ProfileStatsPagerState extends State<_ProfileStatsPager> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 0),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1180),
-              child: const _ProfileHeader(),
-            ),
-          ),
-        ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         _StatsPageTabs(
           selectedIndex: _selectedIndex,
           items: _tabItems,
@@ -573,29 +564,6 @@ class _StatsPageDots extends StatelessWidget {
           ),
         );
       }),
-    );
-  }
-}
-
-class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            'Perfil',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: baseTheme.colorScheme.primary,
-              fontWeight: FontWeight.w800,
-              height: 1,
-            ),
-          ),
-        ),
-        Icon(Icons.person, color: baseTheme.colorScheme.primary, size: 52),
-      ],
     );
   }
 }

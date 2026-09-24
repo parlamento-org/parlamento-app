@@ -20,42 +20,14 @@ class ProposalTopicChips extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final textColor = onDark ? Colors.white : baseTheme.colorScheme.primary;
-
-    return Column(
-      crossAxisAlignment:
-          alignment == WrapAlignment.center
-              ? CrossAxisAlignment.center
-              : CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.topic_outlined, size: 18, color: textColor),
-            const SizedBox(width: 6),
-            Text(
-              'Tópicos',
-              style: TextStyle(
-                color: textColor,
-                fontSize: 12,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          alignment: alignment,
-          spacing: 8,
-          runSpacing: 8,
-          children:
-              topics
-                  .map(
-                    (topic) => _ProposalTopicChip(topic: topic, onDark: onDark),
-                  )
-                  .toList(),
-        ),
-      ],
+    return Wrap(
+      alignment: alignment,
+      spacing: 8,
+      runSpacing: 8,
+      children:
+          topics
+              .map((topic) => _ProposalTopicChip(topic: topic, onDark: onDark))
+              .toList(),
     );
   }
 }
@@ -79,57 +51,51 @@ class _ProposalTopicChip extends StatelessWidget {
             : swatch.withValues(alpha: 0.46);
     final primaryText = onDark ? Colors.white : baseTheme.colorScheme.primary;
     final secondaryText =
-        onDark ? Colors.white.withValues(alpha: 0.82) : Colors.black54;
+        onDark ? Colors.white.withValues(alpha: 0.80) : Colors.black54;
 
     return Container(
-      constraints: const BoxConstraints(maxWidth: 260),
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+      constraints: const BoxConstraints(maxWidth: 360),
+      padding: const EdgeInsets.fromLTRB(10, 7, 11, 7),
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: borderColor),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 8,
-            height: 34,
-            decoration: BoxDecoration(
-              color: swatch,
-              borderRadius: BorderRadius.circular(99),
-            ),
+            width: 7,
+            height: 7,
+            margin: const EdgeInsets.only(top: 5),
+            decoration: BoxDecoration(color: swatch, shape: BoxShape.circle),
           ),
-          const SizedBox(width: 9),
+          const SizedBox(width: 8),
           Flexible(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  topic.parentTopicLabel,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: primaryText,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                    height: 1.1,
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: '${topic.parentTopicLabel}: ',
+                    style: TextStyle(
+                      color: primaryText,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  topic.subtopicLabel,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: secondaryText,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    height: 1.1,
+                  TextSpan(
+                    text: topic.subtopicLabel,
+                    style: TextStyle(
+                      color: secondaryText,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
+              style: const TextStyle(height: 1.18),
+              softWrap: true,
             ),
           ),
         ],

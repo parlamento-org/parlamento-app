@@ -111,10 +111,8 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
             return RefreshIndicator(
               onRefresh: () async => _reloadHistory(),
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
+                padding: const EdgeInsets.fromLTRB(18, 14, 18, 28),
                 children: [
-                  const _HistoryHeader(),
-                  const SizedBox(height: 22),
                   _HistorySearchBar(
                     controller: _searchController,
                     showFilters: _showFilters,
@@ -365,29 +363,6 @@ class _PreviousVotesHistoryPageState extends State<PreviousVotesHistoryPage> {
   }
 
   bool get _hasActiveServerFilter => _filters.hasActiveFilters;
-}
-
-class _HistoryHeader extends StatelessWidget {
-  const _HistoryHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            'Os Meus Votos',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: baseTheme.colorScheme.primary,
-              fontWeight: FontWeight.w800,
-              height: 1,
-            ),
-          ),
-        ),
-        Icon(Icons.edit, color: baseTheme.colorScheme.primary, size: 52),
-      ],
-    );
-  }
 }
 
 class _HistorySearchBar extends StatelessWidget {
