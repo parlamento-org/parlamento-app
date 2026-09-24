@@ -121,9 +121,16 @@ class _JourneyHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final initiativeReference = proposalInitiativeReferenceLabel(
+      initiativeType: journey.initiativeType,
+      initiativeNumber: journey.initiativeNumber,
+      legislature: journey.legislature,
+      initiativeSelection: journey.initiativeSelection,
+    );
+    final legislatureLabel = proposalLegislatureLabel(journey.legislature);
     final meta = [
-      journey.initiativeType,
-      if (journey.initiativeNumber != null) journey.initiativeNumber!,
+      if (initiativeReference != null) initiativeReference,
+      if (legislatureLabel != null) legislatureLabel,
     ];
     final topicAssignments =
         journey.topicAssignments.isNotEmpty

@@ -530,6 +530,8 @@ public sealed class ProposalFlowService : IProposalFlowService
             InitiativeId = initiative.Id,
             InitiativeType = initiative.InitiativeTypeDescription ?? "Iniciativa parlamentar",
             InitiativeNumber = initiative.InitiativeNumber,
+            Legislature = initiative.Legislatura,
+            InitiativeSelection = initiative.InitiativeSelection,
             Title = initiative.ProposalTitle ?? "Iniciativa sem título disponível",
             FullProposalTextLink = string.IsNullOrWhiteSpace(initiative.FullProposalTextLink)
                 ? null
@@ -975,6 +977,7 @@ public sealed class ProposalFlowService : IProposalFlowService
             InitiativeType = initiative.InitiativeTypeDescription ?? "Iniciativa parlamentar",
             InitiativeNumber = initiative.InitiativeNumber,
             Legislature = initiative.Legislatura,
+            InitiativeSelection = initiative.InitiativeSelection,
             Title = initiative.ProposalTitle ?? "Iniciativa sem título disponível",
             Action = interaction.InteractionType,
             CreatedAtUtc = interaction.CreatedAtUtc,

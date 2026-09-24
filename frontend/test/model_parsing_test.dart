@@ -90,6 +90,7 @@ void main() {
 
       expect(page.items, hasLength(1));
       expect(page.items.single.legislature, isNull);
+      expect(page.items.single.initiativeSelection, isNull);
       expect(page.items.single.proposers, isEmpty);
       expect(page.items.single.action, ProposalInteractionAction.support);
       expect(page.items.single.generalityVote?.approved, isTrue);
@@ -120,11 +121,44 @@ void main() {
       });
     });
 
+    test('formats proposal metadata labels from project law fields', () {
+      expect(
+        proposalInitiativeReferenceLabel(
+          initiativeType: 'Projeto de Lei',
+          initiativeNumber: '40/XV/1',
+          legislature: 'XV',
+          initiativeSelection: '1',
+        ),
+        'Projeto de Lei nº 40 / XV / 1',
+      );
+      expect(
+        proposalInitiativeReferenceLabel(
+          initiativeType: 'Projeto de Resolução',
+          initiativeNumber: '12',
+          legislature: null,
+          initiativeSelection: '2',
+        ),
+        'Projeto de Resolução nº 12 / 2',
+      );
+      expect(
+        proposalInitiativeReferenceLabel(
+          initiativeType: 'Projeto de Lei',
+          initiativeNumber: null,
+          legislature: 'XV',
+          initiativeSelection: '1',
+        ),
+        isNull,
+      );
+      expect(proposalLegislatureLabel(null), isNull);
+    });
+
     test('parses proposal journey original document link', () {
       final journey = ProposalJourney.fromJson({
         'initiativeId': 10,
         'initiativeType': 'Projeto de Lei',
-        'initiativeNumber': '10/XV/1',
+        'initiativeNumber': '10',
+        'legislature': 'XV',
+        'initiativeSelection': '1',
         'title': 'Titulo da iniciativa',
         'fullProposalTextLink': 'https://example.com/propostas/10',
         'userVote': 'Support',
@@ -156,6 +190,18 @@ void main() {
       });
 
       expect(journey.fullProposalTextLink, 'https://example.com/propostas/10');
+      expect(journey.legislature, 'XV');
+      expect(journey.initiativeSelection, '1');
+      expect(
+        proposalInitiativeReferenceLabel(
+          initiativeType: journey.initiativeType,
+          initiativeNumber: journey.initiativeNumber,
+          legislature: journey.legislature,
+          initiativeSelection: journey.initiativeSelection,
+        ),
+        'Projeto de Lei nº 10 / XV / 1',
+      );
+      expect(proposalLegislatureLabel(journey.legislature), 'Legislatura XV');
       expect(journey.userVote, ProposalInteractionAction.support);
       expect(journey.generalityVote?.approved, isTrue);
       expect(journey.proposers.single.acronym, 'PS');

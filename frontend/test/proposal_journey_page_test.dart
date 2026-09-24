@@ -37,7 +37,9 @@ void main() {
                 ProposalJourney(
                   initiativeId: 10,
                   initiativeType: 'Projeto de Lei',
-                  initiativeNumber: '40/XV/1',
+                  initiativeNumber: '40',
+                  legislature: 'XV',
+                  initiativeSelection: '1',
                   title: 'Titulo da iniciativa',
                   userVote: ProposalInteractionAction.support,
                   generalityVote: ParliamentaryVoteSummary(
@@ -85,8 +87,9 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      expect(find.text('Projeto de Lei'), findsOneWidget);
-      expect(find.text('40/XV/1'), findsOneWidget);
+      expect(find.text('Projeto de Lei nº 40 / XV / 1'), findsOneWidget);
+      expect(find.text('Legislatura XV'), findsOneWidget);
+      expect(find.text('40/XV/1'), findsNothing);
       expect(find.text('O teu voto'), findsOneWidget);
       expect(find.text('Tu'), findsOneWidget);
       expect(find.text('Parlamento'), findsOneWidget);

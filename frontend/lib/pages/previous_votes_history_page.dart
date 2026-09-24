@@ -698,6 +698,17 @@ class _HistoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final proposerAcronym = _firstKnownProposer(item.proposers);
+    final initiativeReference = proposalInitiativeReferenceLabel(
+      initiativeType: item.initiativeType,
+      initiativeNumber: item.initiativeNumber,
+      legislature: item.legislature,
+      initiativeSelection: item.initiativeSelection,
+    );
+    final legislatureLabel = proposalLegislatureLabel(item.legislature);
+    final metaBadges = [
+      if (initiativeReference != null) _HistoryMetaBadge(initiativeReference),
+      if (legislatureLabel != null) _HistoryMetaBadge(legislatureLabel),
+    ];
 
     return InkWell(
       borderRadius: BorderRadius.circular(8),
@@ -750,13 +761,9 @@ class _HistoryCard extends StatelessWidget {
                     action: item.action,
                     generalityVote: item.generalityVote,
                   ),
-                  if (item.initiativeNumber != null) ...[
+                  if (metaBadges.isNotEmpty) ...[
                     const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [_HistoryMetaBadge(item.initiativeNumber!)],
-                    ),
+                    Wrap(spacing: 6, runSpacing: 6, children: metaBadges),
                   ],
                 ],
               ),
@@ -804,13 +811,13 @@ class _HistorySignalRow extends StatelessWidget {
       runSpacing: 8,
       children: [
         _HistorySignalIcon(
-          label: 'Tu',
+          label: 'O teu voto',
           icon: _actionIcon(action),
           color: _actionColor(action),
           tooltip: 'O teu voto: ${_actionLabel(action)}',
         ),
         _HistorySignalIcon(
-          label: 'AR',
+          label: 'Parlamento (Generalidade)',
           icon: _approvalIcon(generalityVote?.approved),
           color: _approvalColor(generalityVote?.approved),
           tooltip:

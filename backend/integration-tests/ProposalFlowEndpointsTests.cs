@@ -550,6 +550,7 @@ public sealed class ProposalHistoryEndpointsFactory : TestingWebAppFactory
             Legislatura = legislature,
             InitiativeNumber = $"{sourceId}/{legislature}/1",
             InitiativeTypeDescription = "Projeto de Lei",
+            InitiativeSelection = "1",
             VoteDate = "2024-05-01",
             ProposingParty = proposingParty,
             ProposalTitle = title,
@@ -629,6 +630,7 @@ public sealed class ProposalHistoryEndpointsTests : IClassFixture<ProposalHistor
 
         Assert.Equal(1, root.GetProperty("totalItems").GetInt32());
         Assert.Equal("XVI", item.GetProperty("legislature").GetString());
+        Assert.Equal("1", item.GetProperty("initiativeSelection").GetString());
         Assert.Equal("Only XVI initiative", item.GetProperty("title").GetString());
         Assert.False(root.GetProperty("hasNextPage").GetBoolean());
     }
@@ -822,6 +824,7 @@ public sealed class ProposalRevealEndpointsFactory : TestingWebAppFactory
             Legislatura = "XV",
             InitiativeNumber = "40/XV/1",
             InitiativeTypeDescription = "Projeto de Lei",
+            InitiativeSelection = "1",
             VoteDate = "2024-04-01",
             ProposingParty = ps,
             ProposalTitle = "Reveal candidate",
@@ -1023,6 +1026,8 @@ public sealed class ProposalRevealEndpointsTests : IClassFixture<ProposalRevealE
 
         Assert.Equal(_factory.InitiativeId, root.GetProperty("initiativeId").GetInt32());
         Assert.Equal("Support", root.GetProperty("userVote").GetString());
+        Assert.Equal("XV", root.GetProperty("legislature").GetString());
+        Assert.Equal("1", root.GetProperty("initiativeSelection").GetString());
         Assert.True(root.GetProperty("generalityVote").GetProperty("approved").GetBoolean());
         Assert.Equal(
             "https://example.com/proposals/4001",

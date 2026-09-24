@@ -457,6 +457,8 @@ class ProposalJourney {
     required this.initiativeId,
     required this.initiativeType,
     this.initiativeNumber,
+    this.legislature,
+    this.initiativeSelection,
     required this.title,
     this.fullProposalTextLink,
     this.userVote,
@@ -469,6 +471,8 @@ class ProposalJourney {
   final int initiativeId;
   final String initiativeType;
   final String? initiativeNumber;
+  final String? legislature;
+  final String? initiativeSelection;
   final String title;
   final String? fullProposalTextLink;
   final ProposalInteractionAction? userVote;
@@ -485,6 +489,8 @@ class ProposalJourney {
         'Iniciativa parlamentar',
       ),
       initiativeNumber: _stringOrNull(json['initiativeNumber']),
+      legislature: _stringOrNull(json['legislature']),
+      initiativeSelection: _stringOrNull(json['initiativeSelection']),
       title: _stringOrFallback(
         json['title'],
         'Iniciativa sem título disponível',
@@ -601,6 +607,7 @@ class ProposalHistoryItem {
     this.initiativeNumber,
     required this.title,
     this.legislature,
+    this.initiativeSelection,
     required this.action,
     this.createdAtUtc,
     this.generalityVote,
@@ -613,6 +620,7 @@ class ProposalHistoryItem {
   final String? initiativeNumber;
   final String title;
   final String? legislature;
+  final String? initiativeSelection;
   final ProposalInteractionAction action;
   final String? createdAtUtc;
   final ParliamentaryVoteSummary? generalityVote;
@@ -635,6 +643,7 @@ class ProposalHistoryItem {
         _stringOrNull(json['action']),
       ),
       legislature: _stringOrNull(json['legislature']),
+      initiativeSelection: _stringOrNull(json['initiativeSelection']),
       createdAtUtc: _stringOrNull(json['createdAtUtc']),
       generalityVote:
           json['generalityVote'] is Map<String, dynamic>
@@ -684,6 +693,66 @@ class ProposalHistoryPage {
       ),
     );
   }
+}
+
+String? proposalInitiativeReferenceLabel({
+  required String initiativeType,
+  required String? initiativeNumber,
+  required String? legislature,
+  required String? initiativeSelection,
+}) {
+  final number = initiativeNumber?.trim();
+  if (number == null || number.isEmpty) {
+    return null;
+  }
+
+  final displayNumber = _initiativeNumberDisplayValue(
+    number,
+    legislature: legislature,
+    initiativeSelection: initiativeSelection,
+  );
+  final referenceParts = [
+    displayNumber,
+    if (legislature != null && legislature.trim().isNotEmpty)
+      legislature.trim(),
+    if (initiativeSelection != null && initiativeSelection.trim().isNotEmpty)
+      initiativeSelection.trim(),
+  ];
+
+  final type =
+      initiativeType.trim().isEmpty
+          ? 'Iniciativa parlamentar'
+          : initiativeType.trim();
+
+  return '$type nº ${referenceParts.join(' / ')}';
+}
+
+String _initiativeNumberDisplayValue(
+  String initiativeNumber, {
+  required String? legislature,
+  required String? initiativeSelection,
+}) {
+  final parts = initiativeNumber.split('/').map((part) => part.trim()).toList();
+  if (parts.length < 3) {
+    return initiativeNumber;
+  }
+
+  final legislatureValue = legislature?.trim();
+  final selectionValue = initiativeSelection?.trim();
+  if (parts[1] == legislatureValue && parts[2] == selectionValue) {
+    return parts[0];
+  }
+
+  return initiativeNumber;
+}
+
+String? proposalLegislatureLabel(String? legislature) {
+  final value = legislature?.trim();
+  if (value == null || value.isEmpty) {
+    return null;
+  }
+
+  return 'Legislatura $value';
 }
 
 class ProposalHistoryProposingParty {

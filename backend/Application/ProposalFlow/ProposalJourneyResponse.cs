@@ -15,6 +15,12 @@ public sealed class ProposalJourneyResponse
     [JsonPropertyName("initiativeNumber")]
     public string? InitiativeNumber { get; set; }
 
+    [JsonPropertyName("legislature")]
+    public string? Legislature { get; set; }
+
+    [JsonPropertyName("initiativeSelection")]
+    public string? InitiativeSelection { get; set; }
+
     [JsonPropertyName("title")]
     public string Title { get; set; } = string.Empty;
 

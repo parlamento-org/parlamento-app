@@ -24,6 +24,9 @@ public sealed class ProposalHistoryItemResponse
     [JsonPropertyName("legislature")]
     public string? Legislature { get; set; }
 
+    [JsonPropertyName("initiativeSelection")]
+    public string? InitiativeSelection { get; set; }
+
     [JsonPropertyName("action")]
     public ProposalInteractionType Action { get; set; }
 
