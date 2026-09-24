@@ -459,6 +459,8 @@ class ProposalJourney {
     this.initiativeNumber,
     required this.title,
     this.fullProposalTextLink,
+    this.userVote,
+    this.generalityVote,
     this.proposers = const [],
     this.topicAssignments = const [],
     required this.phases,
@@ -469,6 +471,8 @@ class ProposalJourney {
   final String? initiativeNumber;
   final String title;
   final String? fullProposalTextLink;
+  final ProposalInteractionAction? userVote;
+  final ParliamentaryVoteSummary? generalityVote;
   final List<ProposalProposer> proposers;
   final List<ProposalTopicAssignment> topicAssignments;
   final List<ProposalJourneyPhase> phases;
@@ -486,6 +490,11 @@ class ProposalJourney {
         'Iniciativa sem título disponível',
       ),
       fullProposalTextLink: _stringOrNull(json['fullProposalTextLink']),
+      userVote: _interactionActionOrNull(json['userVote']),
+      generalityVote:
+          json['generalityVote'] is Map<String, dynamic>
+              ? ParliamentaryVoteSummary.fromJson(json['generalityVote'])
+              : null,
       proposers: _objectList(json['proposers'], ProposalProposer.fromJson),
       topicAssignments: _objectList(
         json['topicAssignments'],
@@ -594,6 +603,7 @@ class ProposalHistoryItem {
     this.legislature,
     required this.action,
     this.createdAtUtc,
+    this.generalityVote,
     required this.proposers,
   });
 
@@ -605,6 +615,7 @@ class ProposalHistoryItem {
   final String? legislature;
   final ProposalInteractionAction action;
   final String? createdAtUtc;
+  final ParliamentaryVoteSummary? generalityVote;
   final List<ProposalProposer> proposers;
 
   factory ProposalHistoryItem.fromJson(Map<String, dynamic> json) {
@@ -625,6 +636,10 @@ class ProposalHistoryItem {
       ),
       legislature: _stringOrNull(json['legislature']),
       createdAtUtc: _stringOrNull(json['createdAtUtc']),
+      generalityVote:
+          json['generalityVote'] is Map<String, dynamic>
+              ? ParliamentaryVoteSummary.fromJson(json['generalityVote'])
+              : null,
       proposers: _objectList(json['proposers'], ProposalProposer.fromJson),
     );
   }
@@ -726,6 +741,11 @@ bool? _boolOrNull(dynamic value) {
 
 bool _boolOrFalse(dynamic value) {
   return _boolOrNull(value) ?? false;
+}
+
+ProposalInteractionAction? _interactionActionOrNull(dynamic value) {
+  final action = ProposalInteractionAction.fromWireName(_stringOrNull(value));
+  return action == ProposalInteractionAction.unknown ? null : action;
 }
 
 double? _doubleOrNull(dynamic value) {

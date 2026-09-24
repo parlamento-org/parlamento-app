@@ -30,6 +30,9 @@ public sealed class ProposalHistoryItemResponse
     [JsonPropertyName("createdAtUtc")]
     public DateTime CreatedAtUtc { get; set; }
 
+    [JsonPropertyName("generalityVote")]
+    public ParliamentaryVoteSummaryResponse? GeneralityVote { get; set; }
+
     [JsonPropertyName("proposers")]
     public List<ProposalProposerResponse> Proposers { get; set; } = [];
 }

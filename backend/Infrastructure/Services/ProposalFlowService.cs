@@ -217,9 +217,20 @@ public sealed class ProposalFlowService : IProposalFlowService
     }
 
     public async Task<ServiceResult<ProposalJourneyResponse>> GetJourneyAsync(
+        int userId,
         int initiativeId,
         CancellationToken cancellationToken = default)
     {
+        var userVote = await _context.ProposalInteractionEvents
+            .AsNoTracking()
+            .Where(interaction =>
+                interaction.UserId == userId &&
+                interaction.ProjectLawId == initiativeId &&
+                TerminalFeedActions.Contains(interaction.InteractionType))
+            .OrderByDescending(interaction => interaction.CreatedAtUtc)
+            .ThenByDescending(interaction => interaction.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
         var initiative = await _context.ProjectLaws
             .AsNoTracking()
             .AsSplitQuery()
@@ -250,7 +261,7 @@ public sealed class ProposalFlowService : IProposalFlowService
             return ServiceResult<ProposalJourneyResponse>.Failure(404, "Não foi encontrada nenhuma iniciativa com o id indicado.");
         }
 
-        return ServiceResult<ProposalJourneyResponse>.Success(MapJourney(initiative));
+        return ServiceResult<ProposalJourneyResponse>.Success(MapJourney(initiative, userVote?.InteractionType));
     }
 
     public async Task<ServiceResult<ProposalHistoryPageResponse>> GetHistoryAsync(
@@ -370,6 +381,11 @@ public sealed class ProposalFlowService : IProposalFlowService
             .AsSplitQuery()
             .Include(interaction => interaction.ProjectLaw!)
                 .ThenInclude(initiative => initiative.ProposingParty)
+            .Include(interaction => interaction.ProjectLaw!)
+                .ThenInclude(initiative => initiative.VotingResultGenerality!.votingBlocks)
+            .Include(interaction => interaction.ProjectLaw!)
+                .ThenInclude(initiative => initiative.ImportedVotes)
+                    .ThenInclude(vote => vote.Blocks)
             .Include(interaction => interaction.ProjectLaw!)
                 .ThenInclude(initiative => initiative.ImportedAuthors)
             .Where(interaction => latestInteractionIds.Contains(interaction.Id))
@@ -507,7 +523,7 @@ public sealed class ProposalFlowService : IProposalFlowService
         };
     }
 
-    private static ProposalJourneyResponse MapJourney(ProjectLaw initiative)
+    private static ProposalJourneyResponse MapJourney(ProjectLaw initiative, ProposalInteractionType? userVote)
     {
         return new ProposalJourneyResponse
         {
@@ -518,6 +534,8 @@ public sealed class ProposalFlowService : IProposalFlowService
             FullProposalTextLink = string.IsNullOrWhiteSpace(initiative.FullProposalTextLink)
                 ? null
                 : initiative.FullProposalTextLink,
+            UserVote = userVote,
+            GeneralityVote = MapGeneralityVote(initiative),
             Proposers = MapProposers(initiative),
             TopicAssignments = MapTopicAssignments(initiative),
             Phases = BuildJourneyPhases(initiative)
@@ -707,7 +725,21 @@ public sealed class ProposalFlowService : IProposalFlowService
 
         if (initiative.VotingResultGenerality?.votingBlocks is not { Count: > 0 } blocks)
         {
-            return null;
+            var result = MapProposalResult(initiative.ProposalResult);
+            if (result == null && string.IsNullOrWhiteSpace(initiative.VoteDate))
+            {
+                return null;
+            }
+
+            return new ParliamentaryVoteSummaryResponse
+            {
+                StageCode = "250",
+                StageName = "Votação na generalidade",
+                Date = initiative.VoteDate,
+                Result = result,
+                Approved = ApprovedFromProposalResult(initiative.ProposalResult),
+                PartyVotes = []
+            };
         }
 
         return new ParliamentaryVoteSummaryResponse
@@ -946,6 +978,7 @@ public sealed class ProposalFlowService : IProposalFlowService
             Title = initiative.ProposalTitle ?? "Iniciativa sem título disponível",
             Action = interaction.InteractionType,
             CreatedAtUtc = interaction.CreatedAtUtc,
+            GeneralityVote = MapGeneralityVote(initiative),
             Proposers = MapProposers(initiative)
         };
     }
@@ -1016,6 +1049,16 @@ public sealed class ProposalFlowService : IProposalFlowService
             ProposalResult.RejectedInGenerality => "Rejeitado na generalidade",
             ProposalResult.ApprovedInSpeciality => "Aprovado na especialidade",
             ProposalResult.RejectedInSpeciality => "Rejeitado na especialidade",
+            _ => null
+        };
+    }
+
+    private static bool? ApprovedFromProposalResult(ProposalResult? result)
+    {
+        return result switch
+        {
+            ProposalResult.ApprovedInGenerality or ProposalResult.ApprovedInSpeciality => true,
+            ProposalResult.RejectedInGenerality => false,
             _ => null
         };
     }

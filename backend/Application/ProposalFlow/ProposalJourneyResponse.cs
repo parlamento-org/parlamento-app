@@ -1,5 +1,7 @@
 using System.Text.Json.Serialization;
 
+using Parlamento.Domain.Enums;
+
 namespace Parlamento.Application.ProposalFlow;
 
 public sealed class ProposalJourneyResponse
@@ -18,6 +20,12 @@ public sealed class ProposalJourneyResponse
 
     [JsonPropertyName("fullProposalTextLink")]
     public string? FullProposalTextLink { get; set; }
+
+    [JsonPropertyName("userVote")]
+    public ProposalInteractionType? UserVote { get; set; }
+
+    [JsonPropertyName("generalityVote")]
+    public ParliamentaryVoteSummaryResponse? GeneralityVote { get; set; }
 
     [JsonPropertyName("proposers")]
     public List<ProposalProposerResponse> Proposers { get; set; } = [];

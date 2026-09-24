@@ -20,6 +20,7 @@ public interface IProposalFlowService
         CancellationToken cancellationToken = default);
 
     Task<ServiceResult<ProposalJourneyResponse>> GetJourneyAsync(
+        int userId,
         int initiativeId,
         CancellationToken cancellationToken = default);
 

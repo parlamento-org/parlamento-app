@@ -67,6 +67,14 @@ void main() {
             'initiativeType': 'Projeto de Lei',
             'title': 'Histórico sem campos opcionais',
             'action': 'Support',
+            'generalityVote': {
+              'stageCode': '250',
+              'stageName': 'Votação na generalidade',
+              'result': 'Aprovado',
+              'approved': true,
+              'isUnanimous': false,
+              'partyVotes': [],
+            },
           },
         ],
         'page': 1,
@@ -84,6 +92,7 @@ void main() {
       expect(page.items.single.legislature, isNull);
       expect(page.items.single.proposers, isEmpty);
       expect(page.items.single.action, ProposalInteractionAction.support);
+      expect(page.items.single.generalityVote?.approved, isTrue);
       expect(page.hasPreviousPage, isFalse);
       expect(page.availableLegislatures, ['XVII', 'XVI']);
       expect(page.availableProposingParties.single.acronym, 'PS');
@@ -118,6 +127,15 @@ void main() {
         'initiativeNumber': '10/XV/1',
         'title': 'Titulo da iniciativa',
         'fullProposalTextLink': 'https://example.com/propostas/10',
+        'userVote': 'Support',
+        'generalityVote': {
+          'stageCode': '250',
+          'stageName': 'Votação na generalidade',
+          'result': 'Aprovado',
+          'approved': true,
+          'isUnanimous': false,
+          'partyVotes': [],
+        },
         'proposers': [
           {
             'kind': 'ParliamentaryGroup',
@@ -138,6 +156,8 @@ void main() {
       });
 
       expect(journey.fullProposalTextLink, 'https://example.com/propostas/10');
+      expect(journey.userVote, ProposalInteractionAction.support);
+      expect(journey.generalityVote?.approved, isTrue);
       expect(journey.proposers.single.acronym, 'PS');
       expect(journey.topicAssignments.single.parentTopicLabel, 'Ambiente');
       expect(journey.topicAssignments.single.subtopicLabel, 'Energia');

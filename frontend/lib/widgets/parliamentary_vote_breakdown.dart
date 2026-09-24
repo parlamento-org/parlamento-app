@@ -11,6 +11,7 @@ class ParliamentaryVoteBreakdown extends StatelessWidget {
     this.isUnanimous = false,
     this.highlightedOrientation,
     this.showHighlightedWhenEmpty = false,
+    this.userOrientation,
     this.style = ParliamentaryVoteBreakdownStyle.compact,
     this.showAbsent = true,
     this.emptyLabel = 'Votos por partido ainda indisponíveis.',
@@ -20,6 +21,7 @@ class ParliamentaryVoteBreakdown extends StatelessWidget {
   final bool isUnanimous;
   final ParliamentaryVoteOrientation? highlightedOrientation;
   final bool showHighlightedWhenEmpty;
+  final ParliamentaryVoteOrientation? userOrientation;
   final ParliamentaryVoteBreakdownStyle style;
   final bool showAbsent;
   final String emptyLabel;
@@ -37,9 +39,13 @@ class ParliamentaryVoteBreakdown extends StatelessWidget {
         !isUnanimous &&
         highlightedOrientation != null &&
         visibleGroupedVotes[highlightedOrientation!]?.isNotEmpty != true;
+    final shouldShowUserVote =
+        style == ParliamentaryVoteBreakdownStyle.compact &&
+        userOrientation != null;
 
     if (!hasVisibleGroupedVotes &&
         !isUnanimous &&
+        !shouldShowUserVote &&
         !shouldShowEmptyHighlightedGroup) {
       return Text(
         emptyLabel,
@@ -63,6 +69,7 @@ class ParliamentaryVoteBreakdown extends StatelessWidget {
         ],
         for (final orientation in _voteOrientationOrder)
           if (visibleGroupedVotes[orientation]?.isNotEmpty == true ||
+              userOrientation == orientation ||
               shouldShowEmptyHighlightedGroup &&
                   orientation == highlightedOrientation)
             _buildGroup(orientation, visibleGroupedVotes[orientation] ?? []),
@@ -84,6 +91,7 @@ class ParliamentaryVoteBreakdown extends StatelessWidget {
       ParliamentaryVoteBreakdownStyle.compact => _CompactPartyVoteGroup(
         orientation: orientation,
         votes: orientationVotes,
+        showUserVote: userOrientation == orientation,
       ),
     };
   }
@@ -188,14 +196,21 @@ class _RevealPartyVoteGroup extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Container(
-                width: isHighlighted ? 86 : 78,
-                height: isHighlighted ? 86 : 78,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                child: Icon(
-                  _orientationIcon(orientation),
-                  color: Colors.white,
-                  size: isHighlighted ? 54 : 48,
+              Tooltip(
+                message: _orientationLabel(orientation),
+                child: Container(
+                  width: isHighlighted ? 86 : 78,
+                  height: isHighlighted ? 86 : 78,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    _orientationIcon(orientation),
+                    color: Colors.white,
+                    size: isHighlighted ? 54 : 48,
+                    semanticLabel: _orientationLabel(orientation),
+                  ),
                 ),
               ),
               const SizedBox(width: 14),
@@ -203,16 +218,6 @@ class _RevealPartyVoteGroup extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (!isHighlighted) ...[
-                      Text(
-                        _orientationLabel(orientation),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
                     Wrap(
                       spacing: 10,
                       runSpacing: 10,
@@ -244,10 +249,12 @@ class _CompactPartyVoteGroup extends StatelessWidget {
   const _CompactPartyVoteGroup({
     required this.orientation,
     required this.votes,
+    required this.showUserVote,
   });
 
   final ParliamentaryVoteOrientation orientation;
   final List<PartyVote> votes;
+  final bool showUserVote;
 
   @override
   Widget build(BuildContext context) {
@@ -256,34 +263,30 @@ class _CompactPartyVoteGroup extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: _orientationColor(orientation),
-              borderRadius: BorderRadius.circular(8),
+          Tooltip(
+            message: _orientationLabel(orientation),
+            child: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: _orientationColor(orientation),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                _orientationIcon(orientation),
+                color: Colors.white,
+                semanticLabel: _orientationLabel(orientation),
+              ),
             ),
-            child: Icon(_orientationIcon(orientation), color: Colors.white),
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 6,
               children: [
-                Text(
-                  _orientationLabel(orientation),
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children:
-                      votes.map((vote) => _PartyVoteChip(vote: vote)).toList(),
-                ),
+                if (showUserVote) _UserVoteChip(orientation: orientation),
+                ...votes.map((vote) => _PartyVoteChip(vote: vote)),
               ],
             ),
           ),
@@ -383,6 +386,43 @@ class ParliamentaryPartyLogo extends StatelessWidget {
         errorBuilder:
             (context, error, stackTrace) =>
                 _FallbackLogo(label: fallbackLabel ?? acronym, size: size),
+      ),
+    );
+  }
+}
+
+class _UserVoteChip extends StatelessWidget {
+  const _UserVoteChip({required this.orientation});
+
+  final ParliamentaryVoteOrientation orientation;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _orientationColor(orientation);
+
+    return Tooltip(
+      message: 'O teu voto: ${_orientationLabel(orientation)}',
+      child: Semantics(
+        label: 'O teu voto: ${_orientationLabel(orientation)}',
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 30),
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: color, width: 2),
+          ),
+          child: const Text(
+            'Tu',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
       ),
     );
   }

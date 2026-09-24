@@ -605,6 +605,7 @@ public sealed class ProposalHistoryEndpointsTests : IClassFixture<ProposalHistor
         Assert.True(root.GetProperty("hasNextPage").GetBoolean());
         Assert.False(root.GetProperty("hasPreviousPage").GetBoolean());
         Assert.Equal("Newest XVII initiative", items[0].GetProperty("title").GetString());
+        Assert.True(items[0].GetProperty("generalityVote").GetProperty("approved").GetBoolean());
         Assert.Equal("Latest duplicate XV initiative", items[1].GetProperty("title").GetString());
         Assert.Equal("Support", items[1].GetProperty("action").GetString());
         Assert.Contains(
@@ -1021,6 +1022,8 @@ public sealed class ProposalRevealEndpointsTests : IClassFixture<ProposalRevealE
         var root = document.RootElement;
 
         Assert.Equal(_factory.InitiativeId, root.GetProperty("initiativeId").GetInt32());
+        Assert.Equal("Support", root.GetProperty("userVote").GetString());
+        Assert.True(root.GetProperty("generalityVote").GetProperty("approved").GetBoolean());
         Assert.Equal(
             "https://example.com/proposals/4001",
             root.GetProperty("fullProposalTextLink").GetString());

@@ -698,7 +698,6 @@ class _HistoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final proposerAcronym = _firstKnownProposer(item.proposers);
-    final actionColor = _actionColor(item.action);
 
     return InkWell(
       borderRadius: BorderRadius.circular(8),
@@ -746,32 +745,26 @@ class _HistoryCard extends StatelessWidget {
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: [
-                      _HistoryMetaBadge(_actionLabel(item.action)),
-                      if (item.initiativeNumber != null)
-                        _HistoryMetaBadge(item.initiativeNumber!),
-                    ],
+                  const SizedBox(height: 10),
+                  _HistorySignalRow(
+                    action: item.action,
+                    generalityVote: item.generalityVote,
                   ),
+                  if (item.initiativeNumber != null) ...[
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [_HistoryMetaBadge(item.initiativeNumber!)],
+                    ),
+                  ],
                 ],
               ),
             ),
             const SizedBox(width: 12),
-            Container(
-              width: 54,
-              height: 54,
-              decoration: BoxDecoration(
-                color: actionColor,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                _actionIcon(item.action),
-                color: Colors.white,
-                size: 38,
-              ),
+            Icon(
+              Icons.chevron_right,
+              color: baseTheme.colorScheme.primary.withValues(alpha: 0.58),
             ),
           ],
         ),
@@ -795,6 +788,94 @@ class _HistoryCard extends StatelessWidget {
     }
 
     return null;
+  }
+}
+
+class _HistorySignalRow extends StatelessWidget {
+  const _HistorySignalRow({required this.action, required this.generalityVote});
+
+  final ProposalInteractionAction action;
+  final ParliamentaryVoteSummary? generalityVote;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _HistorySignalIcon(
+          label: 'Tu',
+          icon: _actionIcon(action),
+          color: _actionColor(action),
+          tooltip: 'O teu voto: ${_actionLabel(action)}',
+        ),
+        _HistorySignalIcon(
+          label: 'AR',
+          icon: _approvalIcon(generalityVote?.approved),
+          color: _approvalColor(generalityVote?.approved),
+          tooltip:
+              'Parlamento: ${_approvalLabel(generalityVote?.approved, generalityVote?.result)}',
+        ),
+      ],
+    );
+  }
+}
+
+class _HistorySignalIcon extends StatelessWidget {
+  const _HistorySignalIcon({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.tooltip,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color color;
+  final String tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Semantics(
+        label: tooltip,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 34),
+          padding: const EdgeInsets.fromLTRB(8, 4, 9, 4),
+          decoration: BoxDecoration(
+            color: baseTheme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: baseTheme.colorScheme.primary.withValues(alpha: 0.28),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: baseTheme.colorScheme.primary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                width: 25,
+                height: 25,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: Colors.white, size: 18),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -914,8 +995,8 @@ IconData _actionIcon(ProposalInteractionAction action) {
     ProposalInteractionAction.support => Icons.check,
     ProposalInteractionAction.oppose => Icons.close,
     ProposalInteractionAction.abstain => Icons.remove,
-    ProposalInteractionAction.skip => Icons.help_outline,
-    ProposalInteractionAction.unknown => Icons.check,
+    ProposalInteractionAction.skip => Icons.skip_next,
+    ProposalInteractionAction.unknown => Icons.help_outline,
   };
 }
 
@@ -927,4 +1008,34 @@ Color _actionColor(ProposalInteractionAction action) {
     ProposalInteractionAction.skip => baseTheme.colorScheme.secondary,
     ProposalInteractionAction.unknown => baseTheme.colorScheme.primary,
   };
+}
+
+IconData _approvalIcon(bool? approved) {
+  if (approved == true) {
+    return Icons.check;
+  }
+  if (approved == false) {
+    return Icons.close;
+  }
+  return Icons.remove;
+}
+
+Color _approvalColor(bool? approved) {
+  if (approved == true) {
+    return approvedGreenBold;
+  }
+  if (approved == false) {
+    return rejectedRedBold;
+  }
+  return Colors.grey.shade700;
+}
+
+String _approvalLabel(bool? approved, String? rawResult) {
+  if (approved == true) {
+    return 'Aprovado';
+  }
+  if (approved == false) {
+    return 'Rejeitado';
+  }
+  return rawResult ?? 'Sem resultado';
 }

@@ -43,11 +43,7 @@ class MainPageState extends State<MainPage> {
           },
         ),
         title: Center(
-          child: Image.asset(
-            'lib/images/logo_parlamento.png',
-            height: 50,
-            width: 50,
-          ),
+          child: Image.asset('lib/images/logo.png', height: 50, width: 50),
         ),
         actions: [
           IconButton(

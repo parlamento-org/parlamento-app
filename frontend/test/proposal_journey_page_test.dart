@@ -37,12 +37,24 @@ void main() {
                 ProposalJourney(
                   initiativeId: 10,
                   initiativeType: 'Projeto de Lei',
+                  initiativeNumber: '40/XV/1',
                   title: 'Titulo da iniciativa',
+                  userVote: ProposalInteractionAction.support,
+                  generalityVote: ParliamentaryVoteSummary(
+                    stageCode: '250',
+                    stageName: 'Votação na generalidade',
+                    result: 'Aprovado',
+                    approved: true,
+                    isUnanimous: false,
+                    partyVotes: const [],
+                  ),
                   phases: [
                     ProposalJourneyPhase(
+                      phaseCode: '250',
                       phaseName: 'Votação na generalidade',
                       date: '2026-06-30',
                       summary: 'Resumo da fase',
+                      approvedTextId: 'AT-123',
                       votes: [
                         ParliamentaryVoteSummary(
                           stageCode: '250',
@@ -74,6 +86,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Projeto de Lei'), findsOneWidget);
+      expect(find.text('40/XV/1'), findsOneWidget);
+      expect(find.text('O teu voto'), findsOneWidget);
+      expect(find.text('Tu'), findsOneWidget);
+      expect(find.text('Parlamento'), findsOneWidget);
       expect(find.byType(ParliamentaryPartyLogo), findsOneWidget);
       expect(find.text('Ambiente'), findsOneWidget);
       expect(find.text('Energia'), findsOneWidget);
@@ -82,8 +98,47 @@ void main() {
       expect(find.textContaining('5 de janeiro de 2024'), findsOneWidget);
       expect(find.text('2026-06-30'), findsNothing);
       expect(find.text('28-09-2019'), findsNothing);
+      expect(find.text('Fase 250'), findsNothing);
+      expect(find.text('AT-123'), findsNothing);
     },
   );
+
+  testWidgets('only shows the user vote chip in phase 250', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ProposalJourneyPage(
+          initiativeId: 10,
+          voteController: VoteController(
+            repository: _FakeRepository(
+              ProposalJourney(
+                initiativeId: 10,
+                initiativeType: 'Projeto de Lei',
+                title: 'Titulo da iniciativa',
+                userVote: ProposalInteractionAction.support,
+                phases: [
+                  ProposalJourneyPhase(
+                    phaseCode: '200',
+                    phaseName: 'Discussão na generalidade',
+                    summary: 'Resumo da discussão.',
+                    votes: const [],
+                    documents: const [],
+                    diaryLinks: const [],
+                    videos: const [],
+                    transcripts: const [],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Discussão na generalidade'), findsOneWidget);
+    expect(find.text('Tu'), findsNothing);
+  });
 }
 
 class _FakeRepository implements Repository {
